@@ -1,2 +1,2 @@
-# lcls2-pcie-aps
+# lcls2-pcie-apps
 LCLS2 PCIE-Express Board Applications
