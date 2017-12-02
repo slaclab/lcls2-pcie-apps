@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 -- File       : PgpLaneTx.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-26
--- Last update: 2017-10-26
+-- Created    : 2017-10-04
+-- Last update: 2017-10-08
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -23,23 +23,22 @@ use ieee.std_logic_unsigned.all;
 use work.StdRtlPkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
-use work.Pgp3Pkg.all;
+use work.Pgp2bPkg.all;
 
 entity PgpLaneTx is
    generic (
-      TPD_G    : time     := 1 ns;
-      NUM_VC_G : positive := 16);
+      TPD_G : time := 1 ns);
    port (
-      -- DMA Interface (dmaClk domain)
-      dmaClk       : in  sl;
-      dmaRst       : in  sl;
+      -- DMA Interface (sysClk domain)
+      sysClk       : in  sl;
+      sysRst       : in  sl;
       dmaObMaster  : in  AxiStreamMasterType;
       dmaObSlave   : out AxiStreamSlaveType;
-      -- PGP Interface (pgpClk domain)
-      pgpClk       : in  sl;
-      pgpRst       : in  sl;
-      pgpTxMasters : out AxiStreamMasterArray(NUM_VC_G-1 downto 0);
-      pgpTxSlaves  : in  AxiStreamSlaveArray(NUM_VC_G-1 downto 0));
+      -- PGP Interface
+      pgpTxClk     : in  sl;
+      pgpTxRst     : in  sl;
+      pgpTxMasters : out AxiStreamMasterArray(3 downto 0);
+      pgpTxSlaves  : in  AxiStreamSlaveArray(3 downto 0));
 end PgpLaneTx;
 
 architecture mapping of PgpLaneTx is
@@ -47,55 +46,92 @@ architecture mapping of PgpLaneTx is
    signal txMaster : AxiStreamMasterType;
    signal txSlave  : AxiStreamSlaveType;
 
+   signal txMasters : AxiStreamMasterArray(3 downto 0);
+   signal txSlaves  : AxiStreamSlaveArray(3 downto 0);
+
 begin
 
-   U_ASYNC : entity work.AxiStreamFifoV2
+   U_RESIZE : entity work.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
-         INT_PIPE_STAGES_G   => 1,
-         PIPE_STAGES_G       => 1,
+         INT_PIPE_STAGES_G   => 0,
+         PIPE_STAGES_G       => 0,
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
          INT_WIDTH_SELECT_G  => "NARROW",
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         BRAM_EN_G           => false,
          USE_BUILT_IN_G      => false,
-         GEN_SYNC_FIFO_G     => false,
+         GEN_SYNC_FIFO_G     => true,
          CASCADE_SIZE_G      => 1,
-         FIFO_ADDR_WIDTH_G   => 9,
+         FIFO_ADDR_WIDTH_G   => 4,
          -- AXI Stream Port Configurations
          SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
-         MASTER_AXI_CONFIG_G => PGP3_AXIS_CONFIG_C)
+         MASTER_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
       port map (
          -- Slave Port
-         sAxisClk    => dmaClk,
-         sAxisRst    => dmaRst,
+         sAxisClk    => sysClk,
+         sAxisRst    => sysRst,
          sAxisMaster => dmaObMaster,
          sAxisSlave  => dmaObSlave,
          -- Master Port
-         mAxisClk    => pgpClk,
-         mAxisRst    => pgpRst,
+         mAxisClk    => sysClk,
+         mAxisRst    => sysRst,
          mAxisMaster => txMaster,
          mAxisSlave  => txSlave);
 
    U_DeMux : entity work.AxiStreamDeMux
       generic map (
          TPD_G         => TPD_G,
-         NUM_MASTERS_G => NUM_VC_G,
+         NUM_MASTERS_G => 4,
          MODE_G        => "INDEXED",
          PIPE_STAGES_G => 1,
-         TDEST_HIGH_G  => 3,
+         TDEST_HIGH_G  => 1,
          TDEST_LOW_G   => 0)
       port map (
          -- Clock and reset
-         axisClk      => pgpClk,
-         axisRst      => pgpRst,
+         axisClk      => sysClk,
+         axisRst      => sysRst,
          -- Slave         
          sAxisMaster  => txMaster,
          sAxisSlave   => txSlave,
          -- Masters
-         mAxisMasters => pgpTxMasters,
-         mAxisSlaves  => pgpTxSlaves);
+         mAxisMasters => txMasters,
+         mAxisSlaves  => txSlaves);
+
+   GEN_VEC :
+   for i in 3 downto 0 generate
+
+      U_ASYNC : entity work.AxiStreamFifoV2
+         generic map (
+            -- General Configurations
+            TPD_G               => TPD_G,
+            INT_PIPE_STAGES_G   => 1,
+            PIPE_STAGES_G       => 1,
+            SLAVE_READY_EN_G    => true,
+            VALID_THOLD_G       => 1,
+            -- FIFO configurations
+            BRAM_EN_G           => false,
+            USE_BUILT_IN_G      => false,
+            GEN_SYNC_FIFO_G     => false,
+            CASCADE_SIZE_G      => 1,
+            FIFO_ADDR_WIDTH_G   => 4,
+            -- AXI Stream Port Configurations
+            SLAVE_AXI_CONFIG_G  => SSI_PGP2B_CONFIG_C,
+            MASTER_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
+         port map (
+            -- Slave Port
+            sAxisClk    => sysClk,
+            sAxisRst    => sysRst,
+            sAxisMaster => txMasters(i),
+            sAxisSlave  => txSlaves(i),
+            -- Master Port
+            mAxisClk    => pgpTxClk,
+            mAxisRst    => pgpTxRst,
+            mAxisMaster => pgpTxMasters(i),
+            mAxisSlave  => pgpTxSlaves(i));
+
+   end generate GEN_VEC;
 
 end mapping;

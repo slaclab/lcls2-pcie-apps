@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : TimeToolKcu1500.vhd
+-- File       : XilinxKcu1500Pgp2b.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
 -- Last update: 2017-11-27
@@ -24,7 +24,7 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
 
-entity TimeToolKcu1500 is
+entity XilinxKcu1500Pgp2b is
    generic (
       TPD_G        : time := 1 ns;
       BUILD_INFO_G : BuildInfoType);
@@ -84,9 +84,9 @@ entity TimeToolKcu1500 is
       pciRxN       : in    slv(7 downto 0);
       pciTxP       : out   slv(7 downto 0);
       pciTxN       : out   slv(7 downto 0));
-end TimeToolKcu1500;
+end XilinxKcu1500Pgp2b;
 
-architecture top_level of TimeToolKcu1500 is
+architecture top_level of XilinxKcu1500Pgp2b is
 
    signal sysClk     : sl;
    signal sysRst     : sl;
