@@ -159,11 +159,12 @@ begin
          evrRxP          => evrRxP,
          evrRxN          => evrRxN,
          evrTxP          => evrTxP,
-         evrTxN          => evrTxN,
-         -- User LEDs
-         ledDbg          => ledDbg,
-         ledRedL         => ledRedL,
-         ledBlueL        => ledBlueL,
-         ledGreenL       => ledGreenL);
+         evrTxN          => evrTxN);
+
+   ledDbg     <= '0'
+   ledRedL    <= (others=>'1');
+   ledBlueL   <= (others=>'1');
+   ledGreenL  <= (others=>'1');
 
 end top_level;
+

@@ -196,8 +196,6 @@ begin
          sysRst          => sysRst,
          userClk156      => userClk156,
          userClk100      => userClk100,
-         userSwDip       => userSwDip,
-         userLed         => userLed,
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
@@ -208,12 +206,6 @@ begin
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves,
-         -- Memory bus (sysClk domain)
-         memReady        => memReady,
-         memWriteMasters => memWriteMasters,
-         memWriteSlaves  => memWriteSlaves,
-         memReadMasters  => memReadMasters,
-         memReadSlaves   => memReadSlaves,
          ---------------------
          --  Application Ports
          ---------------------         
@@ -232,4 +224,15 @@ begin
          qsfp1TxP        => qsfp1TxP,
          qsfp1TxN        => qsfp1TxN);
 
+
+   -- Unused memory signals
+   --memReady        : slv(3 downto 0);
+   memWriteMasters <= (others=>AXI_WRITE_MASTER_INIT_C);
+   --memWriteSlaves  : AxiWriteSlaveArray(15 downto 0);
+   memReadMasters  <= (others=>AXI_WRITE_SLAVE_INIT_C);
+   --memReadSlaves   : AxiReadSlaveArray(15 downto 0);
+
+   -- Unused user signals
+   --userSwDip  : slv(3 downto 0);
+   userLed <= (others=>'0');
 end top_level;
