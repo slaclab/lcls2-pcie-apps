@@ -59,7 +59,7 @@ entity Hardware is
       evrRxP          : in  sl;
       evrRxN          : in  sl;
       evrTxP          : out sl;
-      evrTxN          : out sl;
+      evrTxN          : out sl);
 end Hardware;
 
 architecture mapping of Hardware is

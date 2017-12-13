@@ -88,6 +88,13 @@ end TimeToolKcu1500;
 
 architecture top_level of TimeToolKcu1500 is
 
+   constant AXI_ERROR_RESP_C : slv(1 downto 0)  := BAR0_ERROR_RESP_C;
+   constant AXI_BASE_ADDR_C  : slv(31 downto 0) := BAR0_BASE_ADDR_G;
+
+   constant NUM_AXI_MASTERS_C : natural := 2;
+
+   constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_C, 23, 22);
+
    signal sysClk     : sl;
    signal sysRst     : sl;
    signal userClk156 : sl;
@@ -100,10 +107,20 @@ architecture top_level of TimeToolKcu1500 is
    signal axilWriteMaster : AxiLiteWriteMasterType;
    signal axilWriteSlave  : AxiLiteWriteSlaveType;
 
+   signal intReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+
    signal dmaObMasters : AxiStreamMasterArray(7 downto 0);
    signal dmaObSlaves  : AxiStreamSlaveArray(7 downto 0);
    signal dmaIbMasters : AxiStreamMasterArray(7 downto 0);
    signal dmaIbSlaves  : AxiStreamSlaveArray(7 downto 0);
+
+   signal hwObMasters  : AxiStreamMasterArray(7 downto 0);
+   signal hwObSlaves   : AxiStreamSlaveArray(7 downto 0);
+   signal hwIbMasters  : AxiStreamMasterArray(7 downto 0);
+   signal hwIbSlaves   : AxiStreamSlaveArray(7 downto 0);
 
    signal memReady        : slv(3 downto 0);
    signal memWriteMasters : AxiWriteMasterArray(15 downto 0);
@@ -186,7 +203,30 @@ begin
          pciTxP          => pciTxP,
          pciTxN          => pciTxN);
 
+   U_XBAR : entity work.AxiLiteCrossbar
+      generic map (
+         TPD_G              => TPD_G,
+         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_C,
+         NUM_SLAVE_SLOTS_G  => 1,
+         NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
+         MASTERS_CONFIG_G   => AXI_CONFIG_C)
+      port map (
+         axiClk              => sysClk,
+         axiClkRst           => sysRst,
+         sAxiWriteMasters(0) => axilWriteMaster,
+         sAxiWriteSlaves(0)  => axilWriteSlave,
+         sAxiReadMasters(0)  => axilReadMaster,
+         sAxiReadSlaves(0)   => axilReadSlave,
+         mAxiWriteMasters    => intWriteMasters,
+         mAxiWriteSlaves     => intWriteSlaves,
+         mAxiReadMasters     => intReadMasters,
+         mAxiReadSlaves      => intReadSlaves);
+
    U_App : entity work.Hardware
+      generic map (
+         TPD_G            => TPD_G,
+         AXI_ERROR_RESP_G => AXI_ERROR_RESP_C,
+         AXI_BASE_ADDR_G  => AXI_BASE_ADDR_C)
       port map (
          ------------------------      
          --  Top Level Interfaces
@@ -197,15 +237,15 @@ begin
          userClk156      => userClk156,
          userClk100      => userClk100,
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMaster,
-         axilReadSlave   => axilReadSlave,
-         axilWriteMaster => axilWriteMaster,
-         axilWriteSlave  => axilWriteSlave,
+         axilReadMaster  => intReadMasters(0),
+         axilReadSlave   => intReadSlaves(0),
+         axilWriteMaster => intWriteMasters(0),
+         axilWriteSlave  => intWriteSlaves(0),
          -- DMA Interface (sysClk domain)
-         dmaObMasters    => dmaObMasters,
-         dmaObSlaves     => dmaObSlaves,
-         dmaIbMasters    => dmaIbMasters,
-         dmaIbSlaves     => dmaIbSlaves,
+         dmaObMasters    => hwObMasters,
+         dmaObSlaves     => hwObSlaves,
+         dmaIbMasters    => hwIbMasters,
+         dmaIbSlaves     => hwIbSlaves,
          ---------------------
          --  Application Ports
          ---------------------         
@@ -224,15 +264,38 @@ begin
          qsfp1TxP        => qsfp1TxP,
          qsfp1TxN        => qsfp1TxN);
 
-
    -- Unused memory signals
    --memReady        : slv(3 downto 0);
    memWriteMasters <= (others=>AXI_WRITE_MASTER_INIT_C);
    --memWriteSlaves  : AxiWriteSlaveArray(15 downto 0);
-   memReadMasters  <= (others=>AXI_WRITE_SLAVE_INIT_C);
+   memReadMasters  <= (others=>AXI_READ_MASTER_INIT_C);
    --memReadSlaves   : AxiReadSlaveArray(15 downto 0);
 
    -- Unused user signals
    --userSwDip  : slv(3 downto 0);
    userLed <= (others=>'0');
+
+   U_TimeToolCore: entity work.TimeToolCore
+      generic map ( 
+         TPD_G            => TPD_G,
+         AXI_ERROR_RESP_G => AXI_ERROR_RESP_C)
+      port map (
+         sysClk          => sysClk,
+         sysRst          => sysRst,
+         dataInMaster    => hwIbMasters(0),
+         dataInSlave     => hwIbSlaves(0),
+         dataOutMaster   => dmaIbMasters(0),
+         dataOutSlave    => dmaIbSlaves(0),
+         axilReadMaster  => intReadMasters(1),
+         axilReadSlave   => intReadSlaves(1),
+         axilWriteMaster => intWriteMasters(1),
+         axilWriteSlave  => intWriteSlaves(1));
+
+   dmaIbMasters(7 downto 1) <= hwIbmasters(7 downto 1);
+   hwIbSlaves(7 downto 1)   <= dmaIbSlaves(7 downto 1);
+
+   hwObMasters <= dmaObMasters;
+   dmaObSlaves <= hwObSlaves;
+
 end top_level;
+

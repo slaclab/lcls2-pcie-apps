@@ -161,7 +161,7 @@ begin
          evrTxP          => evrTxP,
          evrTxN          => evrTxN);
 
-   ledDbg     <= '0'
+   ledDbg     <= '0';
    ledRedL    <= (others=>'1');
    ledBlueL   <= (others=>'1');
    ledGreenL  <= (others=>'1');

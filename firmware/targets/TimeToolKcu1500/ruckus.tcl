@@ -6,6 +6,7 @@ loadRuckusTcl $::env(PROJ_DIR)/../../submodules/surf
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/axi-pcie-core
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/lcls-timing-core
 loadRuckusTcl $::env(PROJ_DIR)/../../common
+loadRuckusTcl $::env(PROJ_DIR)/../../applications
 
 # Load local source Code and constraints
 loadSource -dir "$::DIR_PATH/hdl"

@@ -32,6 +32,10 @@ library unisim;
 use unisim.vcomponents.all;
 
 entity Hardware is
+   generic (
+      TPD_G            : time             := 1 ns;
+      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
+      AXI_BASE_ADDR_G  : slv(31 downto 0) := x"0000_0000");
    port (
       ------------------------      
       --  Top Level Interfaces
@@ -73,10 +77,6 @@ end Hardware;
 architecture mapping of Hardware is
 
    -- Defined module generics as constants (in case partial reconfiguration build)
-   constant TPD_G            : time             := 1 ns;
-   constant AXI_ERROR_RESP_G : slv(1 downto 0)  := BAR0_ERROR_RESP_C;
-   constant AXI_BASE_ADDR_G  : slv(31 downto 0) := BAR0_BASE_ADDR_G;
-
    constant NUM_AXI_MASTERS_C : natural := 2;
 
    constant PGP_INDEX_C     : natural := 0;
