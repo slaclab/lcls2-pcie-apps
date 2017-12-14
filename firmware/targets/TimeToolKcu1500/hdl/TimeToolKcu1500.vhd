@@ -143,7 +143,6 @@ begin
          sysClk          => sysClk,
          sysRst          => sysRst,
          userClk156      => userClk156,
-         userClk100      => userClk100,
          userSwDip       => userSwDip,
          userLed         => userLed,
          -- DMA Interfaces
@@ -235,7 +234,7 @@ begin
          sysClk          => sysClk,
          sysRst          => sysRst,
          userClk156      => userClk156,
-         userClk100      => userClk100,
+         userClk100      => userClk156, -- Replace
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => intReadMasters(0),
          axilReadSlave   => intReadSlaves(0),
