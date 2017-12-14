@@ -4,11 +4,11 @@ import PyQt4.QtGui
 import ClinkDev
 import sys
 
-cl = ClinkDev.ClinkDev()
+cl = TimeToolDev.TimeToolDev()
 
 # Create GUI
 appTop = PyQt4.QtGui.QApplication(sys.argv)
-guiTop = pyrogue.gui.GuiTop(group='ClinkDev')
+guiTop = pyrogue.gui.GuiTop(group='TimeToolDev')
 guiTop.addTree(cl)
 
 # Run gui

@@ -41,17 +41,16 @@ class ClTestRx(rogue.interfaces.stream.Slave):
                 es = es + ' {}={:#x}'.format(i,berr[i])
             print(es)
 
-class ClinkDev(pr.Root):
+class TimeToolDev(pr.Root):
 
     def __init__(self):
 
-        pr.Root.__init__(self,name='ClinkDev',description='CameraLink Dev')
+        pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev')
 
         # Create the stream interface
         self._pgpVc0 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,0) # Registers
         self._pgpVc1 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,1) # Data
         self._pgpVc2 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,2) # Serial
-        self._pgpVc3 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,3) # Serial
 
         # SRP
         self._srp = rogue.protocols.srp.SrpV3()
@@ -59,7 +58,7 @@ class ClinkDev(pr.Root):
 
         # Version registers
         self.add(surf.axi.AxiVersion(memBase=self._srp,offset=0))
-        self.add(surf.protocols.clink.ClinkTop(memBase=self._srp,offset=0x10000,serialA=self._pgpVc2,serialB=self._pgpVc3))
+        self.add(surf.protocols.clink.ClinkTop(memBase=self._srp,offset=0x10000,serialA=self._pgpVc2))
 
         # Debug slave
         self._dbg = ClTestRx()
@@ -67,5 +66,4 @@ class ClinkDev(pr.Root):
 
         # Start the system
         self.start(pollEn=False)
-
 
