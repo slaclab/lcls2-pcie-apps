@@ -55,12 +55,6 @@ entity AdmPcieKu3Pgp2b is
       -- QSFP[1] Ports
       qsfp1RstL   : out   sl;
       qsfp1LpMode : out   sl;
-      -- FLASH Interface 
-      flashAddr   : out   slv(25 downto 0);
-      flashData   : inout slv(15 downto 4);
-      flashAdv    : out   sl;
-      flashOeL    : out   sl;
-      flashWeL    : out   sl;
       -- PCIe Ports
       pciRstL     : in    sl;
       pciRefClkP  : in    sl;           -- 100 MHz
@@ -122,12 +116,6 @@ begin
          -- QSFP[1] Ports
          qsfp1RstL      => qsfp1RstL,
          qsfp1LpMode    => qsfp1LpMode,
-         -- Boot Memory Ports 
-         flashAddr      => flashAddr,
-         flashData      => flashData,
-         flashAdv       => flashAdv,
-         flashOeL       => flashOeL,
-         flashWeL       => flashWeL,
          -- PCIe Ports 
          pciRstL        => pciRstL,
          pciRefClkP     => pciRefClkP,

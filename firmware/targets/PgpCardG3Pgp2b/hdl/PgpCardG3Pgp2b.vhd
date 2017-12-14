@@ -74,10 +74,10 @@ architecture top_level of PgpCardG3Pgp2b is
    signal axilWriteMaster : AxiLiteWriteMasterType;
    signal axilWriteSlave  : AxiLiteWriteSlaveType;
 
-   signal dmaObMaster : AxiStreamMasterType;
-   signal dmaObSlave  : AxiStreamSlaveType;
-   signal dmaIbMaster : AxiStreamMasterType;
-   signal dmaIbSlave  : AxiStreamSlaveType;
+   signal dmaObMasters : AxiStreamMasterArray(7 downto 0);
+   signal dmaObSlaves  : AxiStreamSlaveArray(7 downto 0);
+   signal dmaIbMasters : AxiStreamMasterArray(7 downto 0);
+   signal dmaIbSlaves  : AxiStreamSlaveArray(7 downto 0);
 
 begin
 
@@ -85,7 +85,7 @@ begin
       generic map (
          TPD_G            => TPD_G,
          BUILD_INFO_G     => BUILD_INFO_G,
-         DMA_SIZE_G       => 1)
+         DMA_SIZE_G       => 8)
       port map (
          ------------------------      
          --  Top Level Interfaces
@@ -94,10 +94,10 @@ begin
          sysClk          => sysClk,
          sysRst          => sysRst,
          -- DMA Interfaces
-         dmaObMasters(0) => dmaObMaster,
-         dmaObSlaves(0)  => dmaObSlave,
-         dmaIbMasters(0) => dmaIbMaster,
-         dmaIbSlaves(0)  => dmaIbSlave,
+         dmaObMasters   => dmaObMasters,
+         dmaObSlaves    => dmaObSlaves,
+         dmaIbMasters   => dmaIbMasters,
+         dmaIbSlaves    => dmaIbSlaves,
          -- AXI-Lite Interface
          appClk          => sysClk,
          appRst          => sysRst,
@@ -127,8 +127,7 @@ begin
    U_App : entity work.Hardware
       generic map (
          TPD_G            => TPD_G,
---         LANE_SIZE_G      => 8,
-         LANE_SIZE_G      => 1,
+         LANE_SIZE_G      => 8,
          AXI_ERROR_RESP_G => AXI_RESP_OK_C,  -- Always return OK to a MMAP()
          AXI_BASE_ADDR_G  => x"0080_0000")
       port map (
@@ -141,10 +140,10 @@ begin
          axilWriteMaster => axilWriteMaster,
          axilWriteSlave  => axilWriteSlave,
          -- DMA Interface
-         dmaObMaster     => dmaObMaster,
-         dmaObSlave      => dmaObSlave,
-         dmaIbMaster     => dmaIbMaster,
-         dmaIbSlave      => dmaIbSlave,
+         dmaObMasters    => dmaObMasters,
+         dmaObSlaves     => dmaObSlaves,
+         dmaIbMasters    => dmaIbMasters,
+         dmaIbSlaves     => dmaIbSlaves,
          -- PGP GT Serial Ports
          pgpRefClkP      => pgpRefClkP,
          pgpRefClkN      => pgpRefClkN,

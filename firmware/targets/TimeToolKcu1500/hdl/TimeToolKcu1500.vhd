@@ -51,8 +51,8 @@ entity TimeToolKcu1500 is
       --------------
       -- System Ports
       emcClk       : in    sl;
-      userClkP     : in    slv(1 downto 0);
-      userClkN     : in    slv(1 downto 0);
+      userClkP     : in    sl;
+      userClkN     : in    sl;
       swDip        : in    slv(3 downto 0);
       led          : out   slv(7 downto 0);
       -- QSFP[0] Ports
@@ -98,7 +98,6 @@ architecture top_level of TimeToolKcu1500 is
    signal sysClk     : sl;
    signal sysRst     : sl;
    signal userClk156 : sl;
-   signal userClk100 : sl;
    signal userSwDip  : slv(3 downto 0);
    signal userLed    : slv(7 downto 0);
 
@@ -234,7 +233,6 @@ begin
          sysClk          => sysClk,
          sysRst          => sysRst,
          userClk156      => userClk156,
-         userClk100      => userClk156, -- Replace
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => intReadMasters(0),
          axilReadSlave   => intReadSlaves(0),

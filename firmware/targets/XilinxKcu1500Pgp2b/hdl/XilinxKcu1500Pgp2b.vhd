@@ -51,8 +51,8 @@ entity XilinxKcu1500Pgp2b is
       --------------
       -- System Ports
       emcClk       : in    sl;
-      userClkP     : in    slv(1 downto 0);
-      userClkN     : in    slv(1 downto 0);
+      userClkP     : in    sl;
+      userClkN     : in    sl;
       swDip        : in    slv(3 downto 0);
       led          : out   slv(7 downto 0);
       -- QSFP[0] Ports
@@ -91,7 +91,6 @@ architecture top_level of XilinxKcu1500Pgp2b is
    signal sysClk     : sl;
    signal sysRst     : sl;
    signal userClk156 : sl;
-   signal userClk100 : sl;
    signal userSwDip  : slv(3 downto 0);
    signal userLed    : slv(7 downto 0);
 
@@ -126,7 +125,6 @@ begin
          sysClk          => sysClk,
          sysRst          => sysRst,
          userClk156      => userClk156,
-         userClk100      => userClk100,
          userSwDip       => userSwDip,
          userLed         => userLed,
          -- DMA Interfaces
@@ -199,7 +197,6 @@ begin
          sysClk          => sysClk,
          sysRst          => sysRst,
          userClk156      => userClk156,
-         userClk100      => userClk100,
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
@@ -233,7 +230,7 @@ begin
    --memReady        : slv(3 downto 0);
    memWriteMasters <= (others=>AXI_WRITE_MASTER_INIT_C);
    --memWriteSlaves  : AxiWriteSlaveArray(15 downto 0);
-   memReadMasters  <= (others=>AXI_WRITE_SLAVE_INIT_C);
+   memReadMasters  <= (others=>AXI_READ_SLAVE_INIT_C);
    --memReadSlaves   : AxiReadSlaveArray(15 downto 0);
 
    -- Unused user signals
