@@ -2,4 +2,4 @@
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
 # Load Hardware ruckus files
-loadRuckusTcl "$::DIR_PATH/timeTool"
+loadRuckusTcl "$::DIR_PATH/TimeTool"
