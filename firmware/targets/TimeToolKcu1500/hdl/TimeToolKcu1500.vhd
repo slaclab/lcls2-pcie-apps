@@ -291,7 +291,7 @@ begin
          tmAxisMaster => appInMaster,
          tmAxisSlave  => appInSlave,
          tsAxisMaster => appOutMaster,
-         tsAxisSlave  => appOutSlave
+         tsAxisSlave  => appOutSlave,
          axisClk      => sysClk,
          axisRst      => sysRst);
 
