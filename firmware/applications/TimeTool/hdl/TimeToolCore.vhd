@@ -52,7 +52,7 @@ end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
-   constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
+   constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>8);
 
    type RegType is record
       master          : AxiStreamMasterType;

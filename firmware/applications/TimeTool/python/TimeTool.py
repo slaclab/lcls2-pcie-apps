@@ -23,7 +23,7 @@ class TimeToolCore(pr.Device):
     def __init__(   self,       
             name        = "TimeTool",
             **kwargs):
-        super().__init__(name=name, description=description, **kwargs) 
+        super().__init__(name=name, **kwargs) 
 
         self.add(pr.RemoteVariable(    
             name         = "Test",
