@@ -116,10 +116,13 @@ architecture top_level of TimeToolKcu1500 is
    signal dmaIbMasters : AxiStreamMasterArray(7 downto 0);
    signal dmaIbSlaves  : AxiStreamSlaveArray(7 downto 0);
 
-   signal hwObMasters  : AxiStreamMasterArray(7 downto 0);
-   signal hwObSlaves   : AxiStreamSlaveArray(7 downto 0);
    signal hwIbMasters  : AxiStreamMasterArray(7 downto 0);
    signal hwIbSlaves   : AxiStreamSlaveArray(7 downto 0);
+
+   signal appInMaster   : AxiStreamMasterType;
+   signal appInSlave    : AxiStreamSlaveType;
+   signal appOutMaster  : AxiStreamMasterType;
+   signal appOutSlave   : AxiStreamSlaveType;
 
    signal memReady        : slv(3 downto 0);
    signal memWriteMasters : AxiWriteMasterArray(15 downto 0);
@@ -239,8 +242,8 @@ begin
          axilWriteMaster => intWriteMasters(0),
          axilWriteSlave  => intWriteSlaves(0),
          -- DMA Interface (sysClk domain)
-         dmaObMasters    => hwObMasters,
-         dmaObSlaves     => hwObSlaves,
+         dmaObMasters    => dmaObMasters,
+         dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => hwIbMasters,
          dmaIbSlaves     => hwIbSlaves,
          ---------------------
@@ -272,6 +275,26 @@ begin
    --userSwDip  : slv(3 downto 0);
    userLed <= (others=>'0');
 
+   dmaIbMasters(7 downto 1) <= hwIbmasters(7 downto 1);
+   hwIbSlaves(7 downto 1)   <= dmaIbSlaves(7 downto 1);
+
+   -- Tap data destination
+   U_Tap: entity work.AxiStreamTap
+      generic map (
+         TPD_G      => TPD_G,
+         TAP_DEST_G => 1)
+      port map (
+         sAxisMaster  => hwIbMasters(0),
+         sAxisSlave   => hwIbSlaves(0),
+         mAxisMaster  => dmaIbMasters(0),
+         mAxisSlave   => dmaIbSlaves(0),
+         tmAxisMaster => appInMaster,
+         tmAxisSlave  => appInSlave,
+         tsAxisMaster => appOutMaster,
+         tsAxisSlave  => appOutSlave
+         axisClk      => sysClk,
+         axisRst      => sysRst);
+
    U_TimeToolCore: entity work.TimeToolCore
       generic map ( 
          TPD_G            => TPD_G,
@@ -279,20 +302,14 @@ begin
       port map (
          sysClk          => sysClk,
          sysRst          => sysRst,
-         dataInMaster    => hwIbMasters(0),
-         dataInSlave     => hwIbSlaves(0),
-         dataOutMaster   => dmaIbMasters(0),
-         dataOutSlave    => dmaIbSlaves(0),
+         dataInMaster    => appInMaster,
+         dataInSlave     => appInSlave,
+         dataOutMaster   => appOutMaster,
+         dataOutSlave    => appOutSlave,
          axilReadMaster  => intReadMasters(1),
          axilReadSlave   => intReadSlaves(1),
          axilWriteMaster => intWriteMasters(1),
          axilWriteSlave  => intWriteSlaves(1));
-
-   dmaIbMasters(7 downto 1) <= hwIbmasters(7 downto 1);
-   hwIbSlaves(7 downto 1)   <= dmaIbSlaves(7 downto 1);
-
-   hwObMasters <= dmaObMasters;
-   dmaObSlaves <= hwObSlaves;
 
 end top_level;
 
