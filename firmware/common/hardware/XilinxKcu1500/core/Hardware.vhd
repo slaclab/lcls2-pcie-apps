@@ -44,7 +44,6 @@ entity Hardware is
       sysClk          : in  sl;
       sysRst          : in  sl;
       userClk156      : in  sl;
-      userClk100      : in  sl;
       -- AXI-Lite Interface
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
@@ -224,7 +223,6 @@ begin
          axilWriteSlave  => axilWriteSlaves(EVR_INDEX_C),
          -- GT Serial Ports
          userClk156      => userClk156,
-         userClk100      => userClk100,
          evrRxP          => evrRxP,
          evrRxN          => evrRxN,
          evrTxP          => evrTxP,

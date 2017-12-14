@@ -2,7 +2,7 @@
 -- File       : PgpLaneRx.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-11-27
+-- Last update: 2017-12-06
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -81,6 +81,9 @@ architecture mapping of PgpLaneRx is
 
    signal rxMasters : AxiStreamMasterArray(3 downto 0);
    signal rxSlaves  : AxiStreamSlaveArray(3 downto 0);
+
+   signal masters : AxiStreamMasterArray(3 downto 0);
+   signal slaves  : AxiStreamSlaveArray(3 downto 0);
 
    signal dmaIbMasters : AxiStreamMasterArray(3 downto 0);
    signal dmaIbSlaves  : AxiStreamSlaveArray(3 downto 0);
@@ -193,9 +196,9 @@ begin
          sysClk        => sysClk,
          sysRst        => sysRst,
          pgpRxClk      => pgpRxClk,
+         pgpRxRst      => pgpRxRst,
          pgpTxRst      => pgpTxRst,
          pgpTxClk      => pgpTxClk,
-         pgpRxRst      => pgpRxRst,
          evrClk        => evrClk,
          evrRst        => evrRst);
 
@@ -244,31 +247,55 @@ begin
             dataOut(2) => status.vcPause(i),
             dataOut(3) => status.vcOverflow(i));
 
-      U_IbFifo : entity work.AxiStreamFifoV2
+      U_ASYNC : entity work.AxiStreamFifoV2
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
             INT_PIPE_STAGES_G   => 1,
             PIPE_STAGES_G       => 0,
-            VALID_THOLD_G       => 128,  -- Hold until enough to burst into the interleaving MUX
-            VALID_BURST_MODE_G  => true,
-            INT_WIDTH_SELECT_G  => "NARROW",
+            SLAVE_READY_EN_G    => true,
+            VALID_THOLD_G       => 1,
             -- FIFO configurations
-            BRAM_EN_G           => true,
-            XIL_DEVICE_G        => "7SERIES",
-            USE_BUILT_IN_G      => false,
+            BRAM_EN_G           => false,
             GEN_SYNC_FIFO_G     => false,
-            CASCADE_SIZE_G      => 1,
-            FIFO_ADDR_WIDTH_G   => 9,
+            FIFO_ADDR_WIDTH_G   => 4,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => APP_AXIS_CONFIG_C,
-            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+            MASTER_AXI_CONFIG_G => APP_AXIS_CONFIG_C)
          port map (
             -- Slave Port
             sAxisClk    => pgpRxClk,
             sAxisRst    => pgpRxRst,
             sAxisMaster => rxMasters(i),
             sAxisSlave  => rxSlaves(i),
+            -- Master Port
+            mAxisClk    => sysClk,
+            mAxisRst    => sysRst,
+            mAxisMaster => masters(i),
+            mAxisSlave  => slaves(i));
+
+      U_IbFifo : entity work.AxiStreamFifoV2
+         generic map (
+            -- General Configurations
+            TPD_G               => TPD_G,
+            INT_PIPE_STAGES_G   => 1,
+            PIPE_STAGES_G       => 0,
+            SLAVE_READY_EN_G    => true,
+            VALID_THOLD_G       => 128,  -- Hold until enough to burst into the interleaving MUX
+            VALID_BURST_MODE_G  => true,
+            -- FIFO configurations
+            BRAM_EN_G           => true,
+            GEN_SYNC_FIFO_G     => true,
+            FIFO_ADDR_WIDTH_G   => 9,
+            -- AXI Stream Port Configurations
+            SLAVE_AXI_CONFIG_G  => APP_AXIS_CONFIG_C,
+            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+         port map (
+            -- Slave Port
+            sAxisClk    => sysClk,
+            sAxisRst    => sysRst,
+            sAxisMaster => masters(i),
+            sAxisSlave  => slaves(i),
             -- Master Port
             mAxisClk    => sysClk,
             mAxisRst    => sysRst,

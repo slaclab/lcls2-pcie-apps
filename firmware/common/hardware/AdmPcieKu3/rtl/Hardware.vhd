@@ -53,7 +53,7 @@ entity Hardware is
       dmaIbMasters    : out AxiStreamMasterArray(7 downto 0);
       dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
       ---------------------
-      --  Hardware Ports
+      --  Application Ports
       ---------------------    
       -- QSFP[0] Ports
       qsfp0RefClkP    : in  sl;
@@ -73,6 +73,9 @@ end Hardware;
 
 architecture mapping of Hardware is
 
+
+   constant LANE_SIZE_G      : natural          := 8;
+   
    constant NUM_AXI_MASTERS_C : natural := 1;
 
    constant PGP_INDEX_C : natural := 0;
@@ -143,6 +146,7 @@ begin
    U_Pgp : entity work.PgpLaneWrapper
       generic map (
          TPD_G            => TPD_G,
+         LANE_SIZE_G      => LANE_SIZE_G,
          AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
          AXI_BASE_ADDR_G  => AXI_CONFIG_C(PGP_INDEX_C).baseAddr)
       port map (

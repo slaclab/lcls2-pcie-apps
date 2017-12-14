@@ -5,5 +5,5 @@ source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 loadSource      -dir "$::DIR_PATH/rtl"
 loadConstraints -dir "$::DIR_PATH/rtl"
 
-loadSource -path "$::DIR_PATH/../XilinxKcu1500/pgp2b/PgpLane.vhd"
-loadSource -path "$::DIR_PATH/../XilinxKcu1500/pgp2b/PgpLaneTx.vhd"
+# loadIpCore -path "$::DIR_PATH/ip/AxisPgpGthCore.xci"
+loadSource   -path "$::DIR_PATH/ip/AxisPgpGthCore.dcp"

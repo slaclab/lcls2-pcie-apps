@@ -41,10 +41,10 @@ entity Hardware is
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType;
       -- DMA Interface
-      dmaObMaster     : in  AxiStreamMasterType;
-      dmaObSlave      : out AxiStreamSlaveType;
-      dmaIbMaster     : out AxiStreamMasterType;
-      dmaIbSlave      : in  AxiStreamSlaveType;
+      dmaObMasters    : in  AxiStreamMasterArray(7 downto 0);
+      dmaObSlaves     : out AxiStreamSlaveArray(7 downto 0);
+      dmaIbMasters    : out AxiStreamMasterArray(7 downto 0);
+      dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
       -- PGP GT Serial Ports
       pgpRefClkP      : in  sl;
       pgpRefClkN      : in  sl;
@@ -76,37 +76,12 @@ architecture mapping of Hardware is
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
 
-   signal dmaObMasters : AxiStreamMasterArray(7 downto 0);
-   signal dmaObSlaves  : AxiStreamSlaveArray(7 downto 0);
-   signal dmaIbMasters : AxiStreamMasterArray(7 downto 0);
-   signal dmaIbSlaves  : AxiStreamSlaveArray(7 downto 0);
-
    signal evrClk       : sl;
    signal evrRst       : sl;
    signal evrTimingBus : TimingBusType;
 
 begin
 
-   ----------------------
-   -- AXI Stream DMA MUX
-   ----------------------
-   U_AxisDmaMux : entity work.AxisDmaMux
-      generic map (
-         TPD_G => TPD_G)
-      port map (
-         -- Clock and Reset
-         sysClk       => sysClk,
-         sysRst       => sysRst,
-         -- Single DMA Interface
-         dmaObMaster  => dmaObMaster,
-         dmaObSlave   => dmaObSlave,
-         dmaIbMaster  => dmaIbMaster,
-         dmaIbSlave   => dmaIbSlave,
-         -- Multiple DMA Interfaces
-         dmaObMasters => dmaObMasters,
-         dmaObSlaves  => dmaObSlaves,
-         dmaIbMasters => dmaIbMasters,
-         dmaIbSlaves  => dmaIbSlaves);
 
    ---------------------
    -- AXI-Lite Crossbar

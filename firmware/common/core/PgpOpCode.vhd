@@ -2,7 +2,7 @@
 -- File       : PgpOpCode.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-10-04
+-- Last update: 2017-12-10
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -90,6 +90,9 @@ architecture rtl of PgpOpCode is
    signal delay   : EvrToPgpType;
    signal fromEvr : EvrToPgpType;
 
+   signal unused1b  : sl;
+   signal unused32b : Slv32Array(1 downto 0);
+
 begin
 
    U_TxFifo : entity work.SynchronizerFifo
@@ -140,8 +143,8 @@ begin
          din(63 downto 32)  => (others => '0'),
          din(31 downto 0)   => (others => '0'),
          dout(64)           => delay.accept,
-         dout(63 downto 32) => open,
-         dout(31 downto 0)  => open);
+         dout(63 downto 32) => unused32b(0),
+         dout(31 downto 0)  => unused32b(1));
 
    ---------------
    -- Sync Modules
@@ -176,7 +179,7 @@ begin
          rd_clk  => sysClk,
          rd_en   => '1',
          valid   => fromEvr.accept,
-         dout(0) => open);
+         dout(0) => unused1b);
 
    Sync_seconds : entity work.SynchronizerFifo
       generic map(

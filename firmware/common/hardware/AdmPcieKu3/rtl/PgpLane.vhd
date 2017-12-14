@@ -2,7 +2,7 @@
 -- File       : PgpLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-12-10
+-- Last update: 2017-12-11
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -33,39 +33,39 @@ use unisim.vcomponents.all;
 
 entity PgpLane is
    generic (
-      TPD_G            : time                 := 1 ns;
-      ENABLE_G         : boolean              := true;
-      LANE_G           : natural range 0 to 7 := 0;
-      AXI_ERROR_RESP_G : slv(1 downto 0)      := AXI_RESP_DECERR_C;
-      AXI_BASE_ADDR_G  : slv(31 downto 0)     := (others => '0'));
+      TPD_G            : time                  := 1 ns;
+      LANE_G           : positive range 0 to 7 := 0;
+      ENABLE_G         : boolean               := true;
+      AXI_ERROR_RESP_G : slv(1 downto 0)       := AXI_RESP_DECERR_C;
+      AXI_BASE_ADDR_G  : slv(31 downto 0)      := (others => '0'));
    port (
-      -- QPLL Clocking
-      gtQPllOutRefClk  : in  slv(1 downto 0);
-      gtQPllOutClk     : in  slv(1 downto 0);
-      gtQPllLock       : in  slv(1 downto 0);
-      gtQPllRefClkLost : in  slv(1 downto 0);
-      gtQPllReset      : out slv(1 downto 0);
       -- PGP Serial Ports
-      pgpTxP           : out sl;
-      pgpTxN           : out sl;
-      pgpRxP           : in  sl;
-      pgpRxN           : in  sl;
+      pgpTxP          : out sl;
+      pgpTxN          : out sl;
+      pgpRxP          : in  sl;
+      pgpRxN          : in  sl;
+      pgpRefClk       : in  sl;
+      pgpClk          : in  sl;
+      pgpRst          : in  sl;
+      -- DRP Clock and Reset
+      sysClk          : in  sl;
+      sysRst          : in  sl;
+      drpClk          : in  sl;
+      drpRst          : in  sl;
       -- DMA Interface (sysClk domain)
-      dmaObMaster      : in  AxiStreamMasterType;
-      dmaObSlave       : out AxiStreamSlaveType;
-      dmaIbMaster      : out AxiStreamMasterType;
-      dmaIbSlave       : in  AxiStreamSlaveType;
+      dmaObMaster     : in  AxiStreamMasterType;
+      dmaObSlave      : out AxiStreamSlaveType;
+      dmaIbMaster     : out AxiStreamMasterType;
+      dmaIbSlave      : in  AxiStreamSlaveType;
       -- Timing Interface (evrClk domain)
-      evrClk           : in  sl;
-      evrRst           : in  sl;
-      evrTimingBus     : in  TimingBusType;
+      evrClk          : in  sl;
+      evrRst          : in  sl;
+      evrTimingBus    : in  TimingBusType;
       -- AXI-Lite Interface (sysClk domain)
-      sysClk           : in  sl;
-      sysRst           : in  sl;
-      axilReadMaster   : in  AxiLiteReadMasterType;
-      axilReadSlave    : out AxiLiteReadSlaveType;
-      axilWriteMaster  : in  AxiLiteWriteMasterType;
-      axilWriteSlave   : out AxiLiteWriteSlaveType);
+      axilReadMaster  : in  AxiLiteReadMasterType;
+      axilReadSlave   : out AxiLiteReadSlaveType;
+      axilWriteMaster : in  AxiLiteWriteMasterType;
+      axilWriteSlave  : out AxiLiteWriteSlaveType);
 end PgpLane;
 
 architecture mapping of PgpLane is
@@ -97,17 +97,6 @@ architecture mapping of PgpLane is
    signal pgpRxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
 
-   signal gtQPllRst    : slv(1 downto 0);
-   signal gtQPllLocked : slv(1 downto 0);
-   signal lockedStrobe : slv(1 downto 0);
-
-   signal pgpTxRecClk : sl;
-   signal pgpTxClk    : sl;
-   signal pgpTxRst    : sl;
-
-   signal pgpRxClk : sl;
-   signal pgpRxRst : sl;
-
    signal status : StatusType;
    signal config : ConfigType;
 
@@ -135,79 +124,47 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-   ----------------------------------------------------------------------------
-   -- Prevent the gtQPllRst of this lane disrupting the other lanes in the QUAD
-   ----------------------------------------------------------------------------
-   GEN_VEC :
-   for i in 1 downto 0 generate
-
-      U_PwrUpRst : entity work.PwrUpRst
-         generic map (
-            TPD_G      => TPD_G,
-            DURATION_G => 12500)        -- 100 us pulse
-         port map (
-            arst   => gtQPllRst(i),
-            clk    => sysClk,
-            rstOut => lockedStrobe(i));
-
-      gtQPllReset(i)  <= gtQPllRst(i) and not (gtQPllLock(i));
-      gtQPllLocked(i) <= gtQPllLock(i) and not(lockedStrobe(i));
-
-   end generate GEN_VEC;
-
    -----------
    -- PGP Core
    -----------
-   U_Pgp : entity work.Pgp2bGtp7DrpWrapper
-      -- U_Pgp : entity work.Pgp2bGtp7MultiLane
+   U_PGP : entity work.AxisPgp2bGthCore
+      generic map (
+         TPD_G             => TPD_G,
+         VC_INTERLEAVE_G   => 1)
+      port map (
+         stableClk       => sysClk,
+         stableRst       => sysRst,
+         gtRefClk        => pgpRefClk,
+         pgpGtTxP        => pgpTxP,
+         pgpGtTxN        => pgpTxN,
+         pgpGtRxP        => pgpRxP,
+         pgpGtRxN        => pgpRxN,
+         pgpTxReset      => pgpRst,
+         pgpTxClk        => pgpClk,
+         pgpTxMmcmLocked => '1',
+         pgpRxReset      => pgpRst,
+         pgpRxClk        => pgpClk,
+         pgpRxMmcmLocked => '1',
+         pgpRxIn         => pgpRxIn,
+         pgpRxOut        => pgpRxOut,
+         pgpTxIn         => pgpTxIn,
+         pgpTxOut        => pgpTxOut,
+         pgpTxMasters    => pgpTxMasters,
+         pgpTxSlaves     => pgpTxSlaves,
+         pgpRxMasters    => pgpRxMasters,
+         pgpRxCtrl       => pgpRxCtrl);
+
+   U_AxiLiteEmpty : entity work.AxiLiteEmpty
       generic map (
          TPD_G            => TPD_G,
-         VC_INTERLEAVE_G  => 1,         -- AxiStreamDmaV2 supports interleaving
          AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
       port map (
-         -- GT Clocking
-         gtQPllOutRefClk     => gtQPllOutRefClk,
-         gtQPllOutClk        => gtQPllOutClk,
-         gtQPllLock          => gtQPllLocked,
-         gtQPllRefClkLost    => gtQPllRefClkLost,
-         gtQPllReset         => gtQPllRst,
-         qPllRxSelect        => config.qPllRxSelect,
-         qPllTxSelect        => config.qPllTxSelect,
-         drpOverride         => config.gtDrpOverride,
-         -- Gt Serial IO
-         gtTxP(0)            => pgpTxP,
-         gtTxN(0)            => pgpTxN,
-         gtRxP(0)            => pgpRxP,
-         gtRxN(0)            => pgpRxN,
-         -- Tx Clocking
-         pgpTxReset          => pgpTxRst,
-         pgpTxClk            => pgpTxClk,
-         -- Rx clocking
-         pgpRxReset          => pgpRxRst,
-         pgpRxClk            => pgpRxClk,
-         -- Non VC Rx Signals
-         pgpRxIn             => pgpRxIn,
-         pgpRxOut            => pgpRxOut,
-         -- Non VC Tx Signals
-         pgpTxIn             => pgpTxIn,
-         pgpTxOut            => pgpTxOut,
-         -- Frame Transmit Interface
-         pgpTxMasters        => pgpTxMasters,
-         pgpTxSlaves         => pgpTxSlaves,
-         -- Frame Receive Interface
-         pgpRxMasters        => pgpRxMasters,
-         pgpRxCtrl           => pgpRxCtrl,
-         -- Debug Interface 
-         txPreCursor         => config.txPreCursor,
-         txPostCursor        => config.txPostCursor,
-         txDiffCtrl          => config.txDiffCtrl,
-         -- AXI-Lite Interface 
-         axilClk             => sysClk,
-         axilRst             => sysRst,
-         axilReadMasters(0)  => axilReadMasters(GT_INDEX_C),
-         axilReadSlaves(0)   => axilReadSlaves(GT_INDEX_C),
-         axilWriteMasters(0) => axilWriteMasters(GT_INDEX_C),
-         axilWriteSlaves(0)  => axilWriteSlaves(GT_INDEX_C));
+         axiClk         => sysClk,
+         axiClkRst      => sysRst,
+         axiReadMaster  => axilReadMasters(GT_INDEX_C),
+         axiReadSlave   => axilReadSlaves(GT_INDEX_C),
+         axiWriteMaster => axilWriteMasters(GT_INDEX_C),
+         axiWriteSlave  => axilWriteSlaves(GT_INDEX_C));
 
    --------------         
    -- PGP Monitor
@@ -224,14 +181,14 @@ begin
          ERROR_CNT_WIDTH_G  => 16)
       port map (
          -- TX PGP Interface (pgpTxClk)
-         pgpTxClk        => pgpTxClk,
-         pgpTxClkRst     => pgpTxRst,
+         pgpTxClk        => pgpClk,
+         pgpTxClkRst     => pgpRst,
          pgpTxIn         => pgpTxIn,
          pgpTxOut        => pgpTxOut,
          locTxIn         => locTxIn,
          -- RX PGP Interface (pgpRxClk)
-         pgpRxClk        => pgpRxClk,
-         pgpRxClkRst     => pgpRxRst,
+         pgpRxClk        => pgpClk,
+         pgpRxClkRst     => pgpRst,
          pgpRxIn         => pgpRxIn,
          pgpRxOut        => pgpRxOut,
          -- AXI-Lite Register Interface (axilClk domain)
@@ -241,6 +198,7 @@ begin
          axilReadSlave   => axilReadSlaves(MON_INDEX_C),
          axilWriteMaster => axilWriteMasters(MON_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(MON_INDEX_C));
+
    ------------
    -- Misc Core
    ------------
@@ -252,8 +210,6 @@ begin
          -- Control/Status  (sysClk domain)
          status          => status,
          config          => config,
-         txUserRst       => pgpTxRst,
-         rxUserRst       => pgpRxRst,
          -- AXI Lite interface
          sysClk          => sysClk,
          sysRst          => sysRst,
@@ -292,8 +248,8 @@ begin
             dmaObMaster  => dmaObMaster,
             dmaObSlave   => dmaObSlave,
             -- PGP Interface
-            pgpTxClk     => pgpTxClk,
-            pgpTxRst     => pgpTxRst,
+            pgpTxClk     => pgpClk,
+            pgpTxRst     => pgpRst,
             pgpTxMasters => pgpTxMasters,
             pgpTxSlaves  => pgpTxSlaves);
 
@@ -320,12 +276,12 @@ begin
             evrRst       => evrRst,
             evrTimingBus => evrTimingBus,
             -- PGP Trigger Interface (pgpTxClk domain)
-            pgpTxClk     => pgpTxClk,
-            pgpTxRst     => pgpTxRst,
+            pgpTxClk     => pgpClk,
+            pgpTxRst     => pgpRst,
             pgpTxIn      => locTxIn,
             -- PGP RX Interface (pgpRxClk domain)
-            pgpRxClk     => pgpRxClk,
-            pgpRxRst     => pgpRxRst,
+            pgpRxClk     => pgpClk,
+            pgpRxRst     => pgpRst,
             pgpRxMasters => rxMasters,
             pgpRxCtrl    => pgpRxCtrl);
 

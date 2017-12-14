@@ -2,7 +2,7 @@
 -- File       : PgpMiscCtrl.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-10-05
+-- Last update: 2017-12-10
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -79,9 +79,9 @@ architecture rtl of PgpMiscCtrl is
    signal rxUserReset : sl;
    signal txUserReset : sl;
 
-  attribute use_dsp48      : string;
-  attribute use_dsp48 of r : signal is "yes";    
-   
+   attribute use_dsp48      : string;
+   attribute use_dsp48 of r : signal is "yes";
+
 begin
 
    --------------------- 
@@ -133,6 +133,7 @@ begin
       axiSlaveRegister(regCon, x"80", 0, v.txUserRst);
       axiSlaveRegister(regCon, x"84", 0, v.rxUserRst);
       axiSlaveRegister(regCon, x"88", 0, v.config.enableTrig);
+      axiSlaveRegister(regCon, x"8C", 0, v.config.rxVcBlowoff);
 
       axiSlaveRegisterR(regCon, x"90", 0, status.evrSyncStatus);
       axiSlaveRegisterR(regCon, x"94", 0, status.acceptCnt);

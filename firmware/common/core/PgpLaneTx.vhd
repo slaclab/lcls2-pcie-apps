@@ -55,16 +55,13 @@ begin
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
-         INT_PIPE_STAGES_G   => 0,
+         INT_PIPE_STAGES_G   => 1,
          PIPE_STAGES_G       => 0,
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
-         INT_WIDTH_SELECT_G  => "NARROW",
          -- FIFO configurations
          BRAM_EN_G           => false,
-         USE_BUILT_IN_G      => false,
          GEN_SYNC_FIFO_G     => true,
-         CASCADE_SIZE_G      => 1,
          FIFO_ADDR_WIDTH_G   => 4,
          -- AXI Stream Port Configurations
          SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
@@ -108,14 +105,12 @@ begin
             -- General Configurations
             TPD_G               => TPD_G,
             INT_PIPE_STAGES_G   => 1,
-            PIPE_STAGES_G       => 1,
+            PIPE_STAGES_G       => 0,
             SLAVE_READY_EN_G    => true,
             VALID_THOLD_G       => 1,
             -- FIFO configurations
             BRAM_EN_G           => false,
-            USE_BUILT_IN_G      => false,
             GEN_SYNC_FIFO_G     => false,
-            CASCADE_SIZE_G      => 1,
             FIFO_ADDR_WIDTH_G   => 4,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => SSI_PGP2B_CONFIG_C,

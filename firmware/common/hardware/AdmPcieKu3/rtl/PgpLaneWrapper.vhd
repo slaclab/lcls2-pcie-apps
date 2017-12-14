@@ -2,7 +2,7 @@
 -- File       : PgpLaneWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2017-11-27
+-- Last update: 2017-12-11
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -32,9 +32,10 @@ use unisim.vcomponents.all;
 
 entity PgpLaneWrapper is
    generic (
-      TPD_G            : time             := 1 ns;
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
-      AXI_BASE_ADDR_G  : slv(31 downto 0) := (others => '0'));
+      TPD_G            : time                 := 1 ns;
+      LANE_SIZE_G      : natural range 0 to 8 := 8;
+      AXI_ERROR_RESP_G : slv(1 downto 0)      := AXI_RESP_DECERR_C;
+      AXI_BASE_ADDR_G  : slv(31 downto 0)     := (others => '0'));
    port (
       -- QSFP[0] Ports
       qsfp0RefClkP    : in  sl;
@@ -78,15 +79,22 @@ architecture mapping of PgpLaneWrapper is
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
 
-   signal pgpRxP    : slv(7 downto 0);
-   signal pgpRxN    : slv(7 downto 0);
-   signal pgpTxP    : slv(7 downto 0);
-   signal pgpTxN    : slv(7 downto 0);
+   signal pgpRxP : slv(7 downto 0);
+   signal pgpRxN : slv(7 downto 0);
+   signal pgpTxP : slv(7 downto 0);
+   signal pgpTxN : slv(7 downto 0);
+
    signal pgpRefClk : slv(7 downto 0);
-   signal refClk    : slv(1 downto 0);
-   
+   signal pgpClk    : slv(7 downto 0);
+   signal pgpRst    : slv(7 downto 0);
+
+   signal refClk     : slv(1 downto 0);
+   signal refClkDiv2 : slv(1 downto 0);
+   signal pgpClock   : slv(1 downto 0);
+   signal pgpReset   : slv(1 downto 0);
+
    attribute dont_touch           : string;
-   attribute dont_touch of refClk : signal is "TRUE";   
+   attribute dont_touch of refClk : signal is "TRUE";
 
 begin
 
@@ -102,7 +110,7 @@ begin
          I     => qsfp0RefClkP,
          IB    => qsfp0RefClkN,
          CEB   => '0',
-         ODIV2 => open,
+         ODIV2 => refClkDiv2(0),
          O     => refClk(0));
 
    U_QsfpRef1 : IBUFDS_GTE3
@@ -114,20 +122,64 @@ begin
          I     => qsfp1RefClkP,
          IB    => qsfp1RefClkN,
          CEB   => '0',
-         ODIV2 => open,
+         ODIV2 => refClkDiv2(1),
          O     => refClk(1));
+
+   U_BUFG_0 : BUFG_GT
+      port map (
+         I       => refClkDiv2(0),
+         CE      => '1',
+         CLR     => '0',
+         CEMASK  => '1',
+         CLRMASK => '1',
+         DIV     => "000",              -- Divide by 1
+         O       => pgpClock(0));
+
+   U_PwrUpRst_0 : entity work.PwrUpRst
+      generic map (
+         TPD_G          => TPD_G,
+         IN_POLARITY_G  => '1',
+         OUT_POLARITY_G => '1')
+      port map (
+         clk    => pgpClock(0),
+         rstOut => pgpReset(0));
+
+   U_BUFG_1 : BUFG_GT
+      port map (
+         I       => refClkDiv2(1),
+         CE      => '1',
+         CLR     => '0',
+         CEMASK  => '1',
+         CLRMASK => '1',
+         DIV     => "000",              -- Divide by 1
+         O       => pgpClock(1));
+
+   U_PwrUpRst_1 : entity work.PwrUpRst
+      generic map (
+         TPD_G          => TPD_G,
+         IN_POLARITY_G  => '1',
+         OUT_POLARITY_G => '1')
+      port map (
+         clk    => pgpClock(1),
+         rstOut => pgpReset(1));
+
+
 
    --------------------------------
    -- Mapping QSFP[1:0] to PGP[7:0]
    --------------------------------
    MAP_QSFP : for i in 3 downto 0 generate
       -- QSFP[0] to PGP[3:0]
+      pgpClk(i+0)    <= pgpClock(0);
+      pgpRst(i+0)    <= pgpReset(0);
       pgpRefClk(i+0) <= refClk(0);
       pgpRxP(i+0)    <= qsfp0RxP(i);
       pgpRxN(i+0)    <= qsfp0RxN(i);
       qsfp0TxP(i)    <= pgpTxP(i+0);
       qsfp0TxN(i)    <= pgpTxN(i+0);
       -- QSFP[1] to PGP[7:4]
+      pgpClk(i+4)    <= pgpClock(1);
+      pgpRst(i+4)    <= pgpReset(1);
       pgpRefClk(i+4) <= refClk(1);
       pgpRxP(i+4)    <= qsfp1RxP(i);
       pgpRxN(i+4)    <= qsfp1RxN(i);
@@ -166,6 +218,7 @@ begin
          generic map (
             TPD_G            => TPD_G,
             LANE_G           => (i),
+            ENABLE_G         => ite((i < LANE_SIZE_G), true, false),
             AXI_BASE_ADDR_G  => AXI_CONFIG_C(i).baseAddr,
             AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
          port map (
@@ -175,6 +228,8 @@ begin
             pgpTxP          => pgpTxP(i),
             pgpTxN          => pgpTxN(i),
             pgpRefClk       => pgpRefClk(i),
+            pgpClk          => pgpClk(i),
+            pgpRst          => pgpRst(i),
             -- DRP Clock and Reset
             sysClk          => sysClk,
             sysRst          => sysRst,

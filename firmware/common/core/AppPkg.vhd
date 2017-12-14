@@ -2,7 +2,7 @@
 -- File       : AppPkg.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-10-05
+-- Last update: 2017-12-10
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -20,17 +20,18 @@ use ieee.std_logic_1164.all;
 
 use work.StdRtlPkg.all;
 use work.AxiStreamPkg.all;
+use work.AxiPciePkg.all;
 
 package AppPkg is
 
    constant APP_AXIS_CONFIG_C : AxiStreamConfigType := (
-      TSTRB_EN_C    => false,
+      TSTRB_EN_C    => DMA_AXIS_CONFIG_C.TSTRB_EN_C,
       TDATA_BYTES_C => 4,               -- 32-bit interface
-      TDEST_BITS_C  => 8,
-      TID_BITS_C    => 0,
-      TKEEP_MODE_C  => TKEEP_COMP_C,
-      TUSER_BITS_C  => 2,
-      TUSER_MODE_C  => TUSER_FIRST_LAST_C);
+      TDEST_BITS_C  => DMA_AXIS_CONFIG_C.TDEST_BITS_C,
+      TID_BITS_C    => DMA_AXIS_CONFIG_C.TID_BITS_C,
+      TKEEP_MODE_C  => DMA_AXIS_CONFIG_C.TKEEP_MODE_C,
+      TUSER_BITS_C  => DMA_AXIS_CONFIG_C.TUSER_BITS_C,
+      TUSER_MODE_C  => DMA_AXIS_CONFIG_C.TUSER_MODE_C);
 
    type EvrToPgpType is record
       run     : sl;
@@ -67,6 +68,7 @@ package AppPkg is
       acceptCnt => (others => '0'));
 
    type ConfigType is record
+      rxVcBlowoff   : slv(3 downto 0);
       gtDrpOverride : sl;
       txDiffCtrl    : slv(3 downto 0);
       txPreCursor   : slv(4 downto 0);
@@ -86,6 +88,7 @@ package AppPkg is
       evrSyncWord   : slv(31 downto 0);
    end record;
    constant CONFIG_INIT_C : ConfigType := (
+      rxVcBlowoff   => "0000",
       gtDrpOverride => '0',
       txDiffCtrl    => "1000",
       txPreCursor   => "00000",
