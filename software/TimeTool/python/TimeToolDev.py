@@ -19,16 +19,16 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.add(pr.LocalVariable( name='dataErrors',   value=0, mode='RO', pollInterval=1))
 
         for i in range(8):
-            self.add(pr.LocalVariable( name='byteError{}'.format(i), value=0, mode='RO', pollInterval=1))
+            self.add(pr.LocalVariable( name='byteError{}'.format(i), disp='{:#x}', value=0, mode='RO', pollInterval=1))
 
     def _acceptFrame(self,frame):
         p = bytearray(frame.getPayload())
         frame.read(p,0)
-        self._count += 1
+        self.frameCount.set(self.frameCount.value() + 1,False)
         berr = [0,0,0,0,0,0,0,0]
 
         if len(p) != 2048:
-            self.lengthErrors.set(self.lengthErrors.value() + 1)
+            self.lengthErrors.set(self.lengthErrors.value() + 1,False)
 
         for i in range(len(p)):
             exp = i & 0xFF
@@ -36,10 +36,10 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
                 d = p[i] ^ exp
                 c = i % 8
                 berr[c] = berr[c] | d
-                self.dataErrors.set(self.dataErrors.value() + 1)
+                self.dataErrors.set(self.dataErrors.value() + 1,False)
 
         for i in range(8):
-            self.node('byteError{}'.format(i)).set(berr[i])
+            self.node('byteError{}'.format(i)).set(berr[i],False)
 
 class ClinkTest(pr.Device):
 
@@ -69,7 +69,7 @@ class TimeToolDev(pr.Root):
         dataMap = rogue.hardware.data.DataMap('/dev/datadev_0')
 
         # Cameralink
-        self.add(Clink(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
+        self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
 
         # Time tool application
         self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00400000))
