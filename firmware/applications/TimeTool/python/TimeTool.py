@@ -26,9 +26,9 @@ class TimeToolCore(pr.Device):
         super().__init__(name=name, **kwargs) 
 
         self.add(pr.RemoteVariable(    
-            name         = "Test",
+            name         = "AddValue",
             offset       =  0x00,
-            bitSize      =  32,
+            bitSize      =  8,
             bitOffset    =  0,
             base         = pr.UInt,
             mode         = "RW",
