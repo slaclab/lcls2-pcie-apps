@@ -4,7 +4,7 @@ import PyQt4.QtGui
 import TimeToolDev
 import sys
 
-cl = TimeToolDev.TimeToolDev()
+cl = TimeToolDev.TimeToolDev(True)
 
 # Create GUI
 appTop = PyQt4.QtGui.QApplication(sys.argv)

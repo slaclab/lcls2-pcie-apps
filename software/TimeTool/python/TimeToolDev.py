@@ -56,9 +56,9 @@ class ClinkTest(pr.Device):
 
 class TimeToolDev(pr.Root):
 
-    def __init__(self):
+    def __init__(self, dataDebug=False):
 
-        pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev', dataDebug=False)
+        pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev')
 
         # Create the stream interface
         self._pgpVc0 = rogue.hardware.data.DataCard('/dev/datadev_0',0) # Registers
