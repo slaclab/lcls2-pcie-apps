@@ -6,6 +6,7 @@ import surf.axi
 import surf.protocols.clink
 import time
 import TimeTool
+import pyrogue.utilities.fileio
 from XilinxKcu1500Pgp2b import *
 
 class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
@@ -78,10 +79,10 @@ class TimeToolDev(pr.Root):
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))
 
         # File writer
-        dataWriter = pyrogue.utilities.fileio.StreamWriter('dataWriter',configEn=True)
+        dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
         self.add(dataWriter)
         pr.streamConnect(self._pgpVc1,dataWriter.getChannel(0))
-        pr.streamConnect(self,dataWriterChannel(1))
+        pr.streamConnect(self,dataWriter.getChannel(1))
 
         # Debug slave
         if dataDebug:
