@@ -58,7 +58,7 @@ class TimeToolDev(pr.Root):
 
     def __init__(self):
 
-        pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev')
+        pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev', dataDebug=False)
 
         # Create the stream interface
         self._pgpVc0 = rogue.hardware.data.DataCard('/dev/datadev_0',0) # Registers
@@ -77,10 +77,17 @@ class TimeToolDev(pr.Root):
         # PGP Card registers
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))
 
+        # File writer
+        dataWriter = pyrogue.utilities.fileio.StreamWriter('dataWriter',configEn=True)
+        self.add(dataWriter)
+        pr.streamConnect(self._pgpVc1,dataWriter.getChannel(0))
+        pr.streamConnect(self,dataWriterChannel(1))
+
         # Debug slave
-        self._dbg = TimeToolRx()
-        pr.streamConnect(self._pgpVc1,self._dbg)
-        self.add(self._dbg)
+        if dataDebug:
+            self._dbg = TimeToolRx()
+            pr.streamTap(self._pgpVc1,self._dbg)
+            self.add(self._dbg)
 
         # Start the system
         self.start(pollEn=True)

@@ -57,7 +57,7 @@ architecture mapping of TimeToolCore is
    type RegType is record
       master          : AxiStreamMasterType;
       slave           : AxiStreamSlaveType;
-      test            : slv(31 downto 0);
+      addvalue        : slv(7 downto 0);
       axilReadSlave   : AxiLiteReadSlaveType;
       axilWriteSlave  : AxiLiteWriteSlaveType;
    end record RegType;
@@ -65,7 +65,7 @@ architecture mapping of TimeToolCore is
    constant REG_INIT_C : RegType := (
       master          => AXI_STREAM_MASTER_INIT_C,
       slave           => AXI_STREAM_SLAVE_INIT_C,
-      test            => (others=>'0'),
+      addValue        => (others=>'0'),
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C);
 
@@ -118,7 +118,7 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"000",  0, v.test);
+      axiSlaveRegister (axilEp, x"000",  0, v.addValue);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
 
@@ -129,6 +129,11 @@ begin
 
       if v.slave.tReady = '1' and inMaster.tValid = '1' then
          v.master := inMaster;
+
+         for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
+            v.master.tData(i) := inMaster.tData(i) + r.addValue;
+         end loop;
+
       else
          v.master.tValid := '0';
       end if;
