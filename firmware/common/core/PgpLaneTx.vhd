@@ -37,6 +37,7 @@ entity PgpLaneTx is
       -- PGP Interface
       pgpTxClk     : in  sl;
       pgpTxRst     : in  sl;
+      pgpTxOut     : in  Pgp2bTxOutType;
       pgpTxMasters : out AxiStreamMasterArray(3 downto 0);
       pgpTxSlaves  : in  AxiStreamSlaveArray(3 downto 0));
 end PgpLaneTx;
@@ -48,6 +49,11 @@ architecture mapping of PgpLaneTx is
 
    signal txMasters : AxiStreamMasterArray(3 downto 0);
    signal txSlaves  : AxiStreamSlaveArray(3 downto 0);
+
+   signal flushMasters : AxiStreamMasterArray(3 downto 0);
+   signal flushCtrls   : AxiStreamCtrlArray(3 downto 0);
+
+   signal flushEn : sl;
 
 begin
 
@@ -97,8 +103,32 @@ begin
          mAxisMasters => txMasters,
          mAxisSlaves  => txSlaves);
 
+   U_FlushSync: entity work.Synchronizer
+      generic map ( 
+         TPD_G          => TPD_G,
+         OUT_POLARITY_G => '0')
+      port map (
+         clk     => sysClk,
+         rst     => sysRst,
+         dataIn  => pgpTxOut.linkReady,
+         dataOut => flushEn);
+
    GEN_VEC :
    for i in 3 downto 0 generate
+
+      U_Flush: entity work.AxiStreamFlush
+         generic map (
+            TPD_G         => TPD_G,
+            AXIS_CONFIG_G => SSI_PGP2B_CONFIG_C,
+            SSI_EN_G      => true)
+         port map (
+            axisClk     => sysClk,
+            axisRst     => sysRst,
+            flushEn     => flushEn,
+            sAxisMaster => txMasters(i),
+            sAxisSlave  => txSlaves(i),
+            mAxisMaster => flushMasters(i),
+            mAxisCtrl   => flushCtrls(i));
 
       U_ASYNC : entity work.AxiStreamFifoV2
          generic map (
@@ -106,12 +136,13 @@ begin
             TPD_G               => TPD_G,
             INT_PIPE_STAGES_G   => 1,
             PIPE_STAGES_G       => 0,
-            SLAVE_READY_EN_G    => true,
+            SLAVE_READY_EN_G    => false,
             VALID_THOLD_G       => 1,
             -- FIFO configurations
             BRAM_EN_G           => false,
             GEN_SYNC_FIFO_G     => false,
-            FIFO_ADDR_WIDTH_G   => 4,
+            FIFO_ADDR_WIDTH_G   => 5,
+            PAUSE_THOLD_G       => 20,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => SSI_PGP2B_CONFIG_C,
             MASTER_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
@@ -119,8 +150,8 @@ begin
             -- Slave Port
             sAxisClk    => sysClk,
             sAxisRst    => sysRst,
-            sAxisMaster => txMasters(i),
-            sAxisSlave  => txSlaves(i),
+            sAxisMaster => flushMasters(i),
+            sAxisCtrl   => flushCtrls(i),
             -- Master Port
             mAxisClk    => pgpTxClk,
             mAxisRst    => pgpTxRst,
@@ -130,3 +161,4 @@ begin
    end generate GEN_VEC;
 
 end mapping;
+

@@ -131,7 +131,7 @@ begin
          v.master := inMaster;
 
          for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
-            v.master.tData(i) := inMaster.tData(i) + r.addValue;
+            v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
          end loop;
 
       else

@@ -30,14 +30,16 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
         if len(p) != 2048:
             self.lengthErrors.set(self.lengthErrors.value() + 1,False)
+        else:
 
-        for i in range(len(p)):
-            exp = i & 0xFF
-            if p[i] != exp:
-                d = p[i] ^ exp
-                c = i % 8
-                berr[c] = berr[c] | d
-                self.dataErrors.set(self.dataErrors.value() + 1,False)
+            for i in range(2048):
+                exp = i & 0xFF
+                if p[i] != exp:
+                    #print("Error at pos {}. Got={:2x}, Exp={:2x}".format(i,p[i],exp))
+                    d = p[i] ^ exp
+                    c = i % 8
+                    berr[c] = berr[c] | d
+                    self.dataErrors.set(self.dataErrors.value() + 1,False)
 
         for i in range(8):
             self.node('byteError{}'.format(i)).set(berr[i],False)
@@ -73,7 +75,7 @@ class TimeToolDev(pr.Root):
         self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
 
         # Time tool application
-        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00400000))
+        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00C00000))
 
         # PGP Card registers
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))

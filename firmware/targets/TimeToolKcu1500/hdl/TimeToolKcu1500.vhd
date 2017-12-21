@@ -93,7 +93,7 @@ architecture top_level of TimeToolKcu1500 is
 
    constant NUM_AXI_MASTERS_C : natural := 2;
 
-   constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_C, 23, 22);
+   constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_C, 22, 22);
 
    signal sysClk     : sl;
    signal sysRst     : sl;
