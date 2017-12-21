@@ -142,7 +142,7 @@ begin
             BRAM_EN_G           => false,
             GEN_SYNC_FIFO_G     => false,
             FIFO_ADDR_WIDTH_G   => 5,
-            PAUSE_THOLD_G       => 20,
+            FIFO_PAUSE_THRESH_G => 20,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => SSI_PGP2B_CONFIG_C,
             MASTER_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
