@@ -150,8 +150,10 @@ begin
          -- DMA Interfaces
          dmaObMasters    => dmaObMasters,
          dmaObSlaves     => dmaObSlaves,
-         dmaIbMasters    => dmaIbMasters,
-         dmaIbSlaves     => dmaIbSlaves,
+         --dmaIbMasters    => dmaIbMasters,
+         --dmaIbSlaves     => dmaIbSlaves,
+         dmaIbMasters    => dmaObMasters,
+         dmaIbSlaves     => dmaObSlaves,
          -- AXI-Lite Interface
          appClk          => sysClk,
          appRst          => sysRst,
@@ -242,8 +244,10 @@ begin
          axilWriteMaster => intWriteMasters(0),
          axilWriteSlave  => intWriteSlaves(0),
          -- DMA Interface (sysClk domain)
-         dmaObMasters    => dmaObMasters,
-         dmaObSlaves     => dmaObSlaves,
+         dmaObMasters    => hwIbMasters,
+         dmaObSlaves     => hwIbSlaves,
+         --dmaObMasters    => dmaObMasters,
+         --dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => hwIbMasters,
          dmaIbSlaves     => hwIbSlaves,
          ---------------------
@@ -275,41 +279,41 @@ begin
    --userSwDip  : slv(3 downto 0);
    userLed <= (others=>'0');
 
-   dmaIbMasters(7 downto 1) <= hwIbmasters(7 downto 1);
-   hwIbSlaves(7 downto 1)   <= dmaIbSlaves(7 downto 1);
+   --dmaIbMasters(7 downto 1) <= hwIbmasters(7 downto 1);
+   --hwIbSlaves(7 downto 1)   <= dmaIbSlaves(7 downto 1);
 
    -- Tap data destination
-   U_Tap: entity work.AxiStreamTap
-      generic map (
-         TPD_G      => TPD_G,
-         TAP_DEST_G => 1)
-      port map (
-         sAxisMaster  => hwIbMasters(0),
-         sAxisSlave   => hwIbSlaves(0),
-         mAxisMaster  => dmaIbMasters(0),
-         mAxisSlave   => dmaIbSlaves(0),
-         tmAxisMaster => appInMaster,
-         tmAxisSlave  => appInSlave,
-         tsAxisMaster => appOutMaster,
-         tsAxisSlave  => appOutSlave,
-         axisClk      => sysClk,
-         axisRst      => sysRst);
-
-   U_TimeToolCore: entity work.TimeToolCore
-      generic map ( 
-         TPD_G            => TPD_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_C)
-      port map (
-         sysClk          => sysClk,
-         sysRst          => sysRst,
-         dataInMaster    => appInMaster,
-         dataInSlave     => appInSlave,
-         dataOutMaster   => appOutMaster,
-         dataOutSlave    => appOutSlave,
-         axilReadMaster  => intReadMasters(1),
-         axilReadSlave   => intReadSlaves(1),
-         axilWriteMaster => intWriteMasters(1),
-         axilWriteSlave  => intWriteSlaves(1));
-
+   --U_Tap: entity work.AxiStreamTap
+      --generic map (
+         --TPD_G      => TPD_G,
+         --TAP_DEST_G => 1)
+      --port map (
+         --sAxisMaster  => hwIbMasters(0),
+         --sAxisSlave   => hwIbSlaves(0),
+         --mAxisMaster  => dmaIbMasters(0),
+         --mAxisSlave   => dmaIbSlaves(0),
+         --tmAxisMaster => appInMaster,
+         --tmAxisSlave  => appInSlave,
+         --tsAxisMaster => appOutMaster,
+         --tsAxisSlave  => appOutSlave,
+         --axisClk      => sysClk,
+         --axisRst      => sysRst);
+--
+   --U_TimeToolCore: entity work.TimeToolCore
+      --generic map ( 
+         --TPD_G            => TPD_G,
+         --AXI_ERROR_RESP_G => AXI_ERROR_RESP_C)
+      --port map (
+         --sysClk          => sysClk,
+         --sysRst          => sysRst,
+         --dataInMaster    => appInMaster,
+         --dataInSlave     => appInSlave,
+         --dataOutMaster   => appOutMaster,
+         --dataOutSlave    => appOutSlave,
+         --axilReadMaster  => intReadMasters(1),
+         --axilReadSlave   => intReadSlaves(1),
+         --axilWriteMaster => intWriteMasters(1),
+         --axilWriteSlave  => intWriteSlaves(1));
+--
 end top_level;
 
