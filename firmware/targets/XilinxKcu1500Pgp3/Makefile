@@ -1,7 +1,7 @@
 export GIT_BYPASS = 0
 
 # Define Firmware Version Number
-export PRJ_VERSION = 0x00000005
+export PRJ_VERSION = 0x00000003
 
 # Define the Hardware Type in the axi-pcie-core
 export PCIE_HW_TYPE = XilinxKcu1500
@@ -16,7 +16,7 @@ export NUM_MIG_CORES = 0
 export DDR_SPEED = 2400
 
 # Select either GEN1 or GEN2 or GEN3 PCIe
-export PCIE_GEN_NUM = GEN2
+export PCIE_GEN_NUM = GEN3
 
 # BYPASS Partial Reconfiguration
 export BYPASS_RECONFIG = 1

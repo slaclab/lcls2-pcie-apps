@@ -10,7 +10,7 @@ export PCIE_HW_TYPE = AdmPcieKu3
 export PRJ_PART = XCKU060-FFVA1156-2-E
 
 # Select either GEN1 or GEN2 or GEN3 PCIe
-export PCIE_GEN_NUM = GEN2
+export PCIE_GEN_NUM = GEN3
 
 # Define target output
 target: prom

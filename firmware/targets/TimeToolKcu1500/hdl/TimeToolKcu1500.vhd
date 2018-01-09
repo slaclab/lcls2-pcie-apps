@@ -246,9 +246,9 @@ begin
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => hwIbMasters,
          dmaIbSlaves     => hwIbSlaves,
-         ---------------------
-         --  Application Ports
-         ---------------------         
+         ------------------
+         --  Hardware Ports
+         ------------------        
          -- QSFP[0] Ports
          qsfp0RefClkP    => qsfp0RefClkP,
          qsfp0RefClkN    => qsfp0RefClkN,
