@@ -2,7 +2,7 @@
 -- File       : PgpLaneTx.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2017-10-26
+-- Last update: 2018-01-09
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -47,9 +47,12 @@ architecture mapping of PgpLaneTx is
    signal txMaster : AxiStreamMasterType;
    signal txSlave  : AxiStreamSlaveType;
 
+   signal txMasterSof : AxiStreamMasterType;
+   signal txSlaveSof  : AxiStreamSlaveType;
+
 begin
 
-   U_ASYNC : entity work.AxiStreamFifoV2
+   U_RESIZE : entity work.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
@@ -57,7 +60,6 @@ begin
          PIPE_STAGES_G       => 1,
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
-         INT_WIDTH_SELECT_G  => "NARROW",
          -- FIFO configurations
          BRAM_EN_G           => true,
          USE_BUILT_IN_G      => false,
@@ -79,6 +81,26 @@ begin
          mAxisMaster => txMaster,
          mAxisSlave  => txSlave);
 
+   U_SOF : entity work.SsiInsertSof
+      generic map (
+         TPD_G               => TPD_G,
+         COMMON_CLK_G        => true,
+         SLAVE_FIFO_G        => false,
+         MASTER_FIFO_G       => false,
+         SLAVE_AXI_CONFIG_G  => PGP3_AXIS_CONFIG_C,
+         MASTER_AXI_CONFIG_G => PGP3_AXIS_CONFIG_C)
+      port map (
+         -- Slave Port
+         sAxisClk    => pgpClk,
+         sAxisRst    => pgpRst,
+         sAxisMaster => txMaster,
+         sAxisSlave  => txSlave,
+         -- Master Port
+         mAxisClk    => pgpClk,
+         mAxisRst    => pgpRst,
+         mAxisMaster => txMasterSof,
+         mAxisSlave  => txSlaveSof);
+
    U_DeMux : entity work.AxiStreamDeMux
       generic map (
          TPD_G         => TPD_G,
@@ -92,8 +114,8 @@ begin
          axisClk      => pgpClk,
          axisRst      => pgpRst,
          -- Slave         
-         sAxisMaster  => txMaster,
-         sAxisSlave   => txSlave,
+         sAxisMaster  => txMasterSof,
+         sAxisSlave   => txSlaveSof,
          -- Masters
          mAxisMasters => pgpTxMasters,
          mAxisSlaves  => pgpTxSlaves);

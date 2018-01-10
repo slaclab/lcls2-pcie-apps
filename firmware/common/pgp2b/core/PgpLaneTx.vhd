@@ -2,7 +2,7 @@
 -- File       : PgpLaneTx.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-10-08
+-- Last update: 2018-01-09
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -47,6 +47,9 @@ architecture mapping of PgpLaneTx is
    signal txMaster : AxiStreamMasterType;
    signal txSlave  : AxiStreamSlaveType;
 
+   signal txMasterSof : AxiStreamMasterType;
+   signal txSlaveSof  : AxiStreamSlaveType;
+
    signal txMasters : AxiStreamMasterArray(3 downto 0);
    signal txSlaves  : AxiStreamSlaveArray(3 downto 0);
 
@@ -84,6 +87,26 @@ begin
          mAxisMaster => txMaster,
          mAxisSlave  => txSlave);
 
+   U_SOF : entity work.SsiInsertSof
+      generic map (
+         TPD_G               => TPD_G,
+         COMMON_CLK_G        => true,
+         SLAVE_FIFO_G        => false,
+         MASTER_FIFO_G       => false,
+         SLAVE_AXI_CONFIG_G  => SSI_PGP2B_CONFIG_C,
+         MASTER_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
+      port map (
+         -- Slave Port
+         sAxisClk    => sysClk,
+         sAxisRst    => sysRst,
+         sAxisMaster => txMaster,
+         sAxisSlave  => txSlave,
+         -- Master Port
+         mAxisClk    => sysClk,
+         mAxisRst    => sysRst,
+         mAxisMaster => txMasterSof,
+         mAxisSlave  => txSlaveSof);
+
    U_DeMux : entity work.AxiStreamDeMux
       generic map (
          TPD_G         => TPD_G,
@@ -97,14 +120,14 @@ begin
          axisClk      => sysClk,
          axisRst      => sysRst,
          -- Slave         
-         sAxisMaster  => txMaster,
-         sAxisSlave   => txSlave,
+         sAxisMaster  => txMasterSof,
+         sAxisSlave   => txSlaveSof,
          -- Masters
          mAxisMasters => txMasters,
          mAxisSlaves  => txSlaves);
 
-   U_FlushSync: entity work.Synchronizer
-      generic map ( 
+   U_FlushSync : entity work.Synchronizer
+      generic map (
          TPD_G          => TPD_G,
          OUT_POLARITY_G => '0')
       port map (
@@ -116,7 +139,7 @@ begin
    GEN_VEC :
    for i in 3 downto 0 generate
 
-      U_Flush: entity work.AxiStreamFlush
+      U_Flush : entity work.AxiStreamFlush
          generic map (
             TPD_G         => TPD_G,
             AXIS_CONFIG_G => SSI_PGP2B_CONFIG_C,

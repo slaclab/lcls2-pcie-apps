@@ -82,7 +82,7 @@ begin
             FIFO_PAUSE_THRESH_G => 512,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => PGP3_AXIS_CONFIG_C,
-            MASTER_AXI_CONFIG_G => PGP3_AXIS_CONFIG_C)
+            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
          port map (
             -- Slave Port
             sAxisClk    => pgpClk,
@@ -131,7 +131,7 @@ begin
          GEN_SYNC_FIFO_G     => false,
          FIFO_ADDR_WIDTH_G   => 9,
          -- AXI Stream Port Configurations
-         SLAVE_AXI_CONFIG_G  => PGP3_AXIS_CONFIG_C,
+         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
          MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- Slave Port
