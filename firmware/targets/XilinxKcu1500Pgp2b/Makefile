@@ -1,4 +1,7 @@
-export GIT_BYPASS = 0
+export GIT_BYPASS = 1
+
+# Include PGP2B XDC
+export INCLUDE_PGP2B = 1
 
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000003
