@@ -37,6 +37,7 @@ entity PgpLaneTx is
       -- PGP Interface
       pgpTxClk     : in  sl;
       pgpTxRst     : in  sl;
+      pgpRxOut     : in  Pgp2bRxOutType;
       pgpTxOut     : in  Pgp2bTxOutType;
       pgpTxMasters : out AxiStreamMasterArray(3 downto 0);
       pgpTxSlaves  : in  AxiStreamSlaveArray(3 downto 0));
@@ -56,7 +57,8 @@ architecture mapping of PgpLaneTx is
    signal flushMasters : AxiStreamMasterArray(3 downto 0);
    signal flushCtrls   : AxiStreamCtrlArray(3 downto 0);
 
-   signal flushEn : sl;
+   signal flushEn   : sl;
+   signal linkReady : sl;
 
 begin
 
@@ -126,6 +128,8 @@ begin
          mAxisMasters => txMasters,
          mAxisSlaves  => txSlaves);
 
+   linkReady <= pgpTxOut.linkReady and pgpRxOut.linkReady;
+
    U_FlushSync : entity work.Synchronizer
       generic map (
          TPD_G          => TPD_G,
@@ -133,7 +137,7 @@ begin
       port map (
          clk     => sysClk,
          rst     => sysRst,
-         dataIn  => pgpTxOut.linkReady,
+         dataIn  => linkReady,
          dataOut => flushEn);
 
    GEN_VEC :

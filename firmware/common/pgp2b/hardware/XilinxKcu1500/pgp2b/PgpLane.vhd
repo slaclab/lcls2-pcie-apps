@@ -265,6 +265,7 @@ begin
          -- PGP Interface
          pgpTxClk     => pgpTxClk,
          pgpTxRst     => pgpTxRst,
+         pgpRxOut     => pgpRxOut,
          pgpTxOut     => pgpTxOut,
          pgpTxMasters => pgpTxMasters,
          pgpTxSlaves  => pgpTxSlaves);

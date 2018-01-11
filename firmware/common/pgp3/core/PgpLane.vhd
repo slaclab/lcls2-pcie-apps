@@ -2,7 +2,7 @@
 -- File       : PgpLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2017-12-01
+-- Last update: 2018-01-10
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -95,14 +95,17 @@ architecture mapping of PgpLane is
    signal pgpClk : sl;
    signal pgpRst : sl;
 
+   signal pgpTxOut     : Pgp3TxOutType;
    signal pgpTxMasters : AxiStreamMasterArray(NUM_VC_G-1 downto 0);
    signal pgpTxSlaves  : AxiStreamSlaveArray(NUM_VC_G-1 downto 0);
 
+   signal pgpRxOut     : Pgp3RxOutType;
    signal rxMasters    : AxiStreamMasterArray(NUM_VC_G-1 downto 0);
    signal pgpRxMasters : AxiStreamMasterArray(NUM_VC_G-1 downto 0);
    signal pgpRxCtrl    : AxiStreamCtrlArray(NUM_VC_G-1 downto 0);
 
    signal pgpRxVcBlowoff : slv(15 downto 0);
+
 
 begin
 
@@ -157,10 +160,10 @@ begin
          pgpClkRst       => pgpRst,
          -- Non VC Rx Signals
          pgpRxIn         => PGP3_RX_IN_INIT_C,
-         pgpRxOut        => open,
+         pgpRxOut        => pgpRxOut,
          -- Non VC Tx Signals
          pgpTxIn         => PGP3_TX_IN_INIT_C,
-         pgpTxOut        => open,
+         pgpTxOut        => pgpTxOut,
          -- Frame Transmit Interface
          pgpTxMasters    => pgpTxMasters,
          pgpTxSlaves     => pgpTxSlaves,
@@ -191,19 +194,21 @@ begin
          -- PGP Interface
          pgpClk       => pgpClk,
          pgpRst       => pgpRst,
+         pgpRxOut     => pgpRxOut,
+         pgpTxOut     => pgpTxOut,
          pgpTxMasters => pgpTxMasters,
          pgpTxSlaves  => pgpTxSlaves);
 
    -----------------------         
    -- RX VC Blowoff Filter
    -----------------------         
-   BLOWOFF_FILTER : process (pgpRxMasters, pgpRxVcBlowoff) is
+   BLOWOFF_FILTER : process (pgpRxMasters, pgpRxOut, pgpRxVcBlowoff) is
       variable tmp : AxiStreamMasterArray(NUM_VC_G-1 downto 0);
       variable i   : natural;
    begin
       tmp := pgpRxMasters;
       for i in NUM_VC_G-1 downto 0 loop
-         if (pgpRxVcBlowoff(i) = '1') then
+         if (pgpRxVcBlowoff(i) = '1') or (pgpRxOut.linkReady = '0') then
             tmp(i).tValid := '0';
          end if;
       end loop;

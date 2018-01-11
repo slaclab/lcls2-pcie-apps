@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : AdmPcieKu3Pgp2b.vhd
+-- File       : AdmPcieKu3Pgp3.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
 -- Last update: 2018-01-08
@@ -24,7 +24,10 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
 
-entity AdmPcieKu3Pgp2b is
+library unisim;
+use unisim.vcomponents.all;
+
+entity AdmPcieKu3Pgp3 is
    generic (
       TPD_G        : time := 1 ns;
       BUILD_INFO_G : BuildInfoType);
@@ -63,9 +66,9 @@ entity AdmPcieKu3Pgp2b is
       pciRxN       : in  slv(7 downto 0);
       pciTxP       : out slv(7 downto 0);
       pciTxN       : out slv(7 downto 0));
-end AdmPcieKu3Pgp2b;
+end AdmPcieKu3Pgp3;
 
-architecture top_level of AdmPcieKu3Pgp2b is
+architecture top_level of AdmPcieKu3Pgp3 is
 
    signal sysClk : sl;
    signal sysRst : sl;
