@@ -8,7 +8,7 @@ source /mnt/host/rogue/develpc/master/setup_env.csh
 setenv SURF_DIR ${PWD}/../../firmware/submodules/surf/python/
 setenv TTA_DIR  ${PWD}/../../firmware/applications/TimeTool/python/
 setenv AXID_DIR ${PWD}/../../firmware/submodules/axi-pcie-core/python/
-setenv COM_DIR  ${PWD}/../../firmware/common/pgp2b/python/
+setenv COM_DIR  ${PWD}/../../firmware/common/python/
 setenv LCLT_DIR ${PWD}/../../firmware/submodules/lcls-timing-core/python/
 
 setenv LOC_DIR ${PWD}/python/
