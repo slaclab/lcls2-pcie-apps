@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- File       : AdmPcieKu3Pgp2b.vhd
+-- File       : AdmPcieKu3Pgp3.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
--- Last update: 2017-11-27
+-- Last update: 2018-01-08
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -24,7 +24,10 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
 
-entity AdmPcieKu3Pgp2b is
+library unisim;
+use unisim.vcomponents.all;
+
+entity AdmPcieKu3Pgp3 is
    generic (
       TPD_G        : time := 1 ns;
       BUILD_INFO_G : BuildInfoType);
@@ -33,43 +36,45 @@ entity AdmPcieKu3Pgp2b is
       --  Application Ports
       ---------------------
       -- QSFP[0] Ports
-      qsfp0RefClkP : in    sl;
-      qsfp0RefClkN : in    sl;
-      qsfp0RxP     : in    slv(3 downto 0);
-      qsfp0RxN     : in    slv(3 downto 0);
-      qsfp0TxP     : out   slv(3 downto 0);
-      qsfp0TxN     : out   slv(3 downto 0);
+      qsfp0RefClkP : in  sl;
+      qsfp0RefClkN : in  sl;
+      qsfp0RxP     : in  slv(3 downto 0);
+      qsfp0RxN     : in  slv(3 downto 0);
+      qsfp0TxP     : out slv(3 downto 0);
+      qsfp0TxN     : out slv(3 downto 0);
       -- QSFP[1] Ports
-      qsfp1RefClkP : in    sl;
-      qsfp1RefClkN : in    sl;
-      qsfp1RxP     : in    slv(3 downto 0);
-      qsfp1RxN     : in    slv(3 downto 0);
-      qsfp1TxP     : out   slv(3 downto 0);
-      qsfp1TxN     : out   slv(3 downto 0);
+      qsfp1RefClkP : in  sl;
+      qsfp1RefClkN : in  sl;
+      qsfp1RxP     : in  slv(3 downto 0);
+      qsfp1RxN     : in  slv(3 downto 0);
+      qsfp1TxP     : out slv(3 downto 0);
+      qsfp1TxN     : out slv(3 downto 0);
       --------------
       --  Core Ports
       --------------
       -- QSFP[0] Ports
-      qsfp0RstL   : out   sl;
-      qsfp0LpMode : out   sl;
+      qsfp0RstL    : out sl;
+      qsfp0LpMode  : out sl;
       -- QSFP[1] Ports
-      qsfp1RstL   : out   sl;
-      qsfp1LpMode : out   sl;
+      qsfp1RstL    : out sl;
+      qsfp1LpMode  : out sl;
       -- PCIe Ports
-      pciRstL     : in    sl;
-      pciRefClkP  : in    sl;           -- 100 MHz
-      pciRefClkN  : in    sl;           -- 100 MHz
-      pciRxP      : in    slv(7 downto 0);
-      pciRxN      : in    slv(7 downto 0);
-      pciTxP      : out   slv(7 downto 0);
-      pciTxN      : out   slv(7 downto 0));
-end AdmPcieKu3Pgp2b;
+      pciRstL      : in  sl;
+      pciRefClkP   : in  sl;            -- 100 MHz
+      pciRefClkN   : in  sl;            -- 100 MHz
+      pciRxP       : in  slv(7 downto 0);
+      pciRxN       : in  slv(7 downto 0);
+      pciTxP       : out slv(7 downto 0);
+      pciTxN       : out slv(7 downto 0));
+end AdmPcieKu3Pgp3;
 
-architecture top_level of AdmPcieKu3Pgp2b is
+architecture top_level of AdmPcieKu3Pgp3 is
 
    signal sysClk : sl;
    signal sysRst : sl;
 
+   signal axilClk         : sl;
+   signal axilRst         : sl;
    signal axilReadMaster  : AxiLiteReadMasterType;
    signal axilReadSlave   : AxiLiteReadSlaveType;
    signal axilWriteMaster : AxiLiteWriteMasterType;
@@ -82,6 +87,22 @@ architecture top_level of AdmPcieKu3Pgp2b is
 
 begin
 
+   U_axilClk : BUFGCE_DIV
+      generic map (
+         BUFGCE_DIVIDE => 2)
+      port map (
+         I   => sysClk,
+         CE  => '1',
+         CLR => '0',
+         O   => axilClk);
+
+   U_axilRst : entity work.RstSync
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk      => axilClk,
+         asyncRst => sysRst,
+         syncRst  => axilRst);
 
    U_Core : entity work.AdmPcieKu3Core
       generic map (
@@ -101,8 +122,8 @@ begin
          dmaIbMasters   => dmaIbMasters,
          dmaIbSlaves    => dmaIbSlaves,
          -- AXI-Lite Interface
-         appClk         => sysClk,
-         appRst         => sysRst,
+         appClk         => axilClk,
+         appRst         => axilRst,
          appReadMaster  => axilReadMaster,
          appReadSlave   => axilReadSlave,
          appWriteMaster => axilWriteMaster,
@@ -133,23 +154,24 @@ begin
       port map (
          ------------------------      
          --  Top Level Interfaces
-         ------------------------        
-         -- Clock and Reset
-         sysClk          => sysClk,
-         sysRst          => sysRst,
-         -- AXI-Lite Interface (sysClk domain)
+         ------------------------         
+         -- AXI-Lite Interface (axilClk domain)
+         axilClk         => axilClk,
+         axilRst         => axilRst,
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
          axilWriteMaster => axilWriteMaster,
          axilWriteSlave  => axilWriteSlave,
-         -- DMA Interface (sysClk domain)
+         -- DMA Interface (dmaClk domain)
+         dmaClk          => sysClk,
+         dmaRst          => sysRst,
          dmaObMasters    => dmaObMasters,
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves,
          ------------------
          --  Hardware Ports
-         ------------------        
+         ------------------
          -- QSFP[0] Ports
          qsfp0RefClkP    => qsfp0RefClkP,
          qsfp0RefClkN    => qsfp0RefClkN,

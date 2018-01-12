@@ -2,7 +2,7 @@
 -- File       : PgpLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-12-11
+-- Last update: 2017-11-30
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -35,7 +35,6 @@ entity PgpLane is
    generic (
       TPD_G            : time                  := 1 ns;
       LANE_G           : positive range 0 to 7 := 0;
-      ENABLE_G         : boolean               := true;
       AXI_ERROR_RESP_G : slv(1 downto 0)       := AXI_RESP_DECERR_C;
       AXI_BASE_ADDR_G  : slv(31 downto 0)      := (others => '0'));
    port (
@@ -45,8 +44,6 @@ entity PgpLane is
       pgpRxP          : in  sl;
       pgpRxN          : in  sl;
       pgpRefClk       : in  sl;
-      pgpClk          : in  sl;
-      pgpRst          : in  sl;
       -- DRP Clock and Reset
       sysClk          : in  sl;
       sysRst          : in  sl;
@@ -93,9 +90,16 @@ architecture mapping of PgpLane is
    signal pgpTxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpTxSlaves  : AxiStreamSlaveArray(3 downto 0);
 
-   signal rxMasters    : AxiStreamMasterArray(3 downto 0);
    signal pgpRxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
+
+   signal pgpTxOutClk : sl;
+   signal pgpTxClk    : sl;
+   signal pgpTxRst    : sl;
+
+   signal pgpRxOutClk : sl;
+   signal pgpRxClk    : sl;
+   signal pgpRxRst    : sl;
 
    signal status : StatusType;
    signal config : ConfigType;
@@ -127,44 +131,70 @@ begin
    -----------
    -- PGP Core
    -----------
-   U_PGP : entity work.AxisPgp2bGthCore
+   U_Pgp : entity work.Pgp2bGthUltra
       generic map (
          TPD_G             => TPD_G,
-         VC_INTERLEAVE_G   => 1)
+         VC_INTERLEAVE_G   => 1,        -- AxiStreamDmaV2 supports interleaving
+         AXIL_ERROR_RESP_G => AXI_ERROR_RESP_G)
       port map (
-         stableClk       => sysClk,
-         stableRst       => sysRst,
+         -- GT Clocking
+         stableClk       => drpClk,
+         stableRst       => drpRst,
          gtRefClk        => pgpRefClk,
+         -- Gt Serial IO
          pgpGtTxP        => pgpTxP,
          pgpGtTxN        => pgpTxN,
          pgpGtRxP        => pgpRxP,
          pgpGtRxN        => pgpRxN,
-         pgpTxReset      => pgpRst,
-         pgpTxClk        => pgpClk,
+         -- Tx Clocking
+         pgpTxReset      => pgpTxRst,
+         pgpTxOutClk     => pgpTxOutClk,
+         pgpTxClk        => pgpTxClk,
          pgpTxMmcmLocked => '1',
-         pgpRxReset      => pgpRst,
-         pgpRxClk        => pgpClk,
+         -- Rx clocking
+         pgpRxReset      => pgpRxRst,
+         pgpRxOutClk     => pgpRxOutClk,
+         pgpRxClk        => pgpRxClk,
          pgpRxMmcmLocked => '1',
+         -- Non VC Rx Signals
          pgpRxIn         => pgpRxIn,
          pgpRxOut        => pgpRxOut,
+         -- Non VC Tx Signals
          pgpTxIn         => pgpTxIn,
          pgpTxOut        => pgpTxOut,
+         -- Frame Transmit Interface
          pgpTxMasters    => pgpTxMasters,
          pgpTxSlaves     => pgpTxSlaves,
+         -- Frame Receive Interface
          pgpRxMasters    => pgpRxMasters,
-         pgpRxCtrl       => pgpRxCtrl);
+         pgpRxCtrl       => pgpRxCtrl,
+         -- AXI-Lite Interface 
+         axilClk         => sysClk,
+         axilRst         => sysRst,
+         axilReadMaster  => axilReadMasters(GT_INDEX_C),
+         axilReadSlave   => axilReadSlaves(GT_INDEX_C),
+         axilWriteMaster => axilWriteMasters(GT_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(GT_INDEX_C));
 
-   U_AxiLiteEmpty : entity work.AxiLiteEmpty
-      generic map (
-         TPD_G            => TPD_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+   U_BUFG_TX : BUFG_GT
       port map (
-         axiClk         => sysClk,
-         axiClkRst      => sysRst,
-         axiReadMaster  => axilReadMasters(GT_INDEX_C),
-         axiReadSlave   => axilReadSlaves(GT_INDEX_C),
-         axiWriteMaster => axilWriteMasters(GT_INDEX_C),
-         axiWriteSlave  => axilWriteSlaves(GT_INDEX_C));
+         I       => pgpTxOutClk,
+         CE      => '1',
+         CEMASK  => '1',
+         CLR     => '0',
+         CLRMASK => '1',
+         DIV     => "000",              -- Divide by 1
+         O       => pgpTxClk);
+
+   U_BUFG_RX : BUFG_GT
+      port map (
+         I       => pgpRxOutClk,
+         CE      => '1',
+         CEMASK  => '1',
+         CLR     => '0',
+         CLRMASK => '1',
+         DIV     => "000",              -- Divide by 1
+         O       => pgpRxClk);
 
    --------------         
    -- PGP Monitor
@@ -181,14 +211,14 @@ begin
          ERROR_CNT_WIDTH_G  => 16)
       port map (
          -- TX PGP Interface (pgpTxClk)
-         pgpTxClk        => pgpClk,
-         pgpTxClkRst     => pgpRst,
+         pgpTxClk        => pgpTxClk,
+         pgpTxClkRst     => pgpTxRst,
          pgpTxIn         => pgpTxIn,
          pgpTxOut        => pgpTxOut,
          locTxIn         => locTxIn,
          -- RX PGP Interface (pgpRxClk)
-         pgpRxClk        => pgpClk,
-         pgpRxClkRst     => pgpRst,
+         pgpRxClk        => pgpRxClk,
+         pgpRxClkRst     => pgpRxRst,
          pgpRxIn         => pgpRxIn,
          pgpRxOut        => pgpRxOut,
          -- AXI-Lite Register Interface (axilClk domain)
@@ -210,6 +240,8 @@ begin
          -- Control/Status  (sysClk domain)
          status          => status,
          config          => config,
+         txUserRst       => pgpTxRst,
+         rxUserRst       => pgpRxRst,
          -- AXI Lite interface
          sysClk          => sysClk,
          sysRst          => sysRst,
@@ -218,84 +250,55 @@ begin
          axilWriteMaster => axilWriteMasters(CTRL_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(CTRL_INDEX_C));
 
-   -----------------------         
-   -- RX VC Blowoff Filter
-   -----------------------         
-   BLOWOFF_FILTER : process (config, pgpRxMasters, pgpRxOut) is
-      variable tmp : AxiStreamMasterArray(3 downto 0);
-      variable i   : natural;
-   begin
-      tmp := pgpRxMasters;
-      for i in 3 downto 0 loop
-         if (config.rxVcBlowoff(i) = '1') or (pgpRxOut.linkReady = '0') then
-            tmp(i).tValid := '0';
-         end if;
-      end loop;
-      rxMasters <= tmp;
-   end process;
+   ---------
+   -- PGP TX
+   ---------
+   U_Tx : entity work.PgpLaneTx
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         -- DMA Interface (sysClk domain)
+         sysClk       => sysClk,
+         sysRst       => sysRst,
+         dmaObMaster  => dmaObMaster,
+         dmaObSlave   => dmaObSlave,
+         -- PGP Interface
+         pgpTxClk     => pgpTxClk,
+         pgpTxRst     => pgpTxRst,
+         pgpRxOut     => pgpRxOut,
+         pgpTxOut     => pgpTxOut,
+         pgpTxMasters => pgpTxMasters,
+         pgpTxSlaves  => pgpTxSlaves);
 
-   BUILD_FIFO : if (ENABLE_G = true) generate
-      ---------
-      -- PGP TX
-      ---------
-      U_Tx : entity work.PgpLaneTx
-         generic map (
-            TPD_G => TPD_G)
-         port map (
-            -- DMA Interface (sysClk domain)
-            sysClk       => sysClk,
-            sysRst       => sysRst,
-            dmaObMaster  => dmaObMaster,
-            dmaObSlave   => dmaObSlave,
-            -- PGP Interface
-            pgpTxClk     => pgpClk,
-            pgpTxRst     => pgpRst,
-            pgpTxMasters => pgpTxMasters,
-            pgpTxSlaves  => pgpTxSlaves);
-
-      ---------
-      -- PGP RX
-      ---------
-      U_Rx : entity work.PgpLaneRx
-         generic map (
-            TPD_G          => TPD_G,
-            -- CASCADE_SIZE_G => 4,
-            CASCADE_SIZE_G => 1,
-            LANE_G         => LANE_G)
-         port map (
-            -- DMA Interface (sysClk domain)
-            sysClk       => sysClk,
-            sysRst       => sysRst,
-            dmaIbMaster  => dmaIbMaster,
-            dmaIbSlave   => dmaIbSlave,
-            -- Control/Status  (sysClk domain)
-            config       => config,
-            status       => status,
-            -- Timing Interface (evrClk domain)
-            evrClk       => evrClk,
-            evrRst       => evrRst,
-            evrTimingBus => evrTimingBus,
-            -- PGP Trigger Interface (pgpTxClk domain)
-            pgpTxClk     => pgpClk,
-            pgpTxRst     => pgpRst,
-            pgpTxIn      => locTxIn,
-            -- PGP RX Interface (pgpRxClk domain)
-            pgpRxClk     => pgpClk,
-            pgpRxRst     => pgpRst,
-            pgpRxMasters => rxMasters,
-            pgpRxCtrl    => pgpRxCtrl);
-
-   end generate;
-
-   BYPASS_FIFO : if (ENABLE_G = false) generate
-      -- PGP TX
-      dmaObSlave   <= AXI_STREAM_SLAVE_FORCE_C;
-      pgpTxMasters <= (others => AXI_STREAM_MASTER_INIT_C);
-      -- PGP RX
-      dmaIbMaster  <= AXI_STREAM_MASTER_INIT_C;
-      status       <= STATUS_INIT_C;
-      locTxIn      <= PGP2B_TX_IN_INIT_C;
-      pgpRxCtrl    <= (others => AXI_STREAM_CTRL_UNUSED_C);
-   end generate;
+   ---------
+   -- PGP RX
+   ---------
+   U_Rx : entity work.PgpLaneRx
+      generic map (
+         TPD_G          => TPD_G,
+         CASCADE_SIZE_G => 4,
+         LANE_G         => LANE_G)
+      port map (
+         -- DMA Interface (sysClk domain)
+         sysClk       => sysClk,
+         sysRst       => sysRst,
+         dmaIbMaster  => dmaIbMaster,
+         dmaIbSlave   => dmaIbSlave,
+         -- Control/Status  (sysClk domain)
+         config       => config,
+         status       => status,
+         -- Timing Interface (evrClk domain)
+         evrClk       => evrClk,
+         evrRst       => evrRst,
+         evrTimingBus => evrTimingBus,
+         -- PGP Trigger Interface (pgpTxClk domain)
+         pgpTxClk     => pgpTxClk,
+         pgpTxRst     => pgpTxRst,
+         pgpTxIn      => locTxIn,
+         -- PGP RX Interface (pgpRxClk domain)
+         pgpRxClk     => pgpRxClk,
+         pgpRxRst     => pgpRxRst,
+         pgpRxMasters => pgpRxMasters,
+         pgpRxCtrl    => pgpRxCtrl);
 
 end mapping;

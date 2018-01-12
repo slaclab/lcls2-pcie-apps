@@ -5,8 +5,7 @@ source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/surf
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/axi-pcie-core
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/lcls-timing-core
-loadRuckusTcl $::env(PROJ_DIR)/../../common/pgp2b
-loadRuckusTcl $::env(PROJ_DIR)/../../applications
+loadRuckusTcl $::env(PROJ_DIR)/../../common/pgp3
 
 # Load local source Code and constraints
 loadSource -dir "$::DIR_PATH/hdl"

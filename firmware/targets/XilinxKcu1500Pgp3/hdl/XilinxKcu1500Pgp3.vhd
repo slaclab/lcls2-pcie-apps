@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : XilinxKcu1500Pgp2b.vhd
+-- File       : XilinxKcu1500Pgp3.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
 -- Last update: 2018-01-08
@@ -24,7 +24,10 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
 
-entity XilinxKcu1500Pgp2b is
+library unisim;
+use unisim.vcomponents.all;
+
+entity XilinxKcu1500Pgp3 is
    generic (
       TPD_G        : time := 1 ns;
       BUILD_INFO_G : BuildInfoType);
@@ -84,9 +87,9 @@ entity XilinxKcu1500Pgp2b is
       pciRxN       : in    slv(7 downto 0);
       pciTxP       : out   slv(7 downto 0);
       pciTxN       : out   slv(7 downto 0));
-end XilinxKcu1500Pgp2b;
+end XilinxKcu1500Pgp3;
 
-architecture top_level of XilinxKcu1500Pgp2b is
+architecture top_level of XilinxKcu1500Pgp3 is
 
    signal sysClk     : sl;
    signal sysRst     : sl;
@@ -94,6 +97,8 @@ architecture top_level of XilinxKcu1500Pgp2b is
    signal userSwDip  : slv(3 downto 0);
    signal userLed    : slv(7 downto 0);
 
+   signal axilClk         : sl;
+   signal axilRst         : sl;
    signal axilReadMaster  : AxiLiteReadMasterType;
    signal axilReadSlave   : AxiLiteReadSlaveType;
    signal axilWriteMaster : AxiLiteWriteMasterType;
@@ -111,6 +116,23 @@ architecture top_level of XilinxKcu1500Pgp2b is
    signal memReadSlaves   : AxiReadSlaveArray(15 downto 0);
 
 begin
+
+   U_axilClk : BUFGCE_DIV
+      generic map (
+         BUFGCE_DIVIDE => 2)
+      port map (
+         I   => sysClk,
+         CE  => '1',
+         CLR => '0',
+         O   => axilClk);
+
+   U_axilRst : entity work.RstSync
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk      => axilClk,
+         asyncRst => sysRst,
+         syncRst  => axilRst);
 
    U_Core : entity work.XilinxKcu1500Core
       generic map (
@@ -133,8 +155,8 @@ begin
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves,
          -- AXI-Lite Interface
-         appClk          => sysClk,
-         appRst          => sysRst,
+         appClk          => axilClk,
+         appRst          => axilRst,
          appReadMaster   => axilReadMaster,
          appReadSlave    => axilReadSlave,
          appWriteMaster  => axilWriteMaster,
@@ -193,23 +215,23 @@ begin
          ------------------------      
          --  Top Level Interfaces
          ------------------------         
-         -- System Interfaces
-         sysClk          => sysClk,
-         sysRst          => sysRst,
-         userClk156      => userClk156,
-         -- AXI-Lite Interface (sysClk domain)
+         -- AXI-Lite Interface (axilClk domain)
+         axilClk         => axilClk,
+         axilRst         => axilRst,
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
          axilWriteMaster => axilWriteMaster,
          axilWriteSlave  => axilWriteSlave,
-         -- DMA Interface (sysClk domain)
+         -- DMA Interface (dmaClk domain)
+         dmaClk          => sysClk,
+         dmaRst          => sysRst,
          dmaObMasters    => dmaObMasters,
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves,
          ------------------
          --  Hardware Ports
-         ------------------      
+         ------------------       
          -- QSFP[0] Ports
          qsfp0RefClkP    => qsfp0RefClkP,
          qsfp0RefClkN    => qsfp0RefClkN,

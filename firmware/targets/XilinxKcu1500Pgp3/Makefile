@@ -1,7 +1,7 @@
 export GIT_BYPASS = 1
 
-# Include PGP2B XDC
-export INCLUDE_PGP2B = 1
+# Include PGP3 XDC
+export INCLUDE_PGP3 = 1
 
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000003
@@ -19,7 +19,7 @@ export NUM_MIG_CORES = 0
 export DDR_SPEED = 2400
 
 # Select either GEN1 or GEN2 or GEN3 PCIe
-export PCIE_GEN_NUM = GEN2
+export PCIE_GEN_NUM = GEN3
 
 # BYPASS Partial Reconfiguration
 export BYPASS_RECONFIG = 1

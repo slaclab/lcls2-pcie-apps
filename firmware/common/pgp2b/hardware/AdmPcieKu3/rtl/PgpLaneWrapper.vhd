@@ -2,7 +2,7 @@
 -- File       : PgpLaneWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2017-12-11
+-- Last update: 2018-01-08
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -92,6 +92,8 @@ architecture mapping of PgpLaneWrapper is
    signal refClkDiv2 : slv(1 downto 0);
    signal pgpClock   : slv(1 downto 0);
    signal pgpReset   : slv(1 downto 0);
+   
+   signal sysReset : slv(7 downto 0);
 
    attribute dont_touch           : string;
    attribute dont_touch of refClk : signal is "TRUE";
@@ -163,8 +165,6 @@ begin
          clk    => pgpClock(1),
          rstOut => pgpReset(1));
 
-
-
    --------------------------------
    -- Mapping QSFP[1:0] to PGP[7:0]
    --------------------------------
@@ -218,7 +218,6 @@ begin
          generic map (
             TPD_G            => TPD_G,
             LANE_G           => (i),
-            ENABLE_G         => ite((i < LANE_SIZE_G), true, false),
             AXI_BASE_ADDR_G  => AXI_CONFIG_C(i).baseAddr,
             AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
          port map (
@@ -228,11 +227,7 @@ begin
             pgpTxP          => pgpTxP(i),
             pgpTxN          => pgpTxN(i),
             pgpRefClk       => pgpRefClk(i),
-            pgpClk          => pgpClk(i),
-            pgpRst          => pgpRst(i),
             -- DRP Clock and Reset
-            sysClk          => sysClk,
-            sysRst          => sysRst,
             drpClk          => drpClk,
             drpRst          => drpRst,
             -- DMA Interface (sysClk domain)
@@ -245,10 +240,20 @@ begin
             evrRst          => '1',
             evrTimingBus    => TIMING_BUS_INIT_C,
             -- AXI-Lite Interface (sysClk domain)
+            sysClk          => sysClk,
+            sysRst          => sysReset(i),
             axilReadMaster  => axilReadMasters(i),
             axilReadSlave   => axilReadSlaves(i),
             axilWriteMaster => axilWriteMasters(i),
             axilWriteSlave  => axilWriteSlaves(i));
+            
+      U_sysRst : entity work.RstPipeline
+         generic map (
+            TPD_G => TPD_G)
+         port map (
+            clk    => sysClk,
+            rstIn  => sysRst,
+            rstOut => sysReset(i));            
 
    end generate GEN_LANE;
 
