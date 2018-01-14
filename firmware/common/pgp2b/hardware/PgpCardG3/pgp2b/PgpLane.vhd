@@ -2,7 +2,7 @@
 -- File       : PgpLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-12-10
+-- Last update: 2018-01-13
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -294,6 +294,8 @@ begin
             -- PGP Interface
             pgpTxClk     => pgpTxClk,
             pgpTxRst     => pgpTxRst,
+            pgpRxOut     => pgpRxOut,
+            pgpTxOut     => pgpTxOut,
             pgpTxMasters => pgpTxMasters,
             pgpTxSlaves  => pgpTxSlaves);
 
