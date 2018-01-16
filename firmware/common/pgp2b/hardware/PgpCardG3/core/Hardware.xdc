@@ -12,25 +12,25 @@
 # PGP #
 #######
 
-create_clock -name pgpRxClk0 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[0].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
-create_clock -name pgpRxClk1 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[1].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
-create_clock -name pgpRxClk2 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[2].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
-create_clock -name pgpRxClk3 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[3].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
+create_clock -name pgpRxClk0 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[0].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
+create_clock -name pgpRxClk1 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[1].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
+create_clock -name pgpRxClk2 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[2].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
+create_clock -name pgpRxClk3 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[3].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
 
-create_clock -name pgpRxClk4 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[0].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
-create_clock -name pgpRxClk5 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[1].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
-create_clock -name pgpRxClk6 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[2].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
-create_clock -name pgpRxClk7 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[3].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
+create_clock -name pgpRxClk4 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[0].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
+create_clock -name pgpRxClk5 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[1].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
+create_clock -name pgpRxClk6 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[2].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
+create_clock -name pgpRxClk7 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[3].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/RXOUTCLK}]
 
-create_clock -name pgpTxClk0 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[0].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
-create_clock -name pgpTxClk1 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[1].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
-create_clock -name pgpTxClk2 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[2].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
-create_clock -name pgpTxClk3 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[3].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
+create_clock -name pgpTxClk0 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[0].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
+create_clock -name pgpTxClk1 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[1].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
+create_clock -name pgpTxClk2 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[2].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
+create_clock -name pgpTxClk3 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[3].U_West/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
 
-create_clock -name pgpTxClk4 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[0].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
-create_clock -name pgpTxClk5 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[1].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
-create_clock -name pgpTxClk6 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[2].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
-create_clock -name pgpTxClk7 -period 4.000 [get_pins {U_App/U_Pgp/GEN_VEC[3].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
+create_clock -name pgpTxClk4 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[0].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
+create_clock -name pgpTxClk5 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[1].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
+create_clock -name pgpTxClk6 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[2].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
+create_clock -name pgpTxClk7 -period 6.400 [get_pins {U_App/U_Pgp/GEN_VEC[3].U_East/U_Pgp/GTP7_CORE_GEN[0].U_GT/U0/Pgp2bGtp7Drp_i/gt0_Pgp2bGtp7Drp_i/gtpe2_i/TXOUTCLK}]
 
 #############
 # User LEDs #
@@ -117,7 +117,7 @@ add_cells_to_pblock [get_pblocks PGP_WEST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[0
 add_cells_to_pblock [get_pblocks PGP_WEST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[1].U_West/BUILD_FIFO.U_Rx}]
 add_cells_to_pblock [get_pblocks PGP_WEST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[2].U_West/BUILD_FIFO.U_Rx}]
 add_cells_to_pblock [get_pblocks PGP_WEST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[3].U_West/BUILD_FIFO.U_Rx}]
-resize_pblock [get_pblocks PGP_WEST_GRP] -add {CLOCKREGION_X0Y0:CLOCKREGION_X0Y3}
+resize_pblock [get_pblocks PGP_WEST_GRP] -add {CLOCKREGION_X0Y0:CLOCKREGION_X0Y4}
 
 create_pblock PGP_EAST_GRP
 add_cells_to_pblock [get_pblocks PGP_EAST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[0].U_East/U_PgpMon}]
@@ -132,4 +132,4 @@ add_cells_to_pblock [get_pblocks PGP_EAST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[0
 add_cells_to_pblock [get_pblocks PGP_EAST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[1].U_East/BUILD_FIFO.U_Rx}]
 add_cells_to_pblock [get_pblocks PGP_EAST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[2].U_East/BUILD_FIFO.U_Rx}]
 add_cells_to_pblock [get_pblocks PGP_EAST_GRP] [get_cells {U_App/U_Pgp/GEN_VEC[3].U_East/BUILD_FIFO.U_Rx}]
-resize_pblock [get_pblocks PGP_EAST_GRP] -add {CLOCKREGION_X1Y0:CLOCKREGION_X1Y3}
+resize_pblock [get_pblocks PGP_EAST_GRP] -add {CLOCKREGION_X1Y0:CLOCKREGION_X1Y4}

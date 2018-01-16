@@ -220,8 +220,8 @@ begin
          COMMON_RX_CLK_G    => false,
          WRITE_EN_G         => true,
          AXI_CLK_FREQ_G     => SYS_CLK_FREQ_C,
-         STATUS_CNT_WIDTH_G => 16,
-         ERROR_CNT_WIDTH_G  => 16)
+         STATUS_CNT_WIDTH_G => 8,
+         ERROR_CNT_WIDTH_G  => 8)
       port map (
          -- TX PGP Interface (pgpTxClk)
          pgpTxClk        => pgpTxClk,

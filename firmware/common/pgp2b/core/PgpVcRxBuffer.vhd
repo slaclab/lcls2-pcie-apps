@@ -124,7 +124,7 @@ begin
          -- General Configurations
          TPD_G               => TPD_G,
          INT_PIPE_STAGES_G   => 1,
-         PIPE_STAGES_G       => 1,
+         PIPE_STAGES_G       => 0,
          SLAVE_READY_EN_G    => SLAVE_READY_EN_G,
          VALID_THOLD_G       => 1,
          -- FIFO configurations
