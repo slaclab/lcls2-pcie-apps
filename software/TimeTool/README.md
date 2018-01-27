@@ -36,7 +36,7 @@ git-lfs/2.1.1
 
 Note: If you need a newer version of git or git-lfs, here's a AFS $PATH for one:
 
->> /afs/slac/g/reseng/git/git/bin
+> /afs/slac/g/reseng/git/git/bin
 
 # Clone the GIT repository
 
