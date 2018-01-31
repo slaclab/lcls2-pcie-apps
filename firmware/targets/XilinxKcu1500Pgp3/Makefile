@@ -1,4 +1,4 @@
-export GIT_BYPASS = 1
+export GIT_BYPASS = 0
 
 # Include PGP3 XDC
 export INCLUDE_PGP3 = 1
