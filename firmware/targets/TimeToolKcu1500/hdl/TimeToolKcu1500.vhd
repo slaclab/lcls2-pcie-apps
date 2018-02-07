@@ -89,7 +89,7 @@ end TimeToolKcu1500;
 architecture top_level of TimeToolKcu1500 is
 
    constant AXI_ERROR_RESP_C : slv(1 downto 0)  := BAR0_ERROR_RESP_C;
-   constant AXI_BASE_ADDR_C  : slv(31 downto 0) := BAR0_BASE_ADDR_G;
+   constant AXI_BASE_ADDR_C  : slv(31 downto 0) := BAR0_BASE_ADDR_C;
 
    constant NUM_AXI_MASTERS_C : natural := 2;
 
