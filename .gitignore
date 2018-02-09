@@ -33,4 +33,5 @@ build*
 # Only .bit.gz and .mcs.gz should be committed to git
 *.bit
 *.mcs
+*.ltx
 *.gz
