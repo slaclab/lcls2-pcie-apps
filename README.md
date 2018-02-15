@@ -1,16 +1,20 @@
 # lcls2-pcie-apps
+
 LCLS2 PCIE-Express Board Applications
 
 # Before you clone the GIT repository
 
 > Create a github account:
-> https://github.com/
+
+https://github.com/
 
 > On the Linux machine that you will clone the github from, generate a SSH key (if not already done)
-> https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/
+
+https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/
 
 > Add a new SSH key to your GitHub account
-> https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
+
+https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
 
 > Setup for large filesystems on github
 
