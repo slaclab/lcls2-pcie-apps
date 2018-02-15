@@ -14,7 +14,9 @@ LCLS2 PCIE-Express Board Applications
 
 > Setup for large filesystems on github
 
-```$ git lfs install```
+```
+$ git lfs install
+```
 
 > Verify that you have git version 2.13.0 (or later) installed 
 
