@@ -38,7 +38,7 @@ git-lfs/2.1.1
 
 # Clone the GIT repository
 
-```$ git clone --recursive https://github.com/slaclab/lcls2-pcie-apps```
+```$ git clone --recursive git@github.com:slaclab/lcls2-pcie-apps```
 
 # How to build the firmware
 
