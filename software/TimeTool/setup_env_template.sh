@@ -1,7 +1,7 @@
 
 # Rogue
-source /mnt/host/rogue/develpc/master/setup_env.sh
-#source /afs/slac.stanford.edu/g/reseng/rogue/master/setup_env.sh
+#source /mnt/host/rogue/develpc/master/setup_env.sh
+source /afs/slac.stanford.edu/g/reseng/rogue/master/setup_env.sh
 #source $HOME/projects/gen_daq/rogue/setup.sh
 
 # Package directories
