@@ -91,7 +91,7 @@ $ make
 $ sudo /sbin/insmod datadev.ko || exit 1
 
 # give appropriate group/permissions
-$ sudo chmod 666 /dev/datadev*
+$ sudo chmod 666 /dev/data_dev*
 
 # Check for the loaded device
 $ cat /proc/data_dev0
