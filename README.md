@@ -36,6 +36,12 @@ $ git-lfs version
 git-lfs/2.1.1
 ```
 
+> If you are on the SLAC AFS network, here's what to add to your user .bashrc to get the git and git-lfs paths:
+
+```
+export PATH=/afs/slac/g/reseng/git/git/bin:${PATH}
+```
+
 # Clone the GIT repository
 
 ```$ git clone --recursive git@github.com:slaclab/lcls2-pcie-apps```
