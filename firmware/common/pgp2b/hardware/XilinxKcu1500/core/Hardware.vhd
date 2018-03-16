@@ -2,7 +2,7 @@
 -- File       : Hardware.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-22
--- Last update: 2017-10-24
+-- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: Hardware File
 -------------------------------------------------------------------------------
@@ -33,9 +33,8 @@ use unisim.vcomponents.all;
 
 entity Hardware is
    generic (
-      TPD_G            : time             := 1 ns;
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
-      AXI_BASE_ADDR_G  : slv(31 downto 0) := x"0000_0000");
+      TPD_G           : time             := 1 ns;
+      AXI_BASE_ADDR_G : slv(31 downto 0) := x"0000_0000");
    port (
       ------------------------      
       --  Top Level Interfaces
@@ -50,10 +49,10 @@ entity Hardware is
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType;
       -- DMA Interface
-      dmaObMasters     : in  AxiStreamMasterArray(7 downto 0);
-      dmaObSlaves      : out AxiStreamSlaveArray(7 downto 0);
-      dmaIbMasters     : out AxiStreamMasterArray(7 downto 0);
-      dmaIbSlaves      : in  AxiStreamSlaveArray(7 downto 0);
+      dmaObMasters    : in  AxiStreamMasterArray(7 downto 0);
+      dmaObSlaves     : out AxiStreamSlaveArray(7 downto 0);
+      dmaIbMasters    : out AxiStreamMasterArray(7 downto 0);
+      dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
       ---------------------
       --  Hardware Ports
       ---------------------    
@@ -78,8 +77,8 @@ architecture mapping of Hardware is
    -- Defined module generics as constants (in case partial reconfiguration build)
    constant NUM_AXI_MASTERS_C : natural := 2;
 
-   constant PGP_INDEX_C     : natural := 0;
-   constant EVR_INDEX_C     : natural := 1;
+   constant PGP_INDEX_C : natural := 0;
+   constant EVR_INDEX_C : natural := 1;
 
    constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_G, 21, 20);
 
@@ -134,7 +133,6 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
          NUM_SLAVE_SLOTS_G  => 1,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => AXI_CONFIG_C)
@@ -149,15 +147,14 @@ begin
          mAxiWriteSlaves     => axilWriteSlaves,
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
-         
+
    --------------
    -- PGP Modules
    --------------
    U_Pgp : entity work.PgpLaneWrapper
       generic map (
-         TPD_G            => TPD_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
-         AXI_BASE_ADDR_G  => AXI_CONFIG_C(PGP_INDEX_C).baseAddr)
+         TPD_G           => TPD_G,
+         AXI_BASE_ADDR_G => AXI_CONFIG_C(PGP_INDEX_C).baseAddr)
       port map (
          -- QSFP[0] Ports
          qsfp0RefClkP    => qsfp0RefClkP,
@@ -180,7 +177,7 @@ begin
          evrTxN          => evrTxN,
          -- DRP Clock and Reset
          drpClk          => drpClk,
-         drpRst          => drpRst,         
+         drpRst          => drpRst,
          -- DMA Interfaces (sysClk domain)
          dmaObMasters    => dmaObMasters,
          dmaObSlaves     => dmaObSlaves,
@@ -196,16 +193,15 @@ begin
          axilReadMaster  => axilReadMasters(PGP_INDEX_C),
          axilReadSlave   => axilReadSlaves(PGP_INDEX_C),
          axilWriteMaster => axilWriteMasters(PGP_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C));         
+         axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C));
 
    ------------------
    -- Timing Receiver
    ------------------
    U_Evr : entity work.EvrFrontEnd
       generic map (
-         TPD_G            => TPD_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
-         AXI_BASE_ADDR_G  => AXI_CONFIG_C(EVR_INDEX_C).baseAddr)
+         TPD_G           => TPD_G,
+         AXI_BASE_ADDR_G => AXI_CONFIG_C(EVR_INDEX_C).baseAddr)
       port map (
          -- Timing Interface (evrClk domain)
          evrClk          => evrClk,

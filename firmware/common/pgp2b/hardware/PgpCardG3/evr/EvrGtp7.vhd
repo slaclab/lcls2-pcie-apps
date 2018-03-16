@@ -2,7 +2,7 @@
 -- File       : EvrGtp7.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-04
--- Last update: 2017-10-04
+-- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -29,9 +29,8 @@ use unisim.vcomponents.all;
 
 entity EvrGtp7 is
    generic (
-      TPD_G            : time            := 1 ns;
-      DEFAULT_TIMING_G : boolean         := false;  -- false = LCLS-I, true = LCLS-II
-      AXI_ERROR_RESP_G : slv(1 downto 0) := AXI_RESP_DECERR_C);
+      TPD_G            : time    := 1 ns;
+      DEFAULT_TIMING_G : boolean := false);  -- false = LCLS-I, true = LCLS-II
    port (
       -- GT Serial Ports
       gtTxP            : out sl;

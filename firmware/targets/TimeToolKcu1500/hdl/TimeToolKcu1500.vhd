@@ -88,12 +88,9 @@ end TimeToolKcu1500;
 
 architecture top_level of TimeToolKcu1500 is
 
-   constant AXI_ERROR_RESP_C : slv(1 downto 0)  := BAR0_ERROR_RESP_C;
-   constant AXI_BASE_ADDR_C  : slv(31 downto 0) := BAR0_BASE_ADDR_C;
-
    constant NUM_AXI_MASTERS_C : natural := 2;
 
-   constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_C, 22, 22);
+   constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, BAR0_BASE_ADDR_C, 22, 22);
 
    signal sysClk     : sl;
    signal sysRst     : sl;
@@ -207,7 +204,6 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_C,
          NUM_SLAVE_SLOTS_G  => 1,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => AXI_CONFIG_C)
@@ -226,8 +222,7 @@ begin
    U_App : entity work.Hardware
       generic map (
          TPD_G            => TPD_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_C,
-         AXI_BASE_ADDR_G  => AXI_BASE_ADDR_C)
+         AXI_BASE_ADDR_G  => AXI_CONFIG_C(0).baseAddr)
       port map (
          ------------------------      
          --  Top Level Interfaces
@@ -297,8 +292,7 @@ begin
 
    U_TimeToolCore: entity work.TimeToolCore
       generic map ( 
-         TPD_G            => TPD_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_C)
+         TPD_G            => TPD_G)
       port map (
          sysClk          => sysClk,
          sysRst          => sysRst,

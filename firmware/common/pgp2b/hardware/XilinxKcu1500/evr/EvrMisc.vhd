@@ -2,7 +2,7 @@
 -- File       : EvrMisc.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-09-20
--- Last update: 2017-12-06
+-- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -26,9 +26,8 @@ use work.AxiPciePkg.all;
 
 entity EvrMisc is
    generic (
-      TPD_G            : time            := 1 ns;
-      DEFAULT_TIMING_G : boolean         := true;  -- false = LCLS-I, true = LCLS-II
-      AXI_ERROR_RESP_G : slv(1 downto 0) := AXI_RESP_DECERR_C);
+      TPD_G            : time    := 1 ns;
+      DEFAULT_TIMING_G : boolean := true);  -- false = LCLS-I, true = LCLS-II
    port (
       rxUserRst       : out sl;
       txUserRst       : out sl;
@@ -213,7 +212,7 @@ begin
       axiSlaveRegisterR(regCon, x"68", 0, refClkFreq(2));
 
       -- Closeout the transaction
-      axiSlaveDefault(regCon, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
+      axiSlaveDefault(regCon, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
       -- Synchronous Reset
       if (sysRst = '1') then

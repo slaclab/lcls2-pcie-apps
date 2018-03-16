@@ -31,7 +31,6 @@ entity EvrFrontEnd is
    generic (
       TPD_G            : time             := 1 ns;
       DEFAULT_TIMING_G : boolean          := false;  -- false = LCLS-I, true = LCLS-II
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
       AXI_BASE_ADDR_G  : slv(31 downto 0) := (others => '0'));
    port (
       -- Timing Interface
@@ -119,7 +118,6 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
          NUM_SLAVE_SLOTS_G  => 1,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => AXI_CONFIG_C)
@@ -162,7 +160,6 @@ begin
    U_QPLL : entity work.Gtp7QuadPll
       generic map (
          TPD_G                => TPD_G,
-         AXI_ERROR_RESP_G     => AXI_ERROR_RESP_G,
          PLL0_REFCLK_SEL_G    => "001",  -- GTREFCLK0 selected
          PLL0_FBDIV_IN_G      => 2,      -- 238 MHz clock reference
          PLL0_FBDIV_45_IN_G   => 5,
@@ -193,8 +190,7 @@ begin
    U_GTP : entity work.EvrGtp7
       generic map (
          TPD_G            => TPD_G,
-         DEFAULT_TIMING_G => DEFAULT_TIMING_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+         DEFAULT_TIMING_G => DEFAULT_TIMING_G)
       port map (
          -- GT Serial Ports
          gtTxP            => evrTxP,
@@ -271,8 +267,7 @@ begin
    U_EvrMisc : entity work.EvrMisc
       generic map (
          TPD_G            => TPD_G,
-         DEFAULT_TIMING_G => DEFAULT_TIMING_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+         DEFAULT_TIMING_G => DEFAULT_TIMING_G)
       port map (
          rxUserRst       => rxUserRst,
          txUserRst       => txUserRst,

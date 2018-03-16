@@ -2,7 +2,7 @@
 -- File       : EvrFrontEnd.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-09-20
--- Last update: 2017-10-24
+-- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -31,7 +31,6 @@ entity EvrFrontEnd is
    generic (
       TPD_G            : time             := 1 ns;
       DEFAULT_TIMING_G : boolean          := false;  -- false = LCLS-I, true = LCLS-II
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
       AXI_BASE_ADDR_G  : slv(31 downto 0) := (others => '0'));
    port (
       -- Timing Interface
@@ -211,7 +210,6 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
          NUM_SLAVE_SLOTS_G  => 1,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => AXI_CONFIG_C)
@@ -234,10 +232,9 @@ begin
 
       U_AxiLiteAsync : entity work.AxiLiteAsync
          generic map (
-            TPD_G            => TPD_G,
-            AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
-            COMMON_CLK_G     => false,
-            NUM_ADDR_BITS_G  => 32)
+            TPD_G           => TPD_G,
+            COMMON_CLK_G    => false,
+            NUM_ADDR_BITS_G => 32)
          port map (
             -- Slave Interface
             sAxiClk         => sysClk,
@@ -257,8 +254,7 @@ begin
       U_GTP : entity work.EvrGthCoreWrapper
          generic map (
             TPD_G            => TPD_G,
-            AXIL_BASE_ADDR_G => AXI_CONFIG_C(GTP0_INDEX_C+i).baseAddr,
-            AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+            AXIL_BASE_ADDR_G => AXI_CONFIG_C(GTP0_INDEX_C+i).baseAddr)
          port map (
             axilClk         => drpClk,
             axilRst         => drpRst,
@@ -335,8 +331,7 @@ begin
          DEFAULT_CLK_SEL_G => ite(DEFAULT_TIMING_G, '1', '0'),
          AXIL_RINGB_G      => false,
          ASYNC_G           => false,
-         AXIL_BASE_ADDR_G  => AXI_CONFIG_C(EVR_INDEX_C).baseAddr,
-         AXIL_ERROR_RESP_G => AXI_ERROR_RESP_G)
+         AXIL_BASE_ADDR_G  => AXI_CONFIG_C(EVR_INDEX_C).baseAddr)
       port map (
          -- GT Interface
          gtTxUsrClk      => txClk,
@@ -368,8 +363,7 @@ begin
    U_EvrMisc : entity work.EvrMisc
       generic map (
          TPD_G            => TPD_G,
-         DEFAULT_TIMING_G => DEFAULT_TIMING_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+         DEFAULT_TIMING_G => DEFAULT_TIMING_G)
       port map (
          rxUserRst       => rxUserRst,
          txUserRst       => txUserRst,

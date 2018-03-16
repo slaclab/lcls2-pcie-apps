@@ -2,7 +2,7 @@
 -- File       : AppPgp2bLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-22
--- Last update: 2017-10-12
+-- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -269,7 +269,6 @@ begin
    U_MON : entity work.Pgp2bAxi
       generic map (
          TPD_G              => TPD_G,
-         AXI_ERROR_RESP_G   => AXIL_ERROR_RESP_G,
          COMMON_TX_CLK_G    => false,
          COMMON_RX_CLK_G    => false,
          WRITE_EN_G         => true,

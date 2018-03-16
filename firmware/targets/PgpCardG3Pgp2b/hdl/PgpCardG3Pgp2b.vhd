@@ -2,7 +2,7 @@
 -- File       : PgpCardG3Pgp2b.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-09-28
--- Last update: 2017-10-07
+-- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ use work.AxiStreamPkg.all;
 
 entity PgpCardG3Pgp2b is
    generic (
-      TPD_G        : time                 := 1 ns;
+      TPD_G        : time := 1 ns;
       BUILD_INFO_G : BuildInfoType);
    port (
       -- PGP GT Serial Ports
@@ -83,53 +83,52 @@ begin
 
    U_Core : entity work.AxiPciePgpCardG3Core
       generic map (
-         TPD_G            => TPD_G,
-         BUILD_INFO_G     => BUILD_INFO_G,
-         DMA_SIZE_G       => 8)
+         TPD_G        => TPD_G,
+         BUILD_INFO_G => BUILD_INFO_G,
+         DMA_SIZE_G   => 8)
       port map (
          ------------------------      
          --  Top Level Interfaces
          ------------------------              
          -- System Clock and Reset
-         sysClk          => sysClk,
-         sysRst          => sysRst,
+         sysClk         => sysClk,
+         sysRst         => sysRst,
          -- DMA Interfaces
          dmaObMasters   => dmaObMasters,
          dmaObSlaves    => dmaObSlaves,
          dmaIbMasters   => dmaIbMasters,
          dmaIbSlaves    => dmaIbSlaves,
          -- AXI-Lite Interface
-         appClk          => sysClk,
-         appRst          => sysRst,
-         appReadMaster   => axilReadMaster,
-         appReadSlave    => axilReadSlave,
-         appWriteMaster  => axilWriteMaster,
-         appWriteSlave   => axilWriteSlave,
+         appClk         => sysClk,
+         appRst         => sysRst,
+         appReadMaster  => axilReadMaster,
+         appReadSlave   => axilReadSlave,
+         appWriteMaster => axilWriteMaster,
+         appWriteSlave  => axilWriteSlave,
          -------------------
          --  Top Level Ports
          -------------------             
          -- Boot Memory Ports 
-         flashAddr       => flashAddr,
-         flashData       => flashData,
-         flashAdv        => flashAdv,
-         flashCeL        => flashCeL,
-         flashOeL        => flashOeL,
-         flashWeL        => flashWeL,
+         flashAddr      => flashAddr,
+         flashData      => flashData,
+         flashAdv       => flashAdv,
+         flashCeL       => flashCeL,
+         flashOeL       => flashOeL,
+         flashWeL       => flashWeL,
          -- PCIe Ports 
-         pciRstL         => pciRstL,
-         pciRefClkP      => pciRefClkP,
-         pciRefClkN      => pciRefClkN,
-         pciRxP          => pciRxP,
-         pciRxN          => pciRxN,
-         pciTxP          => pciTxP,
-         pciTxN          => pciTxN);
+         pciRstL        => pciRstL,
+         pciRefClkP     => pciRefClkP,
+         pciRefClkN     => pciRefClkN,
+         pciRxP         => pciRxP,
+         pciRxN         => pciRxN,
+         pciTxP         => pciTxP,
+         pciTxN         => pciTxN);
 
    U_App : entity work.Hardware
       generic map (
-         TPD_G            => TPD_G,
-         LANE_SIZE_G      => 8,
-         AXI_ERROR_RESP_G => AXI_RESP_OK_C,  -- Always return OK to a MMAP()
-         AXI_BASE_ADDR_G  => x"0080_0000")
+         TPD_G           => TPD_G,
+         LANE_SIZE_G     => 8,
+         AXI_BASE_ADDR_G => x"0080_0000")
       port map (
          -- System Clock and Reset
          sysClk          => sysClk,
@@ -160,10 +159,10 @@ begin
          evrTxP          => evrTxP,
          evrTxN          => evrTxN);
 
-   ledDbg     <= '0';
-   ledRedL    <= (others=>'1');
-   ledBlueL   <= (others=>'1');
-   ledGreenL  <= (others=>'1');
+   ledDbg    <= '0';
+   ledRedL   <= (others => '1');
+   ledBlueL  <= (others => '1');
+   ledGreenL <= (others => '1');
 
 end top_level;
 
