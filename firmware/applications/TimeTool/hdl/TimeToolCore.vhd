@@ -61,7 +61,8 @@ architecture mapping of TimeToolCore is
       master          : AxiStreamMasterType;
       slave           : AxiStreamSlaveType;
       addvalue        : slv(7 downto 0);
-      pulseId         : slv(31 downto 0);   
+      pulseId         : slv(31 downto 0);   --added by cpo
+      endOfFrame      : sl;                 -- added sz and cpo
       axilReadSlave   : AxiLiteReadSlaveType;
       axilWriteSlave  : AxiLiteWriteSlaveType;
    end record RegType;
@@ -70,7 +71,8 @@ architecture mapping of TimeToolCore is
       master          => AXI_STREAM_MASTER_INIT_C,
       slave           => AXI_STREAM_SLAVE_INIT_C,
       addValue        => (others=>'0'),
-      pulseId         => (others=>'0'),
+      pulseId         => (others=>'0'),    --added by cpo
+      endOfFrame      => '0',              --added sz and cpo
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C);
 
@@ -123,13 +125,14 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"000",  0, v.addValue);
+      axiSlaveRegister (axilEp, x"000",  0, v.addValue);	--field is updated from info over axi bus. only for add value
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
 
       ------------------------------
-      -- Event Code
+      -- Event Code            --cpo
       ------------------------------
+      -- will need to change r.pulseId to go into a fifo when data rates increase (camera readout over laps with next trigger being received)
       if timingBus.strobe = '1' and timingBus.valid = '1' then
          v.pulseId := timingBus.stream.pulseId;
       end if;
@@ -139,27 +142,32 @@ begin
       ------------------------------
       v.slave.tReady := not outCtrl.pause;
 
-      -- might have to look at tLast 1 clock tick later
-      if v.endOfFrame = '1' then
-         # could also use sAxisSlave instead of sAxisCtrl
-         # ctrl has pause, slave has ready
-         # rewrite as state-machine case statement
-         # need to make sure evr has correct clock
-         v.master := inMaster;
+      if v.slave.tReady = '1' and r.endOfFrame = '1' then
+         -- could also use sAxisSlave instead of sAxisCtrl
+         -- ctrl has pause, slave has ready
+         -- rewrite as state-machine case statement
+         -- need to make sure evr has correct clock
+         --are there other bits in v.master that need to be twiddled (e.g. strobe?) in order for the output fifo to behave as expected.
          v.master.tData(31 downto 0)   := r.pulseId;
          v.master.tData(127 downto 32) := (others=>'0');
-      elsif v.slave.tReady = '1' and inMaster.tValid = '1' then
+         v.endOfFrame := '0';	  --sz and cpo
+         v.master.tValid := '1';  --sz and cpo
+         v.master.tLast := '1';   --sz and cpo
+    
+      elsif v.slave.tReady = '1' and inMaster.tValid = '1' and r.endOfFrame = '0' then
          v.master := inMaster;
 
          for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
             v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
          end loop;
-         if tLast = '1' then
-           # this should only go high for 1 clock tick
-           v.endOfFrame := '1';
-         else
-           v.endOfFrame := '0';
-         end if;
+
+
+         if inMaster.tLast = '1' then  --cpo
+           v.endOfFrame := '1';            --cpo
+           v.master.tLast := '0';          --cpo
+         end if;                           --cpo
+
+
       else
          v.master.tValid := '0';
       end if;
