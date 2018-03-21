@@ -2,7 +2,7 @@
 -- File       : Hardware.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-22
--- Last update: 2018-03-15
+-- Last update: 2018-03-20
 -------------------------------------------------------------------------------
 -- Description: Hardware File
 -------------------------------------------------------------------------------
@@ -53,6 +53,8 @@ entity Hardware is
       dmaObSlaves     : out AxiStreamSlaveArray(7 downto 0);
       dmaIbMasters    : out AxiStreamMasterArray(7 downto 0);
       dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
+      -- Timing information
+      timingBus       : out TimingBusType;
       ---------------------
       --  Hardware Ports
       ---------------------    
@@ -89,7 +91,6 @@ architecture mapping of Hardware is
 
    signal evrClk       : sl;
    signal evrRst       : sl;
-   signal evrTimingBus : TimingBusType;
 
    signal evrRxP : slv(1 downto 0);
    signal evrRxN : slv(1 downto 0);
@@ -100,9 +101,13 @@ architecture mapping of Hardware is
    signal drpReset : sl;
    signal drpRst   : sl;
 
+   signal evrTimingBus : TimingBusType;
+
 begin
 
-   U_DRP_CLK : BUFGCE_DIV
+  timingBus <= evrTimingBus;
+
+  U_DRP_CLK : BUFGCE_DIV
       generic map (
          BUFGCE_DIVIDE => 8)
       port map (

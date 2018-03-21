@@ -2,7 +2,7 @@
 -- File       : TimeToolKcu1500.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
--- Last update: 2017-11-27
+-- Last update: 2018-03-20
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -23,6 +23,7 @@ use work.AxiPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
+use work.TimingPkg.all;
 
 entity TimeToolKcu1500 is
    generic (
@@ -126,6 +127,8 @@ architecture top_level of TimeToolKcu1500 is
    signal memWriteSlaves  : AxiWriteSlaveArray(15 downto 0);
    signal memReadMasters  : AxiReadMasterArray(15 downto 0);
    signal memReadSlaves   : AxiReadSlaveArray(15 downto 0);
+
+   signal timingBus : TimingBusType;
 
 begin
 
@@ -241,6 +244,8 @@ begin
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => hwIbMasters,
          dmaIbSlaves     => hwIbSlaves,
+         -- Timing information
+         timingBus       => timingBus,
          ------------------
          --  Hardware Ports
          ------------------        
@@ -303,7 +308,7 @@ begin
          axilReadMaster  => intReadMasters(1),
          axilReadSlave   => intReadSlaves(1),
          axilWriteMaster => intWriteMasters(1),
-         axilWriteSlave  => intWriteSlaves(1));
+         axilWriteSlave  => intWriteSlaves(1),
+         timingBus       => timingBus);
 
 end top_level;
-

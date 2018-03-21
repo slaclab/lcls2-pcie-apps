@@ -2,7 +2,7 @@
 -- File       : TimeToolCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2017-12-04
+-- Last update: 2018-03-20
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -26,6 +26,7 @@ use work.AxiStreamPkg.all;
 use work.AxiPkg.all;
 use work.SsiPkg.all;
 use work.AxiPciePkg.all;
+use work.TimingPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -47,7 +48,9 @@ entity TimeToolCore is
       axilReadMaster  : in    AxiLiteReadMasterType;
       axilReadSlave   : out   AxiLiteReadSlaveType;
       axilWriteMaster : in    AxiLiteWriteMasterType;
-      axilWriteSlave  : out   AxiLiteWriteSlaveType);
+      axilWriteSlave  : out   AxiLiteWriteSlaveType;
+      -- Timing information
+      timingBus       : in    TimingBusType);
 end TimeToolCore;
 
 architecture mapping of TimeToolCore is
@@ -58,6 +61,7 @@ architecture mapping of TimeToolCore is
       master          : AxiStreamMasterType;
       slave           : AxiStreamSlaveType;
       addvalue        : slv(7 downto 0);
+      pulseId         : slv(31 downto 0);   
       axilReadSlave   : AxiLiteReadSlaveType;
       axilWriteSlave  : AxiLiteWriteSlaveType;
    end record RegType;
@@ -66,6 +70,7 @@ architecture mapping of TimeToolCore is
       master          => AXI_STREAM_MASTER_INIT_C,
       slave           => AXI_STREAM_SLAVE_INIT_C,
       addValue        => (others=>'0'),
+      pulseId         => (others=>'0'),
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C);
 
@@ -103,7 +108,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster, outCtrl) is
+   comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster, outCtrl, timingBus) is
       variable v      : RegType;
       variable axilEp : AxiLiteEndpointType;
    begin
@@ -123,17 +128,38 @@ begin
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
 
       ------------------------------
+      -- Event Code
+      ------------------------------
+      if timingBus.strobe = '1' and timingBus.valid = '1' then
+         v.pulseId := timingBus.stream.pulseId;
+      end if;
+      
+      ------------------------------
       -- Data Mover
       ------------------------------
       v.slave.tReady := not outCtrl.pause;
 
-      if v.slave.tReady = '1' and inMaster.tValid = '1' then
+      -- might have to look at tLast 1 clock tick later
+      if v.endOfFrame = '1' then
+         # could also use sAxisSlave instead of sAxisCtrl
+         # ctrl has pause, slave has ready
+         # rewrite as state-machine case statement
+         # need to make sure evr has correct clock
+         v.master := inMaster;
+         v.master.tData(31 downto 0)   := r.pulseId;
+         v.master.tData(127 downto 32) := (others=>'0');
+      elsif v.slave.tReady = '1' and inMaster.tValid = '1' then
          v.master := inMaster;
 
          for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
             v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
          end loop;
-
+         if tLast = '1' then
+           # this should only go high for 1 clock tick
+           v.endOfFrame := '1';
+         else
+           v.endOfFrame := '0';
+         end if;
       else
          v.master.tValid := '0';
       end if;
