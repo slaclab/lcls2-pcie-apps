@@ -145,11 +145,8 @@ begin
       if v.slave.tReady = '1' and r.endOfFrame = '1' then
          -- could also use sAxisSlave instead of sAxisCtrl
          -- ctrl has pause, slave has ready
-         -- rewrite as state-machine case statement
-         -- need to make sure evr has correct clock
-         --are there other bits in v.master that need to be twiddled (e.g. strobe?) in order for the output fifo to behave as expected.
          v.master.tData(31 downto 0)   := r.pulseId;
-         v.master.tData(127 downto 32) := (others=>'0');
+         v.master.tKeep := x"000F";
          v.endOfFrame := '0';	  --sz and cpo
          v.master.tValid := '1';  --sz and cpo
          v.master.tLast := '1';   --sz and cpo
@@ -162,7 +159,7 @@ begin
          end loop;
 
 
-         if inMaster.tLast = '1' then  --cpo
+         if inMaster.tLast = '1' then      --cpo
            v.endOfFrame := '1';            --cpo
            v.master.tLast := '0';          --cpo
          end if;                           --cpo

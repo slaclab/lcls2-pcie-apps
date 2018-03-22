@@ -344,8 +344,10 @@ begin
          gtRxControl     => rxCtrl,
          gtRxStatus      => rxStatus,
          -- Decoded timing message interface
-         appTimingClk    => rxClk,
-         appTimingRst    => rxRst,
+         --appTimingClk    => rxClk,
+	 appTimingClk    => sysClk,
+         --appTimingRst    => rxRst,
+	 appTimingRst    => sysRst,
          appTimingBus    => evrTimingBus,
          timingPhy       => timingPhy,
          timingClkSel    => timingClockSel,
