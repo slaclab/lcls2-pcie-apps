@@ -13,7 +13,7 @@ import pyrogue as pr
 import pyrogue.interfaces.simulation
 import rogue.hardware.data
 
-from DataLib.DataDev import *
+import axipcie
 from surf.xilinx import *
 from XilinxKcu1500.TimingCore import *
 from XilinxKcu1500Pgp2b.PgpLane import *
@@ -26,7 +26,7 @@ class XilinxKcu1500Pgp2b(pr.Device):
         super().__init__(name=name, description=description, **kwargs)
         
         # Add axi-pcie-core 
-        self.add(DataDev(            
+        self.add(axipcie.AxiPcieCore(            
             offset       = 0x00000000, 
             useSpi       = True,
             expand       = False,
