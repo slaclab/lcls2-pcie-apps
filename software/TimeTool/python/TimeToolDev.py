@@ -7,7 +7,7 @@ import surf.protocols.clink
 import time
 import TimeTool
 import pyrogue.utilities.fileio
-from XilinxKcu1500Pgp2b import *
+#from XilinxKcu1500Pgp2b import *
 
 class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
@@ -64,12 +64,12 @@ class TimeToolDev(pr.Root):
         pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev')
 
         # Create the stream interface
-        self._pgpVc0 = rogue.hardware.data.DataCard('/dev/datadev_0',0) # Registers
-        self._pgpVc1 = rogue.hardware.data.DataCard('/dev/datadev_0',1) # Data
-        self._pgpVc2 = rogue.hardware.data.DataCard('/dev/datadev_0',2) # Serial
+        self._pgpVc0 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',0,True) # Registers
+        self._pgpVc1 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',1,True) # Data
+        self._pgpVc2 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',2,True) # Serial
 
         # Local map
-        dataMap = rogue.hardware.data.DataMap('/dev/datadev_0')
+        dataMap = rogue.hardware.axi.AxiMemMap('/dev/datadev_0')
 
         # Cameralink
         self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
