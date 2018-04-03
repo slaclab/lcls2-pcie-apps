@@ -7,7 +7,7 @@ import surf.protocols.clink
 import time
 import TimeTool
 import pyrogue.utilities.fileio
-#from XilinxKcu1500Pgp2b import *
+from XilinxKcu1500Pgp2b import *
 
 class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
