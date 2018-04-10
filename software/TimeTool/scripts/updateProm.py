@@ -17,8 +17,10 @@
 import sys
 import argparse
 import pyrogue as pr
-from DataLib.DataDev import *
-import glob
+import rogue.hardware.axi
+import axipcie as pcie
+
+#################################################################
     
 # Set the argument parser
 parser = argparse.ArgumentParser()
@@ -28,55 +30,47 @@ parser.add_argument(
     "--dev", 
     type     = str,
     required = False,
-    default  = "/dev/datadev_0",
+    default  = '/dev/datadev_0',
     help     = "path to device",
 )  
 
 parser.add_argument(
-    "--path", 
+    "--mcs_pri", 
     type     = str,
-    required = False,
-    default  = "../../firmware/targets/TimeToolKcu1500/images/",
-    help     = "path to images",
+    required = True,
+    help     = "path to primary MCS file",
 )  
+
+parser.add_argument(
+    "--mcs_sec", 
+    type     = str,
+    required = True,
+    help     = "path to secondary MCS file",
+)    
 
 # Get the arguments
 args = parser.parse_args()
+
+#################################################################
     
 # Set base
-devTop = pr.Root(name='devTop',description='')
+base = pr.Root(name='PcieTop',description='')
 
 # Create the stream interface
-coreMap = rogue.hardware.data.DataMap(args.dev)
+memMap = rogue.hardware.axi.AxiMemMap(args.dev)
 
 # Add Base Device
-devTop.add(DataDev(memBase=coreMap,useSpi=True))
+base.add(pcie.AxiPcieCore(memBase=memMap,useSpi=True))
 
 # Start the system
-devTop.start(pollEn=False)
+base.start(pollEn=False)
 
-# Get a list of images
-outLst = []
-inLst = glob.glob('{}/*.mcs'.format(args.path))
-for l in inLst:
-    l = l.replace('_primary.mcs','')
-    l = l.replace('_secondary.mcs','')
-    if not l in outLst:
-        outLst.append(l)
+# Load the primary MCS file to QSPI[0]
+base.AxiPcieCore.AxiMicronN25Q[0].LoadMcsFile(args.mcs_pri)  
 
-for i,l in enumerate(outLst):
-    print('{} : {}'.format(i,l))
-
-idx = int(input('Enter image: '))
-pri = '{}_primary.mcs'.format(outLst[idx])
-sec = '{}_secondary.mcs'.format(outLst[idx])
-
-print('Loading primary image: {}'.format(pri))
-devTop.DataDev.AxiMicronN25Q[0].LoadMcsFile(pri)  
-
-print('Loading secondary image: {}'.format(sec))
-devTop.DataDev.AxiMicronN25Q[1].LoadMcsFile(sec)  
-
+# Load the secondary MCS file to QSPI[1]
+base.AxiPcieCore.AxiMicronN25Q[1].LoadMcsFile(args.mcs_sec)  
+    
 # Close out
-devTop.stop()
+base.stop()
 exit()
