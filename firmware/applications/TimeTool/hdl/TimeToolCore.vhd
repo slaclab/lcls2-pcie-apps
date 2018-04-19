@@ -94,6 +94,7 @@ architecture mapping of TimeToolCore is
 
 begin
 
+   locTxIn <= locTxIn_buf;
    ---------------------------------
    -- Input FIFO
    ---------------------------------
@@ -225,7 +226,6 @@ begin
    begin
       if (rising_edge(sysClk)) then
          r <= rin after TPD_G;
-         locTxIn <= locTxIn_buf;
       end if;
    end process seq;
 

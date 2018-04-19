@@ -106,7 +106,7 @@ architecture mapping of PgpLane is
    signal config : ConfigType;
 
 begin
-
+   pgpTxClk_out <= pgpTxClk;
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
@@ -185,15 +185,6 @@ begin
          DIV     => "000",              -- Divide by 1
          O       => pgpTxClk);
 
-   U_BUFG_TX_out : BUFG_GT
-      port map (
-         I       => pgpTxOutClk,
-         CE      => '1',
-         CEMASK  => '1',
-         CLR     => '0',
-         CLRMASK => '1',
-         DIV     => "000",              -- Divide by 1
-         O       => pgpTxClk_out);
 
    U_BUFG_RX : BUFG_GT
       port map (
