@@ -61,7 +61,10 @@ entity PgpLane is
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType);
+      axilWriteSlave  : out AxiLiteWriteSlaveType;
+      -- op-code for controlling of timetool cc1 (<- pin id) trigger
+      locTxIn         : in  Pgp2bTxInType;
+      pgpTxClk_out    : out  sl);
 end PgpLane;
 
 architecture mapping of PgpLane is
@@ -79,7 +82,6 @@ architecture mapping of PgpLane is
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
 
-   signal locTxIn  : Pgp2bTxInType;
    signal pgpTxIn  : Pgp2bTxInType;
    signal pgpTxOut : Pgp2bTxOutType;
 
@@ -182,6 +184,16 @@ begin
          CLRMASK => '1',
          DIV     => "000",              -- Divide by 1
          O       => pgpTxClk);
+
+   U_BUFG_TX_out : BUFG_GT
+      port map (
+         I       => pgpTxOutClk,
+         CE      => '1',
+         CEMASK  => '1',
+         CLR     => '0',
+         CLRMASK => '1',
+         DIV     => "000",              -- Divide by 1
+         O       => pgpTxClk_out);
 
    U_BUFG_RX : BUFG_GT
       port map (
@@ -289,7 +301,7 @@ begin
          -- PGP Trigger Interface (pgpTxClk domain)
          pgpTxClk     => pgpTxClk,
          pgpTxRst     => pgpTxRst,
-         pgpTxIn      => locTxIn,
+         --pgpTxIn      => locTxIn, --removed in order to allow time tool core opcode enable to control. to allow 
          -- PGP RX Interface (pgpRxClk domain)
          pgpRxClk     => pgpRxClk,
          pgpRxRst     => pgpRxRst,

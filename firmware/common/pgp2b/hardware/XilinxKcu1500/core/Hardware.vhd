@@ -27,6 +27,7 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
 use work.TimingPkg.all;
+use work.Pgp2bPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -55,6 +56,8 @@ entity Hardware is
       dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
       -- Timing information
       timingBus       : out TimingBusType;
+      locTxIn         : in  Pgp2bTxInType;
+      pgpTxClk        : out sl;
       ---------------------
       --  Hardware Ports
       ---------------------    
@@ -198,7 +201,10 @@ begin
          axilReadMaster  => axilReadMasters(PGP_INDEX_C),
          axilReadSlave   => axilReadSlaves(PGP_INDEX_C),
          axilWriteMaster => axilWriteMasters(PGP_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C));
+         axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C),
+         -- op-code for controlling of timetool cc1 (<- pin id) trigger
+         locTxIn         => locTxIn,
+         pgpTxClk        => pgpTxClk);
 
    ------------------
    -- Timing Receiver

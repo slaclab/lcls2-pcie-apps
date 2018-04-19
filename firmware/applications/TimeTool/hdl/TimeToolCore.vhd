@@ -27,6 +27,7 @@ use work.AxiPkg.all;
 use work.SsiPkg.all;
 use work.AxiPciePkg.all;
 use work.TimingPkg.all;
+use work.Pgp2bPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -50,31 +51,38 @@ entity TimeToolCore is
       axilWriteMaster : in    AxiLiteWriteMasterType;
       axilWriteSlave  : out   AxiLiteWriteSlaveType;
       -- Timing information
-      timingBus       : in    TimingBusType);
+      timingBus       : in    TimingBusType;
+      -- op-code for controlling of timetool cc1 (<- pin id) trigger
+      locTxIn         : out    Pgp2bTxInType;
+      pgpTxClk        : in     sl);
 end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
    constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
+   constant PGP2BTXIN_LEN  : integer := 19;
 
    type RegType is record
-      master          : AxiStreamMasterType;
-      slave           : AxiStreamSlaveType;
-      addvalue        : slv(7 downto 0);
-      pulseId         : slv(31 downto 0);   --added by cpo
-      endOfFrame      : sl;                 -- added sz and cpo
-      axilReadSlave   : AxiLiteReadSlaveType;
-      axilWriteSlave  : AxiLiteWriteSlaveType;
+      master                : AxiStreamMasterType;
+      slave                 : AxiStreamSlaveType;
+      addvalue              : slv(7 downto 0);
+      pulseId               : slv(31 downto 0);   --added by cpo
+      endOfFrame            : sl;                 -- added sz and cpo
+      axilReadSlave         : AxiLiteReadSlaveType;
+      axilWriteSlave        : AxiLiteWriteSlaveType;
+      locTxIn_local_sysClk  : Pgp2bTxInType;
+
    end record RegType;
 
    constant REG_INIT_C : RegType := (
-      master          => AXI_STREAM_MASTER_INIT_C,
-      slave           => AXI_STREAM_SLAVE_INIT_C,
-      addValue        => (others=>'0'),
-      pulseId         => (others=>'0'),    --added by cpo
-      endOfFrame      => '0',              --added sz and cpo
-      axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
-      axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C);
+      master               => AXI_STREAM_MASTER_INIT_C,
+      slave                => AXI_STREAM_SLAVE_INIT_C,
+      addValue             => (others=>'0'),
+      pulseId              => (others=>'0'),    --added by cpo
+      endOfFrame           => '0',              --added sz and cpo
+      axilReadSlave        => AXI_LITE_READ_SLAVE_INIT_C,
+      axilWriteSlave       => AXI_LITE_WRITE_SLAVE_INIT_C,
+      locTxIn_local_sysClk => PGP2B_TX_IN_INIT_C);    --come back to
 
    signal r   : RegType := REG_INIT_C;
    signal rin : RegType;
@@ -108,6 +116,22 @@ begin
          mAxisSlave  => inSlave);
 
    ---------------------------------
+   -- locTxIn FIFO for crossing clock domains.
+   ---------------------------------
+   locTxIn_SynchronizerFifo: entity work.SynchronizerFifo
+         generic map (
+            TPD_G        => TPD_G,
+            DATA_WIDTH_G => PGP2BTXIN_LEN)
+         port map (
+            rst    => sysRst,
+            wr_clk => sysClk,
+            wr_en  => r.locTxIn_local_sysClk.opCodeEn,
+            din    => r.locTxIn_local_sysClk.flush & r.locTxIn_local_sysClk.opCodeEn & r.locTxIn_local_sysClk.opCode & r.locTxIn_local_sysClk.locData & r.locTxIn_local_sysClk.flowCntlDis,
+            rd_clk => pgpTxClk,
+            dout   => locTxIn.flush & locTxIn.opCodeEn & locTxIn.opCode & locTxIn.locData & locTxIn.flowCntlDis,
+            valid  => locTxIn.opCodeEn);
+
+   ---------------------------------
    -- Application
    ---------------------------------
    comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster, outCtrl, timingBus) is
@@ -135,6 +159,10 @@ begin
       -- will need to change r.pulseId to go into a fifo when data rates increase (camera readout over laps with next trigger being received)
       if timingBus.strobe = '1' and timingBus.valid = '1' then
          v.pulseId := timingBus.stream.pulseId;
+         --look for event code and use it to drive locTxIn and it will send op code to drive front end board.
+         v.locTxIn_local_sysClk.opCodeEn := '0';  --falling edge triggers camera.
+      else
+         v.locTxIn_local_sysClk.opCodeEn := '1';  --this will happen one clock cycle later. is that long enough to trigger camera?
       end if;
       
       ------------------------------
@@ -183,6 +211,7 @@ begin
       axilReadSlave  <= r.axilReadSlave;
       axilWriteSlave <= r.axilWriteSlave;
       inSlave        <= v.slave;
+      locTxIn        <= v.locTxIn_local_sysClk;
 
    end process comb;
 

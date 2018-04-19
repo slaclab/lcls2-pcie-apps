@@ -24,6 +24,7 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
 use work.TimingPkg.all;
+use work.Pgp2bPkg.all;
 
 entity TimeToolKcu1500 is
    generic (
@@ -128,7 +129,9 @@ architecture top_level of TimeToolKcu1500 is
    signal memReadMasters  : AxiReadMasterArray(15 downto 0);
    signal memReadSlaves   : AxiReadSlaveArray(15 downto 0);
 
-   signal timingBus : TimingBusType;
+   signal timingBus       : TimingBusType;
+   signal locTxIn         : Pgp2bTxInType;
+   signal pgpTxClk        : sl;
 
 begin
 
@@ -246,6 +249,8 @@ begin
          dmaIbSlaves     => hwIbSlaves,
          -- Timing information
          timingBus       => timingBus,
+         locTxIn         => locTxIn,
+         pgpTxClk        => pgpTxClk,
          ------------------
          --  Hardware Ports
          ------------------        
@@ -309,6 +314,8 @@ begin
          axilReadSlave   => intReadSlaves(1),
          axilWriteMaster => intWriteMasters(1),
          axilWriteSlave  => intWriteSlaves(1),
-         timingBus       => timingBus);
+         timingBus       => timingBus,
+         locTxIn         => locTxIn,
+         pgpTxClk        => pgpTxClk);
 
 end top_level;

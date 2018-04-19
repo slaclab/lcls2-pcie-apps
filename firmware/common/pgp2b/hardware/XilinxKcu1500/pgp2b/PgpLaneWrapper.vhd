@@ -25,6 +25,7 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.TimingPkg.all;
 use work.AxiPciePkg.all;
+use work.Pgp2bPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -71,7 +72,10 @@ entity PgpLaneWrapper is
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType);
+      axilWriteSlave  : out AxiLiteWriteSlaveType;
+      -- op-code for controlling of timetool cc1 (<- pin id) trigger
+      locTxIn         : in  Pgp2bTxInType;
+      pgpTxClk    : out sl);
 end PgpLaneWrapper;
 
 architecture mapping of PgpLaneWrapper is
@@ -225,7 +229,10 @@ begin
             axilReadMaster  => axilReadMasters(i),
             axilReadSlave   => axilReadSlaves(i),
             axilWriteMaster => axilWriteMasters(i),
-            axilWriteSlave  => axilWriteSlaves(i));
+            axilWriteSlave  => axilWriteSlaves(i),
+            -- op-code for controlling of timetool cc1 (<- pin id) trigger
+            locTxIn         => locTxIn,
+            pgpTxClk_out    => pgpTxClk);
 
       U_evrRst : entity work.RstPipeline
          generic map (

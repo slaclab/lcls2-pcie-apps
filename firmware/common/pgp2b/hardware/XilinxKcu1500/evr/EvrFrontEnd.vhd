@@ -344,7 +344,7 @@ begin
          gtRxControl     => rxCtrl,
          gtRxStatus      => rxStatus,
          -- Decoded timing message interface
-         --appTimingClk    => rxClk,
+         --appTimingClk    => rxClk,  --this was removed and replaced with line below to specify the clock domain to use on the receiving application
 	 appTimingClk    => sysClk,
          --appTimingRst    => rxRst,
 	 appTimingRst    => sysRst,
