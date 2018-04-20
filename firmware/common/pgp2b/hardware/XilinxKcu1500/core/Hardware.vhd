@@ -204,7 +204,7 @@ begin
          axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C),
          -- op-code for controlling of timetool cc1 (<- pin id) trigger
          locTxIn         => locTxIn,
-         pgpTxClk        => pgpTxClk);
+         pgpTxClk_out    => pgpTxClk);
 
    ------------------
    -- Timing Receiver

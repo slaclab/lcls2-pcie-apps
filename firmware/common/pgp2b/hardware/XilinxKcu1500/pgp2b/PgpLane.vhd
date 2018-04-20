@@ -64,7 +64,7 @@ entity PgpLane is
       axilWriteSlave  : out AxiLiteWriteSlaveType;
       -- op-code for controlling of timetool cc1 (<- pin id) trigger
       locTxIn         : in  Pgp2bTxInType;
-      pgpTxClk_out    : out  sl);
+      pgpTxClk_out    : out sl);
 end PgpLane;
 
 architecture mapping of PgpLane is
@@ -95,8 +95,8 @@ architecture mapping of PgpLane is
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
 
    signal pgpTxOutClk : sl;
-   signal pgpTxClk    : sl;
    signal pgpTxRst    : sl;
+   signal pgpTxClk    : sl;
 
    signal pgpRxOutClk : sl;
    signal pgpRxClk    : sl;
@@ -106,6 +106,7 @@ architecture mapping of PgpLane is
    signal config : ConfigType;
 
 begin
+
    pgpTxClk_out <= pgpTxClk;
    ---------------------
    -- AXI-Lite Crossbar

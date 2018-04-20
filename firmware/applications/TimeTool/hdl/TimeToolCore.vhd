@@ -132,10 +132,10 @@ begin
             rd_clk => pgpTxClk,
             --dout   => locTxIn_buf.flush & locTxIn_buf.opCodeEn & locTxIn_buf.opCode & locTxIn_buf.locData & locTxIn_buf.flowCntlDis,
             dout(PGP2BTXIN_LEN-1)                            => locTxIn_buf.flush,
-            dout(PGP2BTXIN_LEN-2)                          => locTxIn_buf.opCodeEn,
-            dout(PGP2BTXIN_LEN-3  downto PGP2BTXIN_LEN-10)  => locTxIn_buf.opCode,
-            dout(PGP2BTXIN_LEN-11 downto PGP2BTXIN_LEN-18) => locTxIn_buf.locData,
-            dout(PGP2BTXIN_LEN-19)                         => locTxIn_buf.flowCntlDis,
+            dout(PGP2BTXIN_LEN-2)                            => locTxIn_buf.opCodeEn,
+            dout(PGP2BTXIN_LEN-3  downto PGP2BTXIN_LEN-10)   => locTxIn_buf.opCode,
+            dout(PGP2BTXIN_LEN-11 downto PGP2BTXIN_LEN-18)   => locTxIn_buf.locData,
+            dout(PGP2BTXIN_LEN-19)                           => locTxIn_buf.flowCntlDis,
             valid  => locTxIn_buf.opCodeEn);
 
    ---------------------------------
@@ -167,9 +167,9 @@ begin
       if timingBus.strobe = '1' and timingBus.valid = '1' then
          v.pulseId := timingBus.stream.pulseId;
          --look for event code and use it to drive locTxIn and it will send op code to drive front end board.
-         v.locTxIn_local_sysClk.opCodeEn := '0';  --falling edge triggers camera.
+         v.locTxIn_local_sysClk.opCodeEn := '1';  --falling edge triggers camera. but we're trigger herbst, not camera.
       else
-         v.locTxIn_local_sysClk.opCodeEn := '1';  --this will happen one clock cycle later. is that long enough to trigger camera?
+         v.locTxIn_local_sysClk.opCodeEn := '0';  --this will happen one clock cycle later. is that long enough to trigger camera?
       end if;
       
       ------------------------------
