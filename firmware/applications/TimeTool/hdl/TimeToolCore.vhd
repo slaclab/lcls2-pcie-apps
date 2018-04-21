@@ -87,10 +87,11 @@ architecture mapping of TimeToolCore is
    signal r   : RegType := REG_INIT_C;
    signal rin : RegType;
 
-   signal inMaster     : AxiStreamMasterType;
-   signal inSlave      : AxiStreamSlaveType;
-   signal outCtrl      : AxiStreamCtrlType;
-   signal locTxIn_buf  : Pgp2bTxInType;
+   signal inMaster            : AxiStreamMasterType;
+   signal inSlave             : AxiStreamSlaveType;
+   signal outCtrl             : AxiStreamCtrlType;
+   signal locTxIn_buf         : Pgp2bTxInType;
+   signal empty_placeholder   :slv(31 downto 0);
 
 begin
 
@@ -120,6 +121,19 @@ begin
    ---------------------------------
    -- locTxIn FIFO for crossing clock domains.
    ---------------------------------
+
+-------------------------
+------usage
+-------------------------
+--rst  	in sl := ' 0 '
+--wr_clk  	in sl
+--wr_en  	in sl := ' 1 '
+--din  	in slv ( DATA_WIDTH_G - 1 downto 0 )
+--rd_clk  	in sl
+--rd_en  	in sl := ' 1 '
+--valid  	out sl
+--dout  	out slv ( DATA_WIDTH_G - 1 downto 0 )
+
    locTxIn_SynchronizerFifo: entity work.SynchronizerFifo
          generic map (
             TPD_G        => TPD_G,
@@ -130,13 +144,15 @@ begin
             wr_en  => r.locTxIn_local_sysClk.opCodeEn,
             din    => r.locTxIn_local_sysClk.flush & r.locTxIn_local_sysClk.opCodeEn & r.locTxIn_local_sysClk.opCode & r.locTxIn_local_sysClk.locData & r.locTxIn_local_sysClk.flowCntlDis,
             rd_clk => pgpTxClk,
-            --dout   => locTxIn_buf.flush & locTxIn_buf.opCodeEn & locTxIn_buf.opCode & locTxIn_buf.locData & locTxIn_buf.flowCntlDis,
+
             dout(PGP2BTXIN_LEN-1)                            => locTxIn_buf.flush,
-            dout(PGP2BTXIN_LEN-2)                            => locTxIn_buf.opCodeEn,
+            --dout(PGP2BTXIN_LEN-2)                            => locTxIn_buf.opCodeEn,--driven by valid.
+            --dout(PGP2BTXIN_LEN-1)                            => empty_placeholder(0),
+            dout(PGP2BTXIN_LEN-2)                            => empty_placeholder(1),--driven by valid.
             dout(PGP2BTXIN_LEN-3  downto PGP2BTXIN_LEN-10)   => locTxIn_buf.opCode,
             dout(PGP2BTXIN_LEN-11 downto PGP2BTXIN_LEN-18)   => locTxIn_buf.locData,
             dout(PGP2BTXIN_LEN-19)                           => locTxIn_buf.flowCntlDis,
-            valid  => locTxIn_buf.opCodeEn);
+            valid                                            => locTxIn_buf.opCodeEn);
 
    ---------------------------------
    -- Application
@@ -218,7 +234,6 @@ begin
       axilReadSlave  <= r.axilReadSlave;
       axilWriteSlave <= r.axilWriteSlave;
       inSlave        <= v.slave;
-      locTxIn        <= v.locTxIn_local_sysClk;
 
    end process comb;
 
