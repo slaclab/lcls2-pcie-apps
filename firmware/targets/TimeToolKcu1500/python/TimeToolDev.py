@@ -41,6 +41,8 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
                     berr[c] = berr[c] | d
                     self.dataErrors.set(self.dataErrors.value() + 1,False)
 
+        print(len(p))
+
         for i in range(8):
             self.node('byteError{}'.format(i)).set(berr[i],False)
 
