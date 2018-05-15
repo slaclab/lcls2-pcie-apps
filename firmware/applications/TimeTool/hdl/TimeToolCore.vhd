@@ -2,7 +2,7 @@
 -- File       : TimeToolCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2018-03-20
+-- Last update: 2018-05-09
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -35,7 +35,8 @@ use unisim.vcomponents.all;
 entity TimeToolCore is
    generic (
       TPD_G            : time             := 1 ns;
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C);
+      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
+      DEBUG_G             : boolean       := true );
    port (
       -- System Interface
       sysClk          : in    sl;
@@ -93,6 +94,11 @@ architecture mapping of TimeToolCore is
    signal locTxIn_buf         : Pgp2bTxInType;
    signal empty_placeholder   :slv(31 downto 0);
 
+   component ila_0
+     port ( clk    : sl;
+            probe0 : slv(255 downto 0) );
+   end component;
+
 begin
 
    locTxIn <= locTxIn_buf;
@@ -122,18 +128,6 @@ begin
    -- locTxIn FIFO for crossing clock domains.
    ---------------------------------
 
--------------------------
-------usage
--------------------------
---rst  	in sl := ' 0 '
---wr_clk  	in sl
---wr_en  	in sl := ' 1 '
---din  	in slv ( DATA_WIDTH_G - 1 downto 0 )
---rd_clk  	in sl
---rd_en  	in sl := ' 1 '
---valid  	out sl
---dout  	out slv ( DATA_WIDTH_G - 1 downto 0 )
-
    locTxIn_SynchronizerFifo: entity work.SynchronizerFifo
          generic map (
             TPD_G        => TPD_G,
@@ -154,6 +148,19 @@ begin
             dout(PGP2BTXIN_LEN-19)                           => locTxIn_buf.flowCntlDis,
             valid                                            => locTxIn_buf.opCodeEn);
 
+   ---------------------------------
+   -- Xilinx debug integrated logic analyzer.
+   ---------------------------------
+
+   GEN_DEBUG : if DEBUG_G generate
+     U_ILA : ila_0
+       port map ( clk   => sysClk,
+                  probe0(0) => timingBus.strobe,
+                  probe0(1) => timingBus.valid,
+                  probe0(33 downto 2) => timingBus.stream.pulseId,
+                  probe0(255 downto 34) => (others=>'0') );
+   end generate;
+     
    ---------------------------------
    -- Application
    ---------------------------------
