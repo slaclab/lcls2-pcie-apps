@@ -155,10 +155,11 @@ begin
    GEN_DEBUG : if DEBUG_G generate
      U_ILA : ila_0
        port map ( clk   => sysClk,
-                  probe0(0) => timingBus.strobe,
-                  probe0(1) => timingBus.valid,
-                  probe0(33 downto 2) => timingBus.stream.pulseId,
-                  probe0(255 downto 34) => (others=>'0') );
+                  probe0(0)                   => timingBus.strobe,
+                  probe0(1)                   => timingBus.valid,
+                  probe0(33 downto 2)         => timingBus.stream.pulseId,
+                  probe0(41 downto 34)        => r.locTxIn_local_sysClk.opCode,
+		  probe0(255 downto 42)       => (others=>'0') );
    end generate;
      
    ---------------------------------
@@ -187,7 +188,7 @@ begin
       -- Event Code            --cpo
       ------------------------------
       -- will need to change r.pulseId to go into a fifo when data rates increase (camera readout over laps with next trigger being received)
-      if timingBus.strobe = '1' and timingBus.valid = '1' then
+      if timingBus.strobe = '1' and timingBus.stream.eventCodes(44) = '1' then
          v.pulseId := timingBus.stream.pulseId;
          --look for event code and use it to drive locTxIn and it will send op code to drive front end board.
          v.locTxIn_local_sysClk.opCodeEn := '1';  --falling edge triggers camera. but we're trigger herbst, not camera.
