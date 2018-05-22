@@ -13,7 +13,8 @@
 
 # Package directories
 #export ROGUE_DIR=/afs/slac.stanford.edu/g/reseng/vol12/rogue/master
-export ROGUE_DIR=/afs/slac.stanford.edu/u/if/cpo/git/rogue
+#export ROGUE_DIR=/afs/slac.stanford.edu/u/if/cpo/git/rogue
+export ROGUE_DIR=/reg/neh/home/cpo/git/rogue
 
 # Setup python path
 export PYTHONPATH=${ROGUE_DIR}/python:${PYTHONPATH}
