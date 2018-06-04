@@ -13,8 +13,20 @@
 
 # Package directories
 #export ROGUE_DIR=/afs/slac.stanford.edu/g/reseng/vol12/rogue/master
-#export ROGUE_DIR=/afs/slac.stanford.edu/u/if/cpo/git/rogue
-export ROGUE_DIR=/reg/neh/home/cpo/git/rogue
+
+if [ $(echo $HOSTNAME | grep -ic -e "lcls") -eq 1 ] 
+then
+	echo "on a afs machine"
+	export ROGUE_DIR=/afs/slac.stanford.edu/u/if/cpo/git/rogue
+
+elif [ $(echo $HOSTNAME | grep -ic -e "drp") -eq 1 ]
+then
+	echo "on a drp"
+	export ROGUE_DIR=/reg/neh/home/cpo/git/rogue
+else
+	echo "not on a node connected to time tool firmware"
+	return
+fi
 
 # Setup python path
 export PYTHONPATH=${ROGUE_DIR}/python:${PYTHONPATH}
