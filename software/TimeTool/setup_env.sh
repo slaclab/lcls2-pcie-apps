@@ -17,7 +17,8 @@
 if [ $(echo $HOSTNAME | grep -ic -e "lcls") -eq 1 ] 
 then
 	echo "on a afs machine"
-	export ROGUE_DIR=/afs/slac.stanford.edu/u/if/cpo/git/rogue
+	#export ROGUE_DIR=/afs/slac.stanford.edu/u/if/cpo/git/rogue
+	export ROGUE_DIR=/u1/sioan/rogue
 
 elif [ $(echo $HOSTNAME | grep -ic -e "drp") -eq 1 ]
 then
