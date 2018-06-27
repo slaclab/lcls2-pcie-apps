@@ -9,6 +9,7 @@ import TimeTool
 import pyrogue.utilities.fileio
 from XilinxKcu1500Pgp2b import *
 import numpy as np
+import h5py
 
 class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
@@ -19,6 +20,9 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.add(pr.LocalVariable( name='frameCount',   value=0, mode='RO', pollInterval=1))
         self.add(pr.LocalVariable( name='lengthErrors', value=0, mode='RO', pollInterval=1))
         self.add(pr.LocalVariable( name='dataErrors',   value=0, mode='RO', pollInterval=1))
+
+        self.my_h5_file = h5py.File("first_test.h5",'w')
+        self.to_save_to_h5 = []
 
         for i in range(8):
             self.add(pr.LocalVariable( name='byteError{}'.format(i), disp='{:#x}', value=0, mode='RO', pollInterval=1))
@@ -45,9 +49,16 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         #print(len(p))
         to_print = np.array(p)[-16:]
         print(to_print)
+        self.to_save_to_h5.append(to_print)
 
         for i in range(8):
             self.node('byteError{}'.format(i)).set(berr[i],False)
+
+    def close_h5_file(self):
+        print("the thing that is not a destructor is working")
+        self.my_h5_file['my_data'] = self.to_save_to_h5
+        self.my_h5_file.close()
+        print(self.to_save_to_h5)
 
 class ClinkTest(pr.Device):
 
