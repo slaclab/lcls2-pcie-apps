@@ -80,7 +80,7 @@ class TimeToolDev(pr.Root):
         self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
 
         # Time tool application
-        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00C00000))
+        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00800000))  #changed from 0x00C00000 by pcds group
 
         # PGP Card registers
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))

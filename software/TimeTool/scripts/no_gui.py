@@ -4,8 +4,9 @@ import TimeToolDev
 import sys
 import time
  
-#working pyrogue script with no gui.  Will print the last 16 elements from the byte-array p (see TimeToolDev.py) to the screen
+#working pyrogue script with no gui.(GUI still needed for initial setup).  Will print the last 16 elements from the byte-array p (see TimeToolDev.py) to the screen
 #that were collected by the camera. Last printed 4 elements are the time stamp.
+
 
 cl = TimeToolDev.TimeToolDev(True)
  
