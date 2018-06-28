@@ -11,6 +11,9 @@ from XilinxKcu1500Pgp2b import *
 import numpy as np
 import h5py
 
+#One of the goals this code satisfies is to to facilitate communication between registers in Xilinx's kcu1500 FPGA and a host linux machine.
+#See comment in TimeTool.py for how to make rogue aware of a FPGA register to communicate with.
+
 class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
     def __init__(self, name='TimeToolRx', **kwargs):
@@ -91,7 +94,10 @@ class TimeToolDev(pr.Root):
         self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
 
         # Time tool application
-        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00800000))  #changed from 0x00C00000 by pcds group
+        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00800000))  #changed from 0x00C00000 by pcds group. this offset is propagated to
+                                                                            #AddValue that is instantiated in TimeTool.py
+                                                                            #the vhd file that has the firmware counterpart to this offset is firmware/
+                                                                            #submodules/axi-pcie-core/hardware/XilinxKcu1500/core/rtl/XilinxKcu1500Core.vhd
 
         # PGP Card registers
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))

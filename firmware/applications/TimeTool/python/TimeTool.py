@@ -25,6 +25,8 @@ class TimeToolCore(pr.Device):
             **kwargs):
         super().__init__(name=name, **kwargs) 
 
+        #to allow pyrogue to see a new register duplicate the code below using a differen "offset" and "name"
+        #
         self.add(pr.RemoteVariable(    
             name         = "AddValue",
             offset       =  0x00,
