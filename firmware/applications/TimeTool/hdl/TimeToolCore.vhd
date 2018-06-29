@@ -62,6 +62,7 @@ architecture mapping of TimeToolCore is
 
    constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
    constant PGP2BTXIN_LEN  : integer := 19;
+   constant TRIGGER_DELAY  : integer := 1024;  -- added by sn
 
    type RegType is record
       master                : AxiStreamMasterType;
@@ -69,6 +70,10 @@ architecture mapping of TimeToolCore is
       addvalue              : slv(7 downto 0);
       pulseId               : slv(31 downto 0);   --added by cpo
       endOfFrame            : sl;                 -- added sz and cpo
+      triggerReady          : sl;                 --added by sn
+      runCounter            : sl;                 --added by sn
+      --counter               : slv(31 downto 0);   --added by sn
+      counter               : slv(10 downto 0);   --added by sn (size dep on delay)
       axilReadSlave         : AxiLiteReadSlaveType;
       axilWriteSlave        : AxiLiteWriteSlaveType;
       locTxIn_local_sysClk  : Pgp2bTxInType;
@@ -81,6 +86,9 @@ architecture mapping of TimeToolCore is
       addValue             => (others=>'0'),
       pulseId              => (others=>'0'),    --added by cpo
       endOfFrame           => '0',              --added sz and cpo
+      triggerReady         => '0',              --added by sn
+      runCounter           => '0',              --added by sn
+      counter              => (others=>'0'),    --added by sn
       axilReadSlave        => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave       => AXI_LITE_WRITE_SLAVE_INIT_C,
       locTxIn_local_sysClk => PGP2B_TX_IN_INIT_C);    --come back to
@@ -193,12 +201,33 @@ begin
       -- will need to change r.pulseId to go into a fifo when data rates increase (camera readout over laps with next trigger being received)
       if timingBus.strobe = '1' and timingBus.stream.eventCodes(44) = '1' then
          v.pulseId := timingBus.stream.pulseId;
-         --look for event code and use it to drive locTxIn and it will send op code to drive front end board.
-         v.locTxIn_local_sysClk.opCodeEn := '1';  --falling edge triggers camera. but we're trigger herbst, not camera.
+         --start counter for trigger delay, 
+         v.runCounter := '1';
+      end if;
+
+      ------------------------------
+      -- Delay Counter            --snelson
+      ------------------------------
+      if v.runCounter = '1' then
+        if v.counter < TRIGGER_DELAY then
+          v.counter := v.counter + 1;
+        else
+          v.triggerReady := '1'; 
+          v.counter := (others => '0');  --reset the counter
+          v.runCounter := '0';           --stop counter loop
+        end if;
+      end if;  
+
+      ------------------------------
+      -- Sending Trigger            --snelson
+      ------------------------------
+      --drive locTxIn and it will send op code to drive front end board.
+      if v.triggerReady = '1' then
+         v.locTxIn_local_sysClk.opCodeEn := '1';  --falling edge triggers camera. but we're trigger herbst, not camera.           
+         v.triggerReady := '0';                    --reset triggerReady 
       else
          v.locTxIn_local_sysClk.opCodeEn := '0';  --this will happen one clock cycle later. is that long enough to trigger camera?
       end if;
-      
       ------------------------------
       -- Data Mover
       ------------------------------
