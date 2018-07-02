@@ -98,6 +98,8 @@ class TimeToolDev(pr.Root):
                                                                             #AddValue that is instantiated in TimeTool.py
                                                                             #the vhd file that has the firmware counterpart to this offset is firmware/
                                                                             #submodules/axi-pcie-core/hardware/XilinxKcu1500/core/rtl/XilinxKcu1500Core.vhd
+                                                                            #the comment above is incorrect.  it's lcls2-pcie-apps/firmware/submodules/surf/protocols/
+                                                                            #clink/hdl/ClinkTop.vhd and _ClinkTop.py
 
         # PGP Card registers
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))

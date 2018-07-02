@@ -26,12 +26,20 @@ class TimeToolCore(pr.Device):
         super().__init__(name=name, **kwargs) 
 
         #to allow pyrogue to see a new register duplicate the code below using a differen "offset" and "name"
-        #
+        #see timetooldev.py and ClinkTop.vhd and _ClinkTop.py for examples how to make python send data to firmware.
         self.add(pr.RemoteVariable(    
             name         = "AddValue",
             offset       =  0x00,
             bitSize      =  8,
             bitOffset    =  0,
+            base         = pr.UInt,
+            mode         = "RW",
+        ))
+        self.add(pr.RemoteVariable(    
+            name         = "DialInTriggerDelay",
+            offset       =  0x08,
+            bitSize      =  7,
+            bitOffset    =  8,
             base         = pr.UInt,
             mode         = "RW",
         ))

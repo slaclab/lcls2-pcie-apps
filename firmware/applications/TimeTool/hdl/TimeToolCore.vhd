@@ -62,17 +62,18 @@ architecture mapping of TimeToolCore is
 
    constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
    constant PGP2BTXIN_LEN  : integer := 19;
-   constant TRIGGER_DELAY  : integer := 1024;  -- added by sn
+   --constant TRIGGER_DELAY  : integer := 1024;  -- added by sn
 
    type RegType is record
       master                : AxiStreamMasterType;
       slave                 : AxiStreamSlaveType;
       addvalue              : slv(7 downto 0);
+      dialInTriggerDelay    : slv(9 downto 0);    --added by sz   
       pulseId               : slv(31 downto 0);   --added by cpo
-      endOfFrame            : sl;                 -- added sz and cpo
+      endOfFrame            : sl;                 --added sz and cpo
       triggerReady          : sl;                 --added by sn
       runCounter            : sl;                 --added by sn
-      --counter               : slv(31 downto 0);   --added by sn
+      --counter               : slv(31 downto 0); --added by sn
       counter               : slv(10 downto 0);   --added by sn (size dep on delay)
       axilReadSlave         : AxiLiteReadSlaveType;
       axilWriteSlave        : AxiLiteWriteSlaveType;
@@ -84,6 +85,7 @@ architecture mapping of TimeToolCore is
       master               => AXI_STREAM_MASTER_INIT_C,
       slave                => AXI_STREAM_SLAVE_INIT_C,
       addValue             => (others=>'0'),
+      dialInTriggerDelay   => (others=>'0'),    --added by sz
       pulseId              => (others=>'0'),    --added by cpo
       endOfFrame           => '0',              --added sz and cpo
       triggerReady         => '0',              --added by sn
@@ -188,10 +190,10 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"000",  0, v.addValue);	--field is updated from info over axi bus. only for addvalue. The first field is the axi lite
-                                                                --endpoint type.  This is the bus from which the data is read (need to verify).
-                                                                --the second field is the address. look for "dataen" in ClinkTop.vhd and_ClinkTop.py
-                                                                --for an example the third field is the bit offset.  
+      axiSlaveRegister (axilEp, x"000",  0, v.addValue);	       --field is updated from info over axi bus. only for addvalue. The first field is the axi lite
+      axiSlaveRegister (axilEp, x"080",  0, v.dialInTriggerDelay);     --endpoint type.  This is the bus from which the data is read (need to verify).
+                                                                       --the second field is the address. look for "dataen" in ClinkTop.vhd and_ClinkTop.py
+                                                                      --for an example the third field is the bit offset.  
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
 
@@ -209,7 +211,7 @@ begin
       -- Delay Counter            --snelson
       ------------------------------
       if v.runCounter = '1' then
-        if v.counter < TRIGGER_DELAY then
+        if v.counter < v.dialInTriggerDelay then
           v.counter := v.counter + 1;
         else
           v.triggerReady := '1'; 
