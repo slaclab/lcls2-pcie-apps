@@ -16,6 +16,6 @@ cl.ClinkTest.ClinkTop.ChannelA.DataEn.get()
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(True)	#this start the data collection
 time.sleep(3)
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(False)#this stops the data collection
-cl.stop()
+cl.stop()	#does this need cl.start() counter part? don't see it in gui.py
 time.sleep(1)
 cl._dbg.close_h5_file()

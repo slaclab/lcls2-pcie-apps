@@ -37,9 +37,9 @@ class TimeToolCore(pr.Device):
         ))
         self.add(pr.RemoteVariable(    
             name         = "DialInTriggerDelay",
-            offset       =  0x08,
-            bitSize      =  7,
-            bitOffset    =  8,
+            offset       =  0x008,
+            bitSize      =  8,
+            bitOffset    =  0,
             base         = pr.UInt,
             mode         = "RW",
         ))
