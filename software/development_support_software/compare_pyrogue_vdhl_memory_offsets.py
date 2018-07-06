@@ -8,7 +8,7 @@ import gc
 #tool for iterating through pyrogue objects to find their offsets.
 
 
-def recursive_memory_validator(this_object,this_offset,running_dict,this_name):
+def recursive_memory_validator(this_object,this_offset,running_dict,this_name,node_path,this_node):
 	#check if this object has the _nodes member
 	if("_nodes" in dir(this_object)):
 		pass
@@ -18,10 +18,11 @@ def recursive_memory_validator(this_object,this_offset,running_dict,this_name):
 	#now get the offset of this node
 	this_offset = this_object.offset + this_offset
 	this_name = this_name+"/"+this_object.name
+	node_path = node_path+"/"+this_node
 
 	for i in this_object._nodes:
 		if("offset" in dir(this_object._nodes[i])):
-			recursive_memory_validator(this_object._nodes[i],this_offset,running_dict,this_name)
+			recursive_memory_validator(this_object._nodes[i],this_offset,running_dict,this_name,node_path,i)
 		else:
 			pass
 	#print(this_object.name+", "+str(format(this_offset,'02x')))
@@ -31,5 +32,6 @@ def recursive_memory_validator(this_object,this_offset,running_dict,this_name):
 		#running_dict[this_name] = {"total":str(format(this_offset+this_object.bitOffset[0],'02x')),"base":str(format(this_offset,'02x'))}
 		running_dict[this_name+"/total"] = str(format(this_offset+this_object.bitOffset[0],'02x'))
 		running_dict[this_name+"/base"]  = str(format(this_offset,'02x'))
+		running_dict[this_name+"/node_path"]  = node_path
 	except:
 		pass

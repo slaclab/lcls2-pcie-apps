@@ -191,7 +191,7 @@ begin
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
       axiSlaveRegister (axilEp, x"000",  0, v.addValue);	       --field is updated from info over axi bus. only for addvalue. The first field is the axi lite
-      axiSlaveRegister (axilEp, x"008",  0, v.dialInTriggerDelay);     --endpoint type.  This is the bus from which the data is read (need to verify).
+      axiSlaveRegister (axilEp, x"000",  8, v.dialInTriggerDelay);     --endpoint type.  This is the bus from which the data is read (need to verify).
                                                                        --the second field is the address. look for "dataen" in ClinkTop.vhd and_ClinkTop.py
                                                                       --for an example the third field is the bit offset.  
 
