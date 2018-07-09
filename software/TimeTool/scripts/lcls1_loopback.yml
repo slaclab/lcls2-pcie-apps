@@ -14,10 +14,10 @@ TimeToolDev:
       LinkReset: 'False'
       ChannelA:
         enable: 'True'
-        LinkMode: Medium
-        DataMode: 8Bit
+        LinkMode: Full
+        DataMode: 12Bit
         FrameMode: Line
-        TapCount: '0x4'
+        TapCount: '0x8'
         DataEn: 'True'
         BaudRate: '9600'
         SwControlValue: '0x0'
@@ -35,6 +35,7 @@ TimeToolDev:
   TimeTool:
     enable: 'True'
     AddValue: '0x0'
+    DialInTriggerDelay: '0x0'
   HW:
     enable: 'True'
     AxiPcieCore:

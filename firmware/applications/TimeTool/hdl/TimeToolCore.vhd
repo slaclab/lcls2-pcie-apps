@@ -167,9 +167,10 @@ begin
        port map ( clk   => sysClk,
                   probe0(0)                   => timingBus.strobe,
                   probe0(1)                   => timingBus.valid,
-                  probe0(33 downto 2)         => timingBus.stream.pulseId,
-                  probe0(41 downto 34)        => r.locTxIn_local_sysClk.opCode,
-		  probe0(255 downto 42)       => (others=>'0') );
+                  probe0(2)                   => r.locTxIn_local_sysClk.opCodeEn,
+                  probe0(34 downto 3)         => timingBus.stream.pulseId,
+                  probe0(42 downto 35)        => r.locTxIn_local_sysClk.opCode,
+		  probe0(255 downto 43)       => (others=>'0') );
    end generate;
      
    ---------------------------------

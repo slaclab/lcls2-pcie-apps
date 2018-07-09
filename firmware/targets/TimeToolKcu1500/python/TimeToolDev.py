@@ -52,7 +52,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         #print(len(p))
         to_print = np.array(p)[-16:]
         print(to_print)
-        self.to_save_to_h5.append(to_print)
+        #self.to_save_to_h5.append(to_print)
 
         for i in range(8):
             self.node('byteError{}'.format(i)).set(berr[i],False)
