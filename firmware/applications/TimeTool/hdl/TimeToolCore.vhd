@@ -2,7 +2,7 @@
 -- File       : TimeToolCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2018-05-09
+-- Last update: 2018-07-11
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -17,8 +17,9 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
+--use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.ALL;
 
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
@@ -31,6 +32,7 @@ use work.Pgp2bPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
+
 
 entity TimeToolCore is
    generic (
@@ -62,13 +64,15 @@ architecture mapping of TimeToolCore is
 
    constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
    constant PGP2BTXIN_LEN  : integer := 19;
-   --constant TRIGGER_DELAY  : integer := 1024;  -- added by sn
+   --constant DEFAULT_OPCODE : integer := 44;  -- added by sn
 
    type RegType is record
       master                : AxiStreamMasterType;
       slave                 : AxiStreamSlaveType;
       addvalue              : slv(7 downto 0);
-      dialInTriggerDelay    : slv(9 downto 0);    --added by sz   
+      dialInOpCode          : slv(7 downto 0);    --added by sn
+      dialInOpCode_natural  : natural;            --added by sz
+      dialInTriggerDelay    : slv(7 downto 0);    --added by sz   
       pulseId               : slv(31 downto 0);   --added by cpo
       endOfFrame            : sl;                 --added sz and cpo
       triggerReady          : sl;                 --added by sn
@@ -85,6 +89,8 @@ architecture mapping of TimeToolCore is
       master               => AXI_STREAM_MASTER_INIT_C,
       slave                => AXI_STREAM_SLAVE_INIT_C,
       addValue             => (others=>'0'),
+      dialInOpCode         => x"2C",            --added by sn
+      dialInOpCode_natural => 44,               --added by sz
       dialInTriggerDelay   => (others=>'0'),    --added by sz
       pulseId              => (others=>'0'),    --added by cpo
       endOfFrame           => '0',              --added sz and cpo
@@ -192,9 +198,9 @@ begin
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
       axiSlaveRegister (axilEp, x"00000",  0, v.addValue);	       --field is updated from info over axi bus. only for addvalue. The first field is the axi lite
-      axiSlaveRegister (axilEp, x"00000",  8, v.dialInTriggerDelay);     --endpoint type.  This is the bus from which the data is read (need to verify).
-                                                                       --the second field is the address. look for "dataen" in ClinkTop.vhd and_ClinkTop.py
-                                                                      --for an example the third field is the bit offset.  
+      axiSlaveRegister (axilEp, x"00000",  8, v.dialInOpCode);         --endpoint type.  This is the bus from which the data is read (need to verify).
+      axiSlaveRegister (axilEp, x"00000", 16, v.dialInTriggerDelay);   --the second field is the address. look for "dataen" in ClinkTop.vhd and_ClinkTop.py
+                                                                       --for an example the third field is the bit offset.  
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
 
@@ -202,7 +208,8 @@ begin
       -- Event Code            --cpo
       ------------------------------
       -- will need to change r.pulseId to go into a fifo when data rates increase (camera readout over laps with next trigger being received)
-      if timingBus.strobe = '1' and timingBus.stream.eventCodes(44) = '1' then
+      v.dialInOpCode_natural := to_integer(unsigned(v.dialInOpCode));
+      if timingBus.strobe = '1' and timingBus.stream.eventCodes(v.dialInOpCode_natural) = '1' then
          v.pulseId := timingBus.stream.pulseId;
          --start counter for trigger delay, 
          v.runCounter := '1';

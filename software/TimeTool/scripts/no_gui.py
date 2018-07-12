@@ -5,12 +5,39 @@ import sys
 import time
 import gc
  
+cl = TimeToolDev.TimeToolDev(True)
+
 #working pyrogue script with no gui.(GUI still needed for initial setup).  Will print the last 16 elements from the byte-array p (see TimeToolDev.py) to the screen
 #that were collected by the camera. Last printed 4 elements are the time stamp.
+time.sleep(0.2)
+cl.ClinkTest.ClinkTop.ChannelA.BaudRate.set(9600)
+time.sleep(0.2)
+cl.ClinkTest.ClinkTop.ChannelA.LinkMode.set(2)		#medium mode
+time.sleep(0.2)
+cl.ClinkTest.ClinkTop.ChannelA.DataMode.set(3)		#12 bit
+time.sleep(0.2)
+cl.ClinkTest.ClinkTop.ChannelA.FrameMode.set(1)		#linemode
+time.sleep(0.2)
+cl.ClinkTest.ClinkTop.ChannelA.TapCount.set(4)
+time.sleep(0.2)
+
+cl.HW.TimingCore.GtLoopback.set(2)			#use evg timing
+#cl.HW.TimingCore.ConfigLclsTimingV1() 			#Doesn't work yet
 
 
-cl = TimeToolDev.TimeToolDev(True)
- 
+my_commands_to_pirana_camera = ['clm 1','svm 1', 'sem 0', 'set 20000', 'stm 1', 'spf 2']
+
+for i in my_commands_to_pirana_camera:
+	time.sleep(0.2)
+	cl.ClinkTest.ClinkTop.ChannelA.SendString(i)
+
+
+
+
+
+
+cl.ClinkTest.ClinkTop.ChannelA.SendString("gcp")
+
  
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.get()
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(True)	#this start the data collection
