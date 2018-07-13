@@ -71,7 +71,7 @@ architecture mapping of TimeToolCore is
       slave                 : AxiStreamSlaveType;
       addvalue              : slv(7 downto 0);
       dialInOpCode          : slv(7 downto 0);    --added by sn
-      dialInOpCode_natural  : natural;            --added by sz
+      dialInOpCode_natural  : natural range 0 to 255;            --added by sz
       dialInTriggerDelay    : slv(7 downto 0);    --added by sz   
       pulseId               : slv(31 downto 0);   --added by cpo
       endOfFrame            : sl;                 --added sz and cpo
