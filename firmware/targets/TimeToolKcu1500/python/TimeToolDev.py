@@ -94,12 +94,7 @@ class TimeToolDev(pr.Root):
         self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
 
         # Time tool application
-        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00800000))  #changed from 0x00C00000 by pcds group. this offset is propagated to
-                                                                            #AddValue that is instantiated in TimeTool.py
-                                                                            #the vhd file that has the firmware counterpart to this offset is firmware/
-                                                                            #submodules/axi-pcie-core/hardware/XilinxKcu1500/core/rtl/XilinxKcu1500Core.vhd
-                                                                            #the comment above is incorrect.  it's lcls2-pcie-apps/firmware/submodules/surf/protocols/
-                                                                            #clink/hdl/ClinkTop.vhd and _ClinkTop.py
+        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00C00000))
 
         # PGP Card registers
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))
