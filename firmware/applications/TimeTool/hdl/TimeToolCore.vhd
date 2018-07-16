@@ -270,6 +270,9 @@ begin
          v.master.tValid := '0';
       end if;
 
+      -- Combinatorial Outputs
+      inSlave <= v.slave;
+      
       -------------
       -- Reset
       -------------
@@ -280,10 +283,9 @@ begin
       -- Register the variable for next clock cycle
       rin <= v;
 
-      -- Outputs 
+      -- Registered Outputs 
       axilReadSlave  <= r.axilReadSlave;
       axilWriteSlave <= r.axilWriteSlave;
-      inSlave        <= v.slave;
 
    end process comb;
 
