@@ -108,7 +108,7 @@ architecture mapping of TimeToolCore is
    signal inSlave             : AxiStreamSlaveType;
    signal outCtrl             : AxiStreamCtrlType;
    signal locTxIn_buf         : Pgp2bTxInType;
-   signal empty_placeholder   :slv(31 downto 0);
+   signal empty_placeholder   : slv(31 downto 0);
 
    component ila_0
      port ( clk    : sl;

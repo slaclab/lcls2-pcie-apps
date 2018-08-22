@@ -14,10 +14,10 @@ TimeToolDev:
       LinkReset: 'False'
       ChannelA:
         enable: 'True'
-        LinkMode: Medium
+        LinkMode: Base
         DataMode: 8Bit
         FrameMode: Line
-        TapCount: '0x4'
+        TapCount: '0x2'
         DataEn: 'False'
         BaudRate: '9600'
         SwControlValue: '0x0'
