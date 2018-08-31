@@ -21,14 +21,14 @@ time.sleep(0.2)
 cl.ClinkTest.ClinkTop.ChannelA.SendString("gcp")
 time.sleep(0.2)
 cl.ClinkTest.ClinkTop.ChannelA.BaudRate.set(9600)
-time.sleep(0.2)
+time.sleep(5.0)
 cl.ClinkTest.ClinkTop.ChannelA.LinkMode.set(1)		#base mode
 time.sleep(0.2)
 cl.ClinkTest.ClinkTop.ChannelA.DataMode.set(1)		#8 bit
 time.sleep(0.2)
 cl.ClinkTest.ClinkTop.ChannelA.FrameMode.set(1)		#linemode
 time.sleep(0.2)
-cl.ClinkTest.ClinkTop.ChannelA.TapCount.set(2)
+cl.ClinkTest.ClinkTop.ChannelA.TapCount.set(4)
 time.sleep(0.2)
 
 my_commands_to_pirana_camera = ['clm 0','svm 0', 'sem 0', 'set 5000', 'stm 1', 'spf 0']
@@ -47,7 +47,7 @@ for i in my_commands_to_pirana_camera:
  
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.get()
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(True)	#this start the data collection
-time.sleep(3)
+time.sleep(10)
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(False)#this stops the data collection
 cl.stop()	#does this need cl.start() counter part? don't see it in gui.py
 time.sleep(1)
