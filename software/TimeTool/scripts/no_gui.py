@@ -5,7 +5,7 @@ import sys
 import time
 import gc
  
-cl = TimeToolDev.TimeToolDev()
+cl = TimeToolDev.TimeToolDev(True)
 time.sleep(0.4)
 cl.HW.TimingCore.GtLoopback.set(2)			#use evg timing
 time.sleep(0.4)
