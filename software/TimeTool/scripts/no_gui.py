@@ -34,8 +34,9 @@ cl.ClinkTest.ClinkTop.ChannelA.TapCount.set(4)
 my_commands_to_pirana_camera = ['clm 0','svm 0', 'sem 0', 'set 5000', 'stm 1', 'spf 0']
 
 for i in my_commands_to_pirana_camera:
+	print("sent command: "+i)
 	cl.ClinkTest.ClinkTop.ChannelA.SendString(i)
-	time.sleep(0.005)					#commands sent too quickly we see serial data 
+	time.sleep(0.1)			 			#commands sent too quickly we see serial data 
                                                                 #corruption. e.g. "svm" turns into "jvm".  
                                                                 #Could be done more by setting a semaphore in
                                                                 # _acceptframe in ClinkSerialRx
@@ -44,7 +45,7 @@ for i in my_commands_to_pirana_camera:
 
 
 
-
+time.sleep(3)
 #cl.ClinkTest.ClinkTop.ChannelA.SendString("gcp")
 
  

@@ -34,13 +34,15 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         p = bytearray(frame.getPayload())
         frame.read(p,0)
         self.frameCount.set(self.frameCount.value() + 1,False)
-        berr = [0,0,0,0,0,0,0,0]
+
+     
+        '''berr = [0,0,0,0,0,0,0,0]
 
         #frameLength = 4100 # sn : medium mode, 12 bit
         frameLength = 2052 # sn : medium mode, 8 bit
         #if len(p) != 2048: 
         if len(p) != frameLength:
-            print('length:',len(p))
+            #print('length:',len(p))
             self.lengthErrors.set(self.lengthErrors.value() + 1,False)
         else:
             for i in range(frameLength-4):
@@ -58,7 +60,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         #self.to_save_to_h5.append(np.array(p))
 
         for i in range(8):
-            self.node('byteError{}'.format(i)).set(berr[i],False)
+            self.node('byteError{}'.format(i)).set(berr[i],False)'''
 
     def close_h5_file(self):
         print("the thing that is not a destructor is working")
