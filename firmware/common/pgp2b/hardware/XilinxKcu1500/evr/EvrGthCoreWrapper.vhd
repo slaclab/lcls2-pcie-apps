@@ -374,7 +374,10 @@ begin
          sAxilReadMaster   => axilReadMasters(0),
          sAxilReadSlave    => axilReadSlaves(0),
          sAxilWriteMaster  => axilWriteMasters(0),
-         sAxilWriteSlave   => axilWriteSlaves(0));
+         sAxilWriteSlave   => axilWriteSlaves(0),
+         --txClk and rxClk frequency monitoring
+         txClk             => txUsrClk,
+         rxClk             => rxUsrClk);
 
    U_AxiLiteToDrp : entity work.AxiLiteToDrp
       generic map (
