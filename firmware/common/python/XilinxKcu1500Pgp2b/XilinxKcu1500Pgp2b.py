@@ -11,7 +11,6 @@
 
 import pyrogue as pr
 import pyrogue.interfaces.simulation
-import rogue.hardware.data
 
 import axipcie
 from surf.xilinx import *

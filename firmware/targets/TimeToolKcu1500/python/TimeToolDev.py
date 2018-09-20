@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import pyrogue as pr
-import rogue.hardware.data
 import rogue.protocols
 import surf.axi
 import surf.protocols.clink
@@ -94,7 +93,7 @@ class TimeToolDev(pr.Root):
         dataMap = rogue.hardware.axi.AxiMemMap('/dev/datadev_0')
 
         # Cameralink
-        self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
+        #self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
 
         # Time tool application
         self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00C00000))

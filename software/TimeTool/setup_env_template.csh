@@ -1,7 +1,9 @@
 # Setup environment
 #source /afs/slac/g/reseng/rogue/v2.8.0/setup_env.csh
-source /afs/slac/g/reseng/rogue/pre-release/setup_env.csh
+#source /afs/slac/g/reseng/rogue/pre-release/setup_env.csh
 #source /afs/slac/g/reseng/rogue/master/setup_env.csh
+#source /u/ey/rherbst/projects/gen_daq/rogue/setup.csh
+source /mnt/host/rogue/develpc/pre-release/setup_rogue.csh
 
 # Package directories
 setenv SURF_DIR ${PWD}/../../firmware/submodules/surf/python

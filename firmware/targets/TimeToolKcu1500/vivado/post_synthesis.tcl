@@ -15,7 +15,7 @@ source -quiet $::env(RUCKUS_DIR)/vivado_env_var.tcl
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
 # Bypass the debug chipscope generation
-return
+#return
 
 ############################
 ## Open the synthesis design
@@ -40,16 +40,16 @@ set_property C_DATA_DEPTH 1024 [get_debug_cores ${ilaName}]
 #################################
 ## Set the clock for the ILA core
 #################################
-SetDebugCoreClk ${ilaName} {sysClk}
+SetDebugCoreClk ${ilaName} {U_ClinkTop/U_Cbl0Half1/clinkClk}
 
 #######################
 ## Set the debug Probes
 #######################
 
-ConfigProbe ${ilaName} {U_TimeToolCore/axilReadMaster[*}
-ConfigProbe ${ilaName} {U_TimeToolCore/r[axilReadSlave][*}
-ConfigProbe ${ilaName} {U_TimeToolCore/axilWriteMaster[*}
-ConfigProbe ${ilaName} {U_TimeToolCore/r[axilWriteSlave][*}
+ConfigProbe ${ilaName} {U_ClinkTop/U_Cbl0Half1/}
+#ConfigProbe ${ilaName} {U_TimeToolCore/r[axilReadSlave][*}
+#ConfigProbe ${ilaName} {U_TimeToolCore/axilWriteMaster[*}
+#ConfigProbe ${ilaName} {U_TimeToolCore/r[axilWriteSlave][*}
 
 # ConfigProbe ${ilaName} {U_TimeToolCore/r[addValue][*]}
 # ConfigProbe ${ilaName} {U_TimeToolCore/r[dialInOpCode][*]}
@@ -59,3 +59,4 @@ ConfigProbe ${ilaName} {U_TimeToolCore/r[axilWriteSlave][*}
 ## Write the port map file
 ##########################
 WriteDebugProbes ${ilaName} 
+
