@@ -67,38 +67,49 @@ architecture mapping of TimeToolCore is
    --constant DEFAULT_OPCODE : integer := 44;  -- added by sn
 
    type RegType is record
-      master                : AxiStreamMasterType;
-      slave                 : AxiStreamSlaveType;
-      addvalue              : slv(7 downto 0);
-      dialInOpCode          : slv(7 downto 0);    --added by sn
-      dialInOpCode_natural  : natural range 0 to 255;            --added by sz
-      dialInTriggerDelay    : slv(7 downto 0);    --added by sz   
-      pulseId               : slv(31 downto 0);   --added by cpo
-      endOfFrame            : sl;                 --added sz and cpo
-      triggerReady          : sl;                 --added by sn
-      runCounter            : sl;                 --added by sn
-      --counter               : slv(31 downto 0); --added by sn
-      counter               : slv(10 downto 0);   --added by sn (size dep on delay)
-      axilReadSlave         : AxiLiteReadSlaveType;
-      axilWriteSlave        : AxiLiteWriteSlaveType;
-      locTxIn_local_sysClk  : Pgp2bTxInType;
+      master                 : AxiStreamMasterType;
+      slave                  : AxiStreamSlaveType;
+      addvalue               : slv(7 downto 0);
+      dialInOpCode           : slv(7 downto 0);    --added by sn
+      dialInTriggerDelay     : slv(7 downto 0);    --added by sz   
+      pulseId                : slv(31 downto 0);   --added by cpo
+      endOfFrame             : sl;                 --added sz and cpo
+      triggerReady           : sl;                 --added by sn
+      startDelayCounter      : sl;                 --added by sn
+      counter                : slv(31 downto 0);      --added by sn
+      dialInDelayCounter     : slv(10 downto 0);   --added by sn (size dep on delay)
+      prescalingRate         : slv(7 downto 0);
+      axilReadSlave          : AxiLiteReadSlaveType;
+      axilWriteSlave         : AxiLiteWriteSlaveType;
+      locTxIn_local_sysClk   : Pgp2bTxInType;
+      --natural counter parts
+      dialInOpCode_natural   : natural range 0 to 255;            --added by sz
+      --prescalingRate_natural : natural range 0 to 255;            --added by sz
+      --counter_natural        : natural range 0 to 255;            --added by sz
+
 
    end record RegType;
 
    constant REG_INIT_C : RegType := (
-      master               => AXI_STREAM_MASTER_INIT_C,
-      slave                => AXI_STREAM_SLAVE_INIT_C,
-      addValue             => (others=>'0'),
-      dialInOpCode         => x"2C",            --added by sn
-      dialInOpCode_natural => 44,               --added by sz
-      dialInTriggerDelay   => (others=>'0'),    --added by sz
-      pulseId              => (others=>'0'),    --added by cpo
-      endOfFrame           => '0',              --added sz and cpo
-      triggerReady         => '0',              --added by sn
-      runCounter           => '0',              --added by sn
-      counter              => (others=>'0'),    --added by sn
-      axilReadSlave        => AXI_LITE_READ_SLAVE_INIT_C,
-      axilWriteSlave       => AXI_LITE_WRITE_SLAVE_INIT_C,
+      master                 => AXI_STREAM_MASTER_INIT_C,
+      slave                  => AXI_STREAM_SLAVE_INIT_C,
+      addValue               => (others=>'0'),
+      dialInOpCode           => x"2C",            --added by sn
+      dialInTriggerDelay     => (others=>'0'),    --added by sz
+      pulseId                => (others=>'0'),    --added by cpo
+      endOfFrame             => '0',              --added sz and cpo
+      triggerReady           => '0',              --added by sn
+      startDelayCounter      => '0',              --added by sn
+      dialInDelaycounter     => (others=>'0'),    --added by sn
+      prescalingRate         => (others=>'0'),
+      counter                => (others=>'0'),
+      axilReadSlave          => AXI_LITE_READ_SLAVE_INIT_C,
+      axilWriteSlave         => AXI_LITE_WRITE_SLAVE_INIT_C,
+      --natural counterparts
+      dialInOpCode_natural   => 44,               --added by sz
+      --prescalingRate_natural => 0,                --added by sz
+      --counter_natural        => 0,                --added by sz
+
       locTxIn_local_sysClk => PGP2B_TX_IN_INIT_C);    --come back to
 
    signal r   : RegType := REG_INIT_C;
@@ -190,6 +201,8 @@ begin
       -- Latch the current value
       v := r;
 
+      v.counter := v.counter + v.prescalingRate;
+
       ------------------------      
       -- AXI-Lite Transactions
       ------------------------      
@@ -203,29 +216,34 @@ begin
       axiSlaveRegister (axilEp, x"00000", 16, v.dialInTriggerDelay);   --the second field is the address. look for "dataen" in ClinkTop.vhd 
                                                                        --and_ClinkTop.py for an example the third field is the bit offset.  
 
+      axiSlaveRegister (axilEp, x"00000", 24, v.prescalingRate);
+
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
 
       ------------------------------
       -- Event Code            --cpo
       ------------------------------
       -- will need to change r.pulseId to go into a fifo when data rates increase (camera readout over laps with next trigger being received)
-      v.dialInOpCode_natural := to_integer(unsigned(v.dialInOpCode));
-      if timingBus.strobe = '1' and timingBus.stream.eventCodes(v.dialInOpCode_natural) = '1' then
+      
+      --v.prescalingRate_natural             := unsigned(v.prescalingRate);
+      v.dialInOpCode_natural               := to_integer(unsigned(v.dialInOpCode));
+
+      if ((timingBus.strobe = '1') and (timingBus.stream.eventCodes(v.dialInOpCode_natural) = '1') and (v.counter < v.prescalingRate)) then
          v.pulseId := timingBus.stream.pulseId;
          --start counter for trigger delay, 
-         v.runCounter := '1';
+         v.startDelayCounter := '1';
       end if;
 
       ------------------------------
       -- Delay Counter            --snelson
       ------------------------------
-      if v.runCounter = '1' then
-        if v.counter < v.dialInTriggerDelay then
-          v.counter := v.counter + 1;
+      if v.startDelayCounter = '1' then
+        if v.dialInDelayCounter < v.dialInTriggerDelay then
+          v.dialInDelayCounter         := v.dialInDelayCounter + 1;
         else
-          v.triggerReady := '1'; 
-          v.counter := (others => '0');  --reset the counter
-          v.runCounter := '0';           --stop counter loop
+          v.triggerReady               := '1'; 
+          v.dialInDelayCounter         := (others => '0');  --reset the counter
+          v.startDelayCounter          := '0';           --stop counter loop
         end if;
       end if;  
 
