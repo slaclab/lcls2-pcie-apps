@@ -71,4 +71,5 @@ set_clock_groups -asynchronous -group [get_clocks {pgpTxClk5}] -group [get_clock
 set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks {userClkP0}] -group [get_clocks {sysClk}] -group [get_clocks {drpClk}]  
 set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks {userClkP1}] -group [get_clocks {sysClk}] -group [get_clocks {drpClk}]  
 set_clock_groups -asynchronous -group [get_clocks {evrRefMon0}] -group [get_clocks {evrRefMon1}] -group [get_clocks {sysClk}]
+set_clock_groups -asynchronous -group [get_clocks {evrRefMon0}] -group [get_clocks {evrRefMon1}] -group [get_clocks {drpClk}]
 set_clock_groups -asynchronous -group [get_clocks evrRxClk0] -group [get_clocks evrRxClk1]

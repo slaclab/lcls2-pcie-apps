@@ -353,9 +353,13 @@ begin
 
    U_AlignCheck : entity work.GthRxAlignCheck
       generic map (
-        TPD_G            => TPD_G,
-        DRP_ADDR_G       => AXI_CROSSBAR_MASTERS_CONFIG_C(1).baseAddr)
+        TPD_G      => TPD_G,
+        GT_TYPE_G  => "GTHE3",
+        DRP_ADDR_G => AXI_CROSSBAR_MASTERS_CONFIG_C(1).baseAddr)
       port map (
+         -- Clock Monitoring
+         txClk           => txoutclkb,
+         rxClk           => rxoutclkb,      
          -- GTH Status/Control Interface
          resetIn         => rxControl.reset,
          resetDone       => bypassdone,
@@ -374,10 +378,7 @@ begin
          sAxilReadMaster   => axilReadMasters(0),
          sAxilReadSlave    => axilReadSlaves(0),
          sAxilWriteMaster  => axilWriteMasters(0),
-         sAxilWriteSlave   => axilWriteSlaves(0),
-         --txClk and rxClk frequency monitoring
-         txClk             => '0',
-         rxClk             => '0');
+         sAxilWriteSlave   => axilWriteSlaves(0));
 
    U_AxiLiteToDrp : entity work.AxiLiteToDrp
       generic map (
