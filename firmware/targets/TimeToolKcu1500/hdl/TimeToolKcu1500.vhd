@@ -2,7 +2,7 @@
 -- File       : TimeToolKcu1500.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
--- Last update: 2018-03-20
+-- Last update: 2018-09-24
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -115,13 +115,13 @@ architecture top_level of TimeToolKcu1500 is
    signal dmaIbMasters : AxiStreamMasterArray(7 downto 0);
    signal dmaIbSlaves  : AxiStreamSlaveArray(7 downto 0);
 
-   signal hwIbMasters  : AxiStreamMasterArray(7 downto 0);
-   signal hwIbSlaves   : AxiStreamSlaveArray(7 downto 0);
+   signal hwIbMasters : AxiStreamMasterArray(7 downto 0);
+   signal hwIbSlaves  : AxiStreamSlaveArray(7 downto 0);
 
-   signal appInMaster   : AxiStreamMasterType;
-   signal appInSlave    : AxiStreamSlaveType;
-   signal appOutMaster  : AxiStreamMasterType;
-   signal appOutSlave   : AxiStreamSlaveType;
+   signal appInMaster  : AxiStreamMasterType;
+   signal appInSlave   : AxiStreamSlaveType;
+   signal appOutMaster : AxiStreamMasterType;
+   signal appOutSlave  : AxiStreamSlaveType;
 
    signal memReady        : slv(3 downto 0);
    signal memWriteMasters : AxiWriteMasterArray(15 downto 0);
@@ -129,9 +129,10 @@ architecture top_level of TimeToolKcu1500 is
    signal memReadMasters  : AxiReadMasterArray(15 downto 0);
    signal memReadSlaves   : AxiReadSlaveArray(15 downto 0);
 
-   signal timingBus       : TimingBusType;
-   signal locTxIn         : Pgp2bTxInType;
-   signal pgpTxClk        : sl;
+   signal timingBus : TimingBusType;
+
+   signal pgpTxClk : slv(5 downto 0);
+   signal pgpTxIn  : Pgp2bTxInArray(5 downto 0);
 
 begin
 
@@ -227,8 +228,8 @@ begin
 
    U_App : entity work.Hardware
       generic map (
-         TPD_G            => TPD_G,
-         AXI_BASE_ADDR_G  => AXI_CONFIG_C(0).baseAddr)
+         TPD_G           => TPD_G,
+         AXI_BASE_ADDR_G => AXI_CONFIG_C(0).baseAddr)
       port map (
          ------------------------      
          --  Top Level Interfaces
@@ -247,10 +248,13 @@ begin
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => hwIbMasters,
          dmaIbSlaves     => hwIbSlaves,
-         -- Timing information
-         timingBus       => timingBus,
-         locTxIn         => locTxIn,
+         -- Timing information (appTimingClk domain)
+         appTimingClk    => sysClk,
+         appTimingRst    => sysRst,
+         appTimingBus    => timingBus,
+         -- PGP TX OP-codes (pgpTxClk domains)
          pgpTxClk        => pgpTxClk,
+         pgpTxIn         => pgpTxIn,
          ------------------
          --  Hardware Ports
          ------------------        
@@ -271,20 +275,20 @@ begin
 
    -- Unused memory signals
    --memReady        : slv(3 downto 0);
-   memWriteMasters <= (others=>AXI_WRITE_MASTER_INIT_C);
+   memWriteMasters <= (others => AXI_WRITE_MASTER_INIT_C);
    --memWriteSlaves  : AxiWriteSlaveArray(15 downto 0);
-   memReadMasters  <= (others=>AXI_READ_MASTER_INIT_C);
+   memReadMasters  <= (others => AXI_READ_MASTER_INIT_C);
    --memReadSlaves   : AxiReadSlaveArray(15 downto 0);
 
    -- Unused user signals
    --userSwDip  : slv(3 downto 0);
-   userLed <= (others=>'0');
+   userLed <= (others => '0');
 
    dmaIbMasters(7 downto 1) <= hwIbmasters(7 downto 1);
    hwIbSlaves(7 downto 1)   <= dmaIbSlaves(7 downto 1);
 
    -- Tap data destination
-   U_Tap: entity work.AxiStreamTap
+   U_Tap : entity work.AxiStreamTap
       generic map (
          TPD_G      => TPD_G,
          TAP_DEST_G => 1)
@@ -300,22 +304,27 @@ begin
          axisClk      => sysClk,
          axisRst      => sysRst);
 
-   U_TimeToolCore: entity work.TimeToolCore
-      generic map ( 
-         TPD_G            => TPD_G)
+   U_TimeToolCore : entity work.TimeToolCore
+      generic map (
+         TPD_G => TPD_G)
       port map (
+         -- System Clock and Reset
          sysClk          => sysClk,
          sysRst          => sysRst,
+         -- DMA Interface (sysClk domain)
          dataInMaster    => appInMaster,
          dataInSlave     => appInSlave,
          dataOutMaster   => appOutMaster,
          dataOutSlave    => appOutSlave,
+         -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => intReadMasters(1),
          axilReadSlave   => intReadSlaves(1),
          axilWriteMaster => intWriteMasters(1),
          axilWriteSlave  => intWriteSlaves(1),
+         -- Timing information (sysClk domain)
          timingBus       => timingBus,
-         locTxIn         => locTxIn,
-         pgpTxClk        => pgpTxClk);
+         -- PGP TX OP-codes (pgpTxClk domains)
+         pgpTxClk        => pgpTxClk,
+         pgpTxIn         => pgpTxIn);
 
 end top_level;

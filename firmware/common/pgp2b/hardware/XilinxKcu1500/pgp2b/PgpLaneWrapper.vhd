@@ -73,9 +73,9 @@ entity PgpLaneWrapper is
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType;
-      -- op-code for controlling of timetool cc1 (<- pin id) trigger
-      locTxIn         : in  Pgp2bTxInType;
-      pgpTxClk_out    : out sl);
+      -- PGP TX OP-codes (pgpTxClk domains)
+      pgpTxClk        : out slv(5 downto 0);
+      pgpTxIn         : in  Pgp2bTxInArray(5 downto 0));      
 end PgpLaneWrapper;
 
 architecture mapping of PgpLaneWrapper is
@@ -97,7 +97,6 @@ architecture mapping of PgpLaneWrapper is
    signal pgpRxN   : slv(NUM_AXI_MASTERS_C-1 downto 0);
    signal pgpTxP   : slv(NUM_AXI_MASTERS_C-1 downto 0);
    signal pgpTxN   : slv(NUM_AXI_MASTERS_C-1 downto 0);
-   signal pgpTxClk : slv(NUM_AXI_MASTERS_C-1 downto 0);
 
    signal refClk : slv(3 downto 0);
 
@@ -105,8 +104,6 @@ architecture mapping of PgpLaneWrapper is
    attribute dont_touch of refClk : signal is "TRUE";
 
 begin
-
-   pgpTxClk_out<=pgpTxClk(0);
 
    -- Unused DMA lanes
    dmaObSlaves(7 downto 6)  <= (others => AXI_STREAM_SLAVE_FORCE_C);
@@ -233,9 +230,9 @@ begin
             axilReadSlave   => axilReadSlaves(i),
             axilWriteMaster => axilWriteMasters(i),
             axilWriteSlave  => axilWriteSlaves(i),
-            -- op-code for controlling of timetool cc1 (<- pin id) trigger
-            locTxIn         => locTxIn,
-            pgpTxClk_out    => pgpTxClk(i));
+            -- PGP TX OP-codes (pgpTxClk domains)
+            pgpTxClkOut     => pgpTxClk(i),
+            appPgpTxIn      => pgpTxIn(i));
 
       U_evrRst : entity work.RstPipeline
          generic map (

@@ -62,9 +62,9 @@ entity PgpLane is
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType;
-      -- op-code for controlling of timetool cc1 (<- pin id) trigger
-      locTxIn         : in  Pgp2bTxInType;
-      pgpTxClk_out    : out sl);
+      -- PGP TX OP-codes (pgpTxClk domain)
+      pgpTxClkOut     : out sl;
+      appPgpTxIn      : in  Pgp2bTxInType);
 end PgpLane;
 
 architecture mapping of PgpLane is
@@ -104,10 +104,14 @@ architecture mapping of PgpLane is
 
    signal status : StatusType;
    signal config : ConfigType;
+   
+   signal evrPgpTxIn : Pgp2bTxInType := PGP2B_TX_IN_INIT_C;
+   signal locTxIn    : Pgp2bTxInType := PGP2B_TX_IN_INIT_C;
 
 begin
 
-   pgpTxClk_out <= pgpTxClk;
+   pgpTxClkOut <= pgpTxClk;
+   
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
@@ -228,7 +232,15 @@ begin
          axilReadSlave   => axilReadSlaves(MON_INDEX_C),
          axilWriteMaster => axilWriteMasters(MON_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(MON_INDEX_C));
-
+         
+   locTxIn.flush       <= appPgpTxIn.flush;
+   locTxIn.opCodeEn    <= appPgpTxIn.opCodeEn or evrPgpTxIn.opCodeEn; 
+   locTxIn.opCode      <= appPgpTxIn.opCode when(appPgpTxIn.opCodeEn = '1') else evrPgpTxIn.opCode;
+   locTxIn.locData     <= appPgpTxIn.locData;
+   locTxIn.flowCntlDis <= appPgpTxIn.flowCntlDis;
+   locTxIn.resetTx     <= appPgpTxIn.resetTx;
+   locTxIn.resetGt     <= appPgpTxIn.resetGt;
+   
    ------------
    -- Misc Core
    ------------
@@ -293,7 +305,7 @@ begin
          -- PGP Trigger Interface (pgpTxClk domain)
          pgpTxClk     => pgpTxClk,
          pgpTxRst     => pgpTxRst,
-         --pgpTxIn      => locTxIn, --removed in order to allow time tool core opcode enable to control. to allow 
+         pgpTxIn      => evrPgpTxIn,
          -- PGP RX Interface (pgpRxClk domain)
          pgpRxClk     => pgpRxClk,
          pgpRxRst     => pgpRxRst,

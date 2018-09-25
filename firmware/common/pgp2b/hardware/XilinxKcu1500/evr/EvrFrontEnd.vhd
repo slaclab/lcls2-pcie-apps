@@ -2,7 +2,7 @@
 -- File       : EvrFrontEnd.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-09-20
--- Last update: 2018-03-15
+-- Last update: 2018-09-24
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -34,9 +34,9 @@ entity EvrFrontEnd is
       AXI_BASE_ADDR_G  : slv(31 downto 0) := (others => '0'));
    port (
       -- Timing Interface
-      evrClk          : out sl;
-      evrRst          : out sl;
-      evrTimingBus    : out TimingBusType;
+      appTimingClk    : in  sl;
+      appTimingRst    : in  sl;
+      appTimingBus    : out TimingBusType;
       -- DRP Clock and Reset
       drpClk          : in  sl;
       drpRst          : in  sl;
@@ -117,18 +117,9 @@ architecture mapping of EvrFrontEnd is
 
 begin
 
-   evrClk  <= rxClk;
    txRst   <= txUserRst;
    rxReset <= rxUserRst or not(rxStatus.resetDone);
    rxRst   <= rxUserRst;
-
-   U_Rst : entity work.RstPipeline
-      generic map (
-         TPD_G => TPD_G)
-      port map (
-         clk    => rxClk,
-         rstIn  => rxReset,
-         rstOut => evrRst);
 
    U_25MHz : entity work.ClockManagerUltraScale
       generic map(
@@ -344,11 +335,9 @@ begin
          gtRxControl     => rxCtrl,
          gtRxStatus      => rxStatus,
          -- Decoded timing message interface
-         --appTimingClk    => rxClk,  --this was removed and replaced with line below to specify the clock domain to use on the receiving application
-	 appTimingClk    => sysClk,
-         --appTimingRst    => rxRst,
-	 appTimingRst    => sysRst,
-         appTimingBus    => evrTimingBus,
+         appTimingClk    => appTimingClk,
+         appTimingRst    => appTimingRst,
+         appTimingBus    => appTimingBus,
          timingPhy       => timingPhy,
          timingClkSel    => timingClockSel,
          -- AXI Lite interface

@@ -2,7 +2,7 @@
 -- File       : Hardware.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-22
--- Last update: 2018-03-20
+-- Last update: 2018-09-24
 -------------------------------------------------------------------------------
 -- Description: Hardware File
 -------------------------------------------------------------------------------
@@ -44,20 +44,23 @@ entity Hardware is
       sysClk          : in  sl;
       sysRst          : in  sl;
       userClk156      : in  sl;
-      -- AXI-Lite Interface
+      -- AXI-Lite Interface (sysClk domain)
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType;
-      -- DMA Interface
+      -- DMA Interface (sysClk domain)
       dmaObMasters    : in  AxiStreamMasterArray(7 downto 0);
       dmaObSlaves     : out AxiStreamSlaveArray(7 downto 0);
       dmaIbMasters    : out AxiStreamMasterArray(7 downto 0);
       dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
-      -- Timing information
-      timingBus       : out TimingBusType;
-      locTxIn         : in  Pgp2bTxInType;
-      pgpTxClk        : out sl;
+      -- Timing information (appTimingClk domain)
+      appTimingClk    : in  sl;
+      appTimingRst    : in  sl;
+      appTimingBus    : out TimingBusType;
+      -- PGP TX OP-codes (pgpTxClk domains)
+      pgpTxClk        : out slv(5 downto 0);
+      pgpTxIn         : in  Pgp2bTxInArray(5 downto 0) := (others => PGP2B_TX_IN_INIT_C);
       ---------------------
       --  Hardware Ports
       ---------------------    
@@ -92,8 +95,8 @@ architecture mapping of Hardware is
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
 
-   signal evrClk       : sl;
-   signal evrRst       : sl;
+   signal evrClk : sl;
+   signal evrRst : sl;
 
    signal evrRxP : slv(1 downto 0);
    signal evrRxN : slv(1 downto 0);
@@ -108,9 +111,9 @@ architecture mapping of Hardware is
 
 begin
 
-  timingBus <= evrTimingBus;
+   appTimingBus <= evrTimingBus;
 
-  U_DRP_CLK : BUFGCE_DIV
+   U_DRP_CLK : BUFGCE_DIV
       generic map (
          BUFGCE_DIVIDE => 8)
       port map (
@@ -192,8 +195,8 @@ begin
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves,
          -- Timing Interface (evrClk domain)
-         evrClk          => evrClk,
-         evrRst          => evrRst,
+         evrClk          => appTimingClk,
+         evrRst          => appTimingRst,
          evrTimingBus    => evrTimingBus,
          -- AXI-Lite Interface (sysClk domain)
          sysClk          => sysClk,
@@ -202,9 +205,9 @@ begin
          axilReadSlave   => axilReadSlaves(PGP_INDEX_C),
          axilWriteMaster => axilWriteMasters(PGP_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C),
-         -- op-code for controlling of timetool cc1 (<- pin id) trigger
-         locTxIn         => locTxIn,
-         pgpTxClk_out    => pgpTxClk);
+         -- PGP TX OP-codes (pgpTxClk domains)
+         pgpTxClk        => pgpTxClk,
+         pgpTxIn         => pgpTxIn);
 
    ------------------
    -- Timing Receiver
@@ -214,10 +217,10 @@ begin
          TPD_G           => TPD_G,
          AXI_BASE_ADDR_G => AXI_CONFIG_C(EVR_INDEX_C).baseAddr)
       port map (
-         -- Timing Interface (evrClk domain)
-         evrClk          => evrClk,
-         evrRst          => evrRst,
-         evrTimingBus    => evrTimingBus,
+         -- Timing Interface (appTimingClk domain)
+         appTimingClk    => appTimingClk,
+         appTimingRst    => appTimingRst,
+         appTimingBus    => evrTimingBus,
          -- DRP Clock and Reset
          drpClk          => drpClk,
          drpRst          => drpRst,

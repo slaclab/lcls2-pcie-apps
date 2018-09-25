@@ -43,21 +43,21 @@ entity TimeToolCore is
       -- System Interface
       sysClk          : in    sl;
       sysRst          : in    sl;
-      -- DMA Interfaces  (sysClk domain)
+      -- DMA Interfaces (sysClk domain)
       dataInMaster    : in    AxiStreamMasterType;
       dataInSlave     : out   AxiStreamSlaveType;
       dataOutMaster   : out   AxiStreamMasterType;
       dataOutSlave    : in    AxiStreamSlaveType;
-      -- AXI-Lite Interface
+      -- AXI-Lite Interface (sysClk domain)
       axilReadMaster  : in    AxiLiteReadMasterType;
       axilReadSlave   : out   AxiLiteReadSlaveType;
       axilWriteMaster : in    AxiLiteWriteMasterType;
       axilWriteSlave  : out   AxiLiteWriteSlaveType;
-      -- Timing information
-      timingBus       : in    TimingBusType;
-      -- op-code for controlling of timetool cc1 (<- pin id) trigger
-      locTxIn         : out    Pgp2bTxInType;
-      pgpTxClk        : in     sl);
+      -- Timing information (sysClk domain)
+      timingBus       : in TimingBusType;
+      -- PGP TX OP-codes (pgpTxClk domains)
+      pgpTxClk        : in slv(5 downto 0);
+      pgpTxIn         : out Pgp2bTxInArray(5 downto 0));
 end TimeToolCore;
 
 architecture mapping of TimeToolCore is
@@ -118,7 +118,7 @@ architecture mapping of TimeToolCore is
    signal inMaster            : AxiStreamMasterType;
    signal inSlave             : AxiStreamSlaveType;
    signal outCtrl             : AxiStreamCtrlType;
-   signal locTxIn_buf         : Pgp2bTxInType;
+   signal locTxIn_buf         : Pgp2bTxInArray(5 downto 0) := (others=>PGP2B_TX_IN_INIT_C);
    signal empty_placeholder   : slv(31 downto 0);
 
    component ila_0
@@ -128,7 +128,7 @@ architecture mapping of TimeToolCore is
 
 begin
 
-   locTxIn <= locTxIn_buf;
+   pgpTxIn <= locTxIn_buf;
    ---------------------------------
    -- Input FIFO
    ---------------------------------
@@ -154,27 +154,28 @@ begin
    ---------------------------------
    -- locTxIn FIFO for crossing clock domains.
    ---------------------------------
+   GEN_PGP_LANE : for i in 5 downto 0 generate
+      locTxIn_SynchronizerFifo: entity work.SynchronizerFifo
+            generic map (
+               TPD_G        => TPD_G,
+               DATA_WIDTH_G => PGP2BTXIN_LEN)
+            port map (
+               rst    => sysRst,
+               wr_clk => sysClk,
+               wr_en  => r.locTxIn_local_sysClk.opCodeEn,
+               din    => r.locTxIn_local_sysClk.flush & r.locTxIn_local_sysClk.opCodeEn & r.locTxIn_local_sysClk.opCode & r.locTxIn_local_sysClk.locData & r.locTxIn_local_sysClk.flowCntlDis,
+               rd_clk => pgpTxClk(i),
 
-   locTxIn_SynchronizerFifo: entity work.SynchronizerFifo
-         generic map (
-            TPD_G        => TPD_G,
-            DATA_WIDTH_G => PGP2BTXIN_LEN)
-         port map (
-            rst    => sysRst,
-            wr_clk => sysClk,
-            wr_en  => r.locTxIn_local_sysClk.opCodeEn,
-            din    => r.locTxIn_local_sysClk.flush & r.locTxIn_local_sysClk.opCodeEn & r.locTxIn_local_sysClk.opCode & r.locTxIn_local_sysClk.locData & r.locTxIn_local_sysClk.flowCntlDis,
-            rd_clk => pgpTxClk,
-
-            dout(PGP2BTXIN_LEN-1)                            => locTxIn_buf.flush,
-            --dout(PGP2BTXIN_LEN-2)                            => locTxIn_buf.opCodeEn,--driven by valid.
-            --dout(PGP2BTXIN_LEN-1)                            => empty_placeholder(0),
-            dout(PGP2BTXIN_LEN-2)                            => empty_placeholder(1),--driven by valid.
-            dout(PGP2BTXIN_LEN-3  downto PGP2BTXIN_LEN-10)   => locTxIn_buf.opCode,
-            dout(PGP2BTXIN_LEN-11 downto PGP2BTXIN_LEN-18)   => locTxIn_buf.locData,
-            dout(PGP2BTXIN_LEN-19)                           => locTxIn_buf.flowCntlDis,
-            valid                                            => locTxIn_buf.opCodeEn);
-
+               dout(PGP2BTXIN_LEN-1)                            => locTxIn_buf(i).flush,
+               --dout(PGP2BTXIN_LEN-2)                            => locTxIn_buf(i).opCodeEn,--driven by valid.
+               --dout(PGP2BTXIN_LEN-1)                            => empty_placeholder(0),
+               dout(PGP2BTXIN_LEN-2)                            => empty_placeholder(1),--driven by valid.
+               dout(PGP2BTXIN_LEN-3  downto PGP2BTXIN_LEN-10)   => locTxIn_buf(i).opCode,
+               dout(PGP2BTXIN_LEN-11 downto PGP2BTXIN_LEN-18)   => locTxIn_buf(i).locData,
+               dout(PGP2BTXIN_LEN-19)                           => locTxIn_buf(i).flowCntlDis,
+               valid                                            => locTxIn_buf(i).opCodeEn);
+   end generate GEN_PGP_LANE;
+   
    ---------------------------------
    -- Xilinx debug integrated logic analyzer.
    ---------------------------------
