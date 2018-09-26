@@ -51,8 +51,39 @@ time.sleep(3)
  
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.get()
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(True)	#this start the data collection
-time.sleep(10)
+time.sleep(1)
 cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(False)#this stops the data collection
-cl.stop()	#does this need cl.start() counter part? don't see it in gui.py
+
+
+#validating prescalling
+
+cl.ClinkTest.ClinkTop.ChannelA.SendString('svm 0')
+cl.ClinkTest.ClinkTop.ChannelA.SendString('stm 1')
+
+def frame_rate(sec):
+    start_time  = time.time()
+    start_count = cl.ClinkTest.ClinkTop.ChannelA.FrameCount.get()
+
+    time.sleep(sec)
+
+    stop_time  = time.time()
+    stop_count = cl.ClinkTest.ClinkTop.ChannelA.FrameCount.get()
+
+    return (stop_count-start_count)*1.0/(stop_time-start_time)
+
+#cl.stop()	#does this need cl.start() counter part? don't see it in gui.py
 #time.sleep(1)
-cl._dbg.close_h5_file()
+#cl._dbg.close_h5_file()
+
+
+
+cl.ClinkTest.ClinkTop.ChannelA.SendString('ssf 7000')
+cl.ClinkTest.ClinkTop.ChannelA.SendString('ssf 6000')
+cl.ClinkTest.ClinkTop.ChannelA.DropCount.get()
+cl.TimeTool.dialInPreScaling.set(254)
+cl.TimeTool.dialInPreScaling.set(124)
+cl.TimeTool.DialInOpCode.set(40)
+cl.TimeTool.dialInPreScaling.set(125)
+cl.ClinkTest.ClinkTop.ChannelA.DropCount.get()
+frame_rate(2)
+

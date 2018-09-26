@@ -76,7 +76,7 @@ architecture mapping of TimeToolCore is
       endOfFrame             : sl;                 --added sz and cpo
       triggerReady           : sl;                 --added by sn
       startDelayCounter      : sl;                 --added by sn
-      counter                : slv(31 downto 0);      --added by sn
+      counter                : slv(7 downto 0);      --added by sn
       dialInDelayCounter     : slv(10 downto 0);   --added by sn (size dep on delay)
       prescalingRate         : slv(7 downto 0);
       axilReadSlave          : AxiLiteReadSlaveType;
