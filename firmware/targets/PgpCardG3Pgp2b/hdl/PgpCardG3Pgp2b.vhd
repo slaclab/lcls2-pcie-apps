@@ -133,16 +133,19 @@ begin
          -- System Clock and Reset
          sysClk          => sysClk,
          sysRst          => sysRst,
-         -- AXI-Lite Interface
+         -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
          axilWriteMaster => axilWriteMaster,
          axilWriteSlave  => axilWriteSlave,
-         -- DMA Interface
+         -- DMA Interface (sysClk domain)
          dmaObMasters    => dmaObMasters,
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves,
+         -- Timing information (appTimingClk domain)
+         appTimingClk    => sysClk,
+         appTimingRst    => sysRst,       
          -- PGP GT Serial Ports
          pgpRefClkP      => pgpRefClkP,
          pgpRefClkN      => pgpRefClkN,

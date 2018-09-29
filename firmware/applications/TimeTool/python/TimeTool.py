@@ -52,4 +52,12 @@ class TimeToolCore(pr.Device):
             mode         = "RW",
         ))
 
+        self.add(pr.RemoteVariable(    
+            name         = "dialInPreScaling",
+            offset       =  0x00,
+            bitSize      =  8,
+            bitOffset    = 24,
+            base         = pr.UInt,
+            mode         = "RW",
+        ))
 
