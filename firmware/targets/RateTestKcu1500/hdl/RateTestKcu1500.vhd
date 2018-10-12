@@ -126,7 +126,6 @@ architecture top_level of RateTestKcu1500 is
    signal memReadSlaves   : AxiReadSlaveArray(15 downto 0);
 
    signal timingBus       : TimingBusType;
-   signal locTxIn         : Pgp2bTxInType;
    signal pgpTxClk        : sl;
 
 begin
@@ -248,9 +247,11 @@ begin
          dmaIbMasters    => hwIbMasters,
          dmaIbSlaves     => hwIbSlaves,
          -- Timing information
-         timingBus       => timingBus,
-         locTxIn         => locTxIn,
-         pgpTxClk        => pgpTxClk,
+         appTimingClk    => sysClk,
+         appTimingRst    => sysRst,
+         appTimingBus    => timingBus,
+         pgpTxClk        => open,
+         pgpTxIn         => (others=>PGP2B_TX_IN_INIT_C),
          ------------------
          --  Hardware Ports
          ------------------        
@@ -285,8 +286,6 @@ begin
 
    --dmaIbMasters(0) <= hwIbmasters(0);
    --hwIbSlaves(0)   <= AXI_STREAM_SLAVE_INIT_C;
-
-   locTxIn <= PGP2B_TX_IN_INIT_C;
 
    U_GenTx: for i in 0 to 3 generate
       hwIbSlaves(i) <= AXI_STREAM_SLAVE_INIT_C;
