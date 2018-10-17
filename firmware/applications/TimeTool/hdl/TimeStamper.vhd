@@ -209,7 +209,7 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"00000",  0, v.addValue);	       --field is updated from info over axi bus. 
+      axiSlaveRegister (axilEp, x"00000",  0, v.addValue);	           --field is updated from info over axi bus. 
                                                                        --only for addvalue. The first field is the axi lite
       axiSlaveRegister (axilEp, x"00000",  8, v.dialInOpCode);         --endpoint type.  This is the bus from which the data is read (need to verify).
       axiSlaveRegister (axilEp, x"00000", 16, v.dialInTriggerDelay);   --the second field is the address. look for "dataen" in ClinkTop.vhd 
