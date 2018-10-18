@@ -23,4 +23,15 @@ def setSize(size):
     cl.prbsTx2.PacketLength.set(size)
     cl.prbsTx3.PacketLength.set(size)
 
-print("enableTx, disableTx, setSize")
+def status():
+    print("LinkWidth={}".format(cl.AxiPcieCore.AxiPciePhy.LinkWidth.get()))
+    print("LinkWidth16={}".format(cl.AxiPcieCore.AxiPciePhy.LinkWidth16.get()))
+    print("LinkRateGen2={}".format(cl.AxiPcieCore.AxiPciePhy.LinkRateGen2.get()))
+    print("LinkRateGen3={}".format(cl.AxiPcieCore.AxiPciePhy.LinkRateGen3.get()))
+    print("BuildStamp={}".format(cl.AxiPcieCore.AxiVersion.BuildStamp.get()))
+    print("FrameRate0={}".format(cl.AxiPcieCore.DmaIbAxisMon.FrameRate[0].get()))
+    print("FrameRate1={}".format(cl.AxiPcieCore.DmaIbAxisMon.FrameRate[0].get()))
+    print("FrameRate2={}".format(cl.AxiPcieCore.DmaIbAxisMon.FrameRate[0].get()))
+    print("FrameRate3={}".format(cl.AxiPcieCore.DmaIbAxisMon.FrameRate[0].get()))
+
+print("enableTx, disableTx, setSize, status")
