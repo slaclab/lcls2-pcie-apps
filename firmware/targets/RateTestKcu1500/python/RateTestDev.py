@@ -11,7 +11,6 @@ import pyrogue.utilities.fileio
 import pyrogue.utilities.prbs
 from XilinxKcu1500Pgp2b import *
 import numpy as np
-import h5py
 
 class RateTestDev(pr.Root):
 
