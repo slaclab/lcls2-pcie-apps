@@ -5,8 +5,6 @@ import sys
 
 cl = RateTestDev.RateTestDev()
 
-cSize=0
-
 def enableTx():
     cl.prbsTx0.TxEn.set(True)
     cl.prbsTx1.TxEn.set(True)
@@ -20,8 +18,6 @@ def disableTx():
     cl.prbsTx3.TxEn.set(False)
 
 def setSize(size):
-    global cSize
-    cSize = ((size + 1) * 16)
     cl.prbsTx0.PacketLength.set(size)
     cl.prbsTx1.PacketLength.set(size)
     cl.prbsTx2.PacketLength.set(size)
@@ -44,9 +40,10 @@ def status():
     total += cl.AxiPcieCore.DmaIbAxisMon.FrameRate[2].get()
     total += cl.AxiPcieCore.DmaIbAxisMon.FrameRate[3].get()
 
-    bw = total * cSize * 8
+    size = ((cl.prbsTx0.PacketLength.get() + 1) * 16)
+    bw = total * size * 8
 
-    print("      Size: {:,} Bytes".format(cSize))
+    print("      Size: {:,} Bytes".format(size))
     print("Total Rate: {:,}".format(total))
     print("  Total Bw: {:,} Gbps".format(bw))
 
