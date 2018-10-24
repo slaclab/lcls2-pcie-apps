@@ -1,12 +1,13 @@
 
 # Incase python path is not set
-if [ -z "$PYTHONPATH" ]
-then
-   PYTHONPATH=""
-fi
+if ( ! $?PYTHONPATH ) then
+   setenv PYTHONPATH ""
+endif
 
-# Current directory
-LOC_DIR=$(dirname -- "$(readlink -f ${BASH_SOURCE[0]})")
+# Set current directory
+set CMD=($_)
+set LOC_PATH=`readlink -f "$CMD[2]"`
+set LOC_DIR=`dirname "$LOC_PATH"`
 
 # Package directories
 setenv SURF_DIR ${LOC_DIR}/../../firmware/submodules/surf/python
