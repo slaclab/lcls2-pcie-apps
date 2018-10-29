@@ -33,7 +33,6 @@ use work.Pgp2bPkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-
 entity TimeStamper is
    generic (
       TPD_G            : time             := 1 ns;

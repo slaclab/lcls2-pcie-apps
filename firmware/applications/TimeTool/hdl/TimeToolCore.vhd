@@ -62,12 +62,64 @@ end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
+   --FEX stands for feature extracted
+   signal masterRepeaterToFEXorPrescaler  : AxiStreamMasterArray(NUM_MASTERS_G-1 downto 0);
+   signal slaveRepeaterToFEXorPrescaler  : AxiStreamSlaveArray(NUM_MASTERS_G-1 downto 0);
+
+   signal masterFEXorPrescalerToCombiner  : AxiStreamMasterArray(NUM_MASTERS_G-1 downto 0);
+   signal slaveFEXorPrescalerToCombiner   : AxiStreamSlaveArray(NUM_MASTERS_G-1 downto 0);
 
 begin
 
 
-      U_TimeStamper : entity work.TimeStamper
+      --------------------------------------------
+      --breaking out the data from detector
+      --------------------------------------------
+
+      U_TimeStamper : entity work.AxiStreamRepeater
       generic map (
+         NUM_MASTERS_G =>'2',
+         TPD_G => TPD_G)
+      port map (
+         -- System Clock and Reset
+         sysClk          => sysClk,
+         sysRst          => sysRst,
+         -- DMA Interface (sysClk domain)
+         sAxisMaster     => dataInMaster,
+         sAxisSlave      => dataInSlave,
+         mAxisMasters    => masterRepeaterToFEXorPrescaler,
+         mAxisSlaves     => slaveRepeaterToFEXorPrescaler);
+
+      --------------------------------------------
+      --sending one of the repeated signals from module above to FEX or prescaling
+      --------------------------------------------
+
+
+      U_TimeStamper : entity work.TimeToolPrescaler
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         -- System Clock and Reset
+         sysClk          => sysClk,
+         sysRst          => sysRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster    => masterRepeaterToFEXorPrescaler(0),
+         dataInSlave     => slaveRepeaterToFEXorPrescaler(0),
+         dataOutMaster   => masterFEXorPrescalerToCombiner(0),
+         dataOutSlave    => slaveFEXorPrescalerToCombiner(0),
+         -- AXI-Lite Interface (sysClk domain)
+         axilReadMaster  => axilReadMaster,
+         axilReadSlave   => axilReadSlave,
+         axilWriteMaster => axilWriteMaster,
+         axilWriteSlave  => axilWriteSlave);
+
+      --------------------------------------------
+      --AxiStreamBatcherEventBuilder Combines them back together
+      --------------------------------------------
+
+      U_TimeStamper : entity work.AxiStreamBatcherEventBuilder
+      generic map (
+         NUM_MASTERS_G =>'2',
          TPD_G => TPD_G)
       port map (
          -- System Clock and Reset
@@ -77,16 +129,6 @@ begin
          dataInMaster    => dataInMaster,
          dataInSlave     => dataInSlave,
          dataOutMaster   => dataOutMaster,
-         dataOutSlave    => dataOutSlave,
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMaster,
-         axilReadSlave   => axilReadSlave,
-         axilWriteMaster => axilWriteMaster,
-         axilWriteSlave  => axilWriteSlave,
-         -- Timing information (sysClk domain)
-         timingBus       => timingBus,
-         -- PGP TX OP-codes (pgpTxClk domains)
-         pgpTxClk        => pgpTxClk,
-         pgpTxIn         => pgpTxIn);
+         dataOutSlave    => dataOutSlave);
 
 end mapping;
