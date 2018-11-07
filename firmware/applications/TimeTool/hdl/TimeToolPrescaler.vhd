@@ -66,18 +66,16 @@ architecture mapping of TimeToolPrescaler is
    type RegType is record
       master          : AxiStreamMasterType;
       slave           : AxiStreamSlaveType;
-      addvalue        : slv(7 downto 0);
       axilReadSlave   : AxiLiteReadSlaveType;
       axilWriteSlave  : AxiLiteWriteSlaveType;
-      counter         : slv(32 downto 0;
-      prescalingRate  : slv(32 downto 0);
+      counter         : slv(31 downto 0);
+      prescalingRate  : slv(31 downto 0);
 
    end record RegType;
 
    constant REG_INIT_C : RegType := (
       master          => AXI_STREAM_MASTER_INIT_C,
       slave           => AXI_STREAM_SLAVE_INIT_C,
-      addValue        => (others=>'0'),
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter         => (others=>'0'),
@@ -137,7 +135,6 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"00000",  0, v.addValue);
       axiSlaveRegister (axilEp, x"00000", 24, v.prescalingRate);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
@@ -148,23 +145,32 @@ begin
       ------------------------------
       v.slave.tReady := not outCtrl.pause;
 
+      if v.counter=v.prescalingRate  then
 
-      if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter=prescalingRate  then
-         v.master := inMaster;
+            if v.slave.tReady = '1' and inMaster.tValid = '1' then
+                v.master := inMaster;
+            else
+                v.master.tValid := '0';
+            end if;
       else
-         v.master.tValid := '0';
-      end if
+            v.master.tValid  := inMaster.tLast;
+            v.master.tLast   := inMaster.tLast;
+      
+            v.master.tKeep(AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) := toSlv(1, AXIS_CONFIG_G.TDATA_BYTES_C);
+            ssiSetUserEofe(AXI_CONFIG_G, v.master, '1');
+
+      end if;
 
       -----------------------------
       --increment prescaling counter. needs to be after the data mover in order for the last packet to be sent
       -----------------------------
       if inMaster.tLast = '1' then 
-            if v.counter = prescalingRate then
-                  v.counter = 0
+            if v.counter = v.prescalingRate then
+                  v.counter := 0;
             else
-                  v.counter = v.counter + 1;
-            end if
-      end if
+                  v.counter := v.counter + 1;
+            end if;
+      end if;
 
       -------------
       -- Reset

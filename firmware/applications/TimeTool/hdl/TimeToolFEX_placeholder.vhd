@@ -17,9 +17,8 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
---use ieee.std_logic_arith.all;
+use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
 
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
@@ -27,23 +26,17 @@ use work.AxiStreamPkg.all;
 use work.AxiPkg.all;
 use work.SsiPkg.all;
 use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
+---------------------------------
+---- entity declaration----------
+---------------------------------
 
--------------------------------------------------------------------------------
--- This a placeholder for future Feature EXtracted (FEX) data.  Same as precaler, but tvalid is always 0 except when tlast is true
--------------------------------------------------------------------------------
-
-
-
-entity TimeToolPrescaler is
+entity TimeToolCore is
    generic (
       TPD_G            : time             := 1 ns;
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
-      DEBUG_G             : boolean       := true );
+      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C);
    port (
       -- System Interface
       sysClk          : in    sl;
@@ -58,12 +51,20 @@ entity TimeToolPrescaler is
       axilReadSlave   : out   AxiLiteReadSlaveType;
       axilWriteMaster : in    AxiLiteWriteMasterType;
       axilWriteSlave  : out   AxiLiteWriteSlaveType);
-end TimeToolPrescaler;
+end TimeToolCore;
 
-architecture mapping of TimeToolPrescaler is
+
+---------------------------------
+--------- architecture-----------
+---------------------------------
+
+architecture mapping of TimeToolCore is
 
    constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
-   constant PGP2BTXIN_LEN  : integer := 19;
+
+---------------------------------------
+----record for two process method------
+---------------------------------------
 
    type RegType is record
       master          : AxiStreamMasterType;
@@ -71,19 +72,18 @@ architecture mapping of TimeToolPrescaler is
       addvalue        : slv(7 downto 0);
       axilReadSlave   : AxiLiteReadSlaveType;
       axilWriteSlave  : AxiLiteWriteSlaveType;
-      counter         : slv(32 downto 0;
-      prescalingRate  : slv(32 downto 0);
-
    end record RegType;
+
+---------------------------------------
+-------record intitial value-----------
+---------------------------------------
 
    constant REG_INIT_C : RegType := (
       master          => AXI_STREAM_MASTER_INIT_C,
       slave           => AXI_STREAM_SLAVE_INIT_C,
       addValue        => (others=>'0'),
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
-      axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
-      counter         => (others=>'0'),
-      prescalingRate  => (others=>'0'));
+      axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C);
 
 ---------------------------------------
 -------record intitial value-----------
@@ -139,34 +139,26 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"00000",  0, v.addValue);
-      axiSlaveRegister (axilEp, x"00000", 24, v.prescalingRate);
+      axiSlaveRegister (axilEp, x"000",  0, v.addValue);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
-
 
       ------------------------------
       -- Data Mover
       ------------------------------
       v.slave.tReady := not outCtrl.pause;
 
-
-      if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter=prescalingRate  then
+      if v.slave.tReady = '1' and inMaster.tLast = '1' then
          v.master := inMaster;
+
+         for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
+            --v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
+            v.master.tData(i*8+7 downto i*8) := r.addValue;
+         end loop;
+
       else
          v.master.tValid := '0';
-      end if
-
-      -----------------------------
-      --increment prescaling counter. needs to be after the data mover in order for the last packet to be sent
-      -----------------------------
-      if inMaster.tLast = '1' then 
-            if v.counter = prescalingRate then
-                  v.counter = 0
-            else
-                  v.counter = v.counter + 1;
-            end if
-      end if
+      end if;
 
       -------------
       -- Reset

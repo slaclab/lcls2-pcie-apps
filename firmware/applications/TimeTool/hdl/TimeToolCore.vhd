@@ -38,7 +38,8 @@ entity TimeToolCore is
    generic (
       TPD_G            : time             := 1 ns;
       AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
-      DEBUG_G             : boolean       := true );
+      DEBUG_G          : boolean          := true;
+      NUM_MASTERS_G    : positive         := 2);
    port (
       -- System Interface
       sysClk          : in    sl;
@@ -64,7 +65,7 @@ architecture mapping of TimeToolCore is
 
    --FEX stands for feature extracted
    signal masterRepeaterToFEXorPrescaler  : AxiStreamMasterArray(NUM_MASTERS_G-1 downto 0);
-   signal slaveRepeaterToFEXorPrescaler  : AxiStreamSlaveArray(NUM_MASTERS_G-1 downto 0);
+   signal slaveRepeaterToFEXorPrescaler   : AxiStreamSlaveArray(NUM_MASTERS_G-1 downto 0);
 
    signal masterFEXorPrescalerToCombiner  : AxiStreamMasterArray(NUM_MASTERS_G-1 downto 0);
    signal slaveFEXorPrescalerToCombiner   : AxiStreamSlaveArray(NUM_MASTERS_G-1 downto 0);
@@ -113,6 +114,31 @@ begin
          axilWriteMaster => axilWriteMaster,
          axilWriteSlave  => axilWriteSlave);
 
+
+      --------------------------------------------
+      --sending one of the repeated signals from module above to FEX or prescaling
+      --------------------------------------------
+
+
+      U_TimeStamper : entity work.TimeToolFEX_placeholder
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         -- System Clock and Reset
+         sysClk          => sysClk,
+         sysRst          => sysRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster    => masterRepeaterToFEXorPrescaler(1),
+         dataInSlave     => slaveRepeaterToFEXorPrescaler(1),
+         dataOutMaster   => masterFEXorPrescalerToCombiner(1),
+         dataOutSlave    => slaveFEXorPrescalerToCombiner(1),
+         -- AXI-Lite Interface (sysClk domain)
+         axilReadMaster  => axilReadMaster,
+         axilReadSlave   => axilReadSlave,
+         axilWriteMaster => axilWriteMaster,
+         axilWriteSlave  => axilWriteSlave);
+
+
       --------------------------------------------
       --AxiStreamBatcherEventBuilder Combines them back together
       --------------------------------------------
@@ -125,10 +151,10 @@ begin
          -- System Clock and Reset
          sysClk          => sysClk,
          sysRst          => sysRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster    => dataInMaster,
-         dataInSlave     => dataInSlave,
-         dataOutMaster   => dataOutMaster,
-         dataOutSlave    => dataOutSlave);
+         -- AXIS Interfaces
+         sAxisMasters    => masterFEXorPrescalerToCombiner,
+         sAxisSlaves     => slaveFEXorPrescalerToCombiner,
+         mAxisMaster     => dataOutMaster,
+         mAxisSlave      => dataOutSlave);
 
 end mapping;
