@@ -1,8 +1,6 @@
 ------------------------------------------------------------------------------
--- File       : TimeToolCore.vhd
+-- File       : TimeToolFEX_placeholder.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-12-04
--- Last update: 2017-12-04
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -33,10 +31,10 @@ use unisim.vcomponents.all;
 ---- entity declaration----------
 ---------------------------------
 
-entity TimeToolCore is
+entity TimeToolFEX_placeholder is
    generic (
-      TPD_G            : time             := 1 ns;
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C);
+      TPD_G             : time                 := 1 ns;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType  := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2));
    port (
       -- System Interface
       sysClk          : in    sl;
@@ -51,14 +49,14 @@ entity TimeToolCore is
       axilReadSlave   : out   AxiLiteReadSlaveType;
       axilWriteMaster : in    AxiLiteWriteMasterType;
       axilWriteSlave  : out   AxiLiteWriteSlaveType);
-end TimeToolCore;
+end TimeToolFEX_placeholder;
 
 
 ---------------------------------
 --------- architecture-----------
 ---------------------------------
 
-architecture mapping of TimeToolCore is
+architecture mapping of TimeToolFEX_placeholder is
 
    constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
 
@@ -109,7 +107,7 @@ begin
          GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 9,
          FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
+         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
          MASTER_AXI_CONFIG_G => INT_CONFIG_C)
       port map (
          sAxisClk    => sysClk,
@@ -141,7 +139,7 @@ begin
 
       axiSlaveRegister (axilEp, x"000",  0, v.addValue);
 
-      axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
+      axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
       ------------------------------
       -- Data Mover
@@ -195,7 +193,7 @@ begin
          FIFO_ADDR_WIDTH_G   => 9,
          FIFO_PAUSE_THRESH_G => 500,
          SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          sAxisClk    => sysClk,
          sAxisRst    => sysRst,

@@ -39,9 +39,9 @@ use unisim.vcomponents.all;
 
 entity TimeToolPrescaler is
    generic (
-      TPD_G            : time             := 1 ns;
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
-      DEBUG_G             : boolean       := true );
+      TPD_G             : time                := 1 ns;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+      DEBUG_G           : boolean             := true );
    port (
       -- System Interface
       sysClk          : in    sl;
@@ -105,7 +105,7 @@ begin
          GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 9,
          FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
+         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
          MASTER_AXI_CONFIG_G => INT_CONFIG_C)
       port map (
          sAxisClk    => sysClk,
@@ -137,7 +137,7 @@ begin
 
       axiSlaveRegister (axilEp, x"00000", 24, v.prescalingRate);
 
-      axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
+      axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
 
       ------------------------------
@@ -156,8 +156,8 @@ begin
             v.master.tValid  := inMaster.tLast;
             v.master.tLast   := inMaster.tLast;
       
-            v.master.tKeep(AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) := toSlv(1, AXIS_CONFIG_G.TDATA_BYTES_C);
-            ssiSetUserEofe(AXI_CONFIG_G, v.master, '1');
+            v.master.tKeep(DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) := toSlv(1, DMA_AXIS_CONFIG_G.TDATA_BYTES_C);
+            ssiSetUserEofe(DMA_AXIS_CONFIG_G, v.master, '1');
 
       end if;
 
@@ -166,7 +166,7 @@ begin
       -----------------------------
       if inMaster.tLast = '1' then 
             if v.counter = v.prescalingRate then
-                  v.counter := 0;
+                  v.counter := (others=>'0');
             else
                   v.counter := v.counter + 1;
             end if;
@@ -207,7 +207,7 @@ begin
          FIFO_ADDR_WIDTH_G   => 9,
          FIFO_PAUSE_THRESH_G => 500,
          SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          sAxisClk    => sysClk,
          sAxisRst    => sysRst,
