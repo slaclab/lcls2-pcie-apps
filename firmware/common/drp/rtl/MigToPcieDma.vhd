@@ -2,7 +2,7 @@
 -- File       : MigToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2018-10-20
+-- Last update: 2018-11-07
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -32,6 +32,8 @@ use work.AppMigPkg.all;
 
 entity MigToPcieDma is
    generic (  LANES_G          : integer          := 4;
+              MONCLKS_G        : integer          := 4;
+              AXIS_CONFIG_G    : AxiStreamConfigType;
               DEBUG_G          : boolean          := true );
    port    ( -- Clock and reset
              axiClk           : in  sl; -- 200MHz
@@ -55,6 +57,8 @@ entity MigToPcieDma is
              axilWriteSlave   : out AxiLiteWriteSlaveType;
              axilReadMaster   : in  AxiLiteReadMasterType;
              axilReadSlave    : out AxiLiteReadSlaveType;
+             --
+             monClk           : in  slv(MONCLKS_G-1 downto 0);
              -- (axiClk domain)
              migConfig        : out MigConfigArray(LANES_G-1 downto 0);
              migStatus        : in  MigStatusArray(LANES_G-1 downto 0) );
@@ -66,6 +70,7 @@ architecture mapping of MigToPcieDma is
   signal sAxilReadSlave   : AxiLiteReadSlaveType;
   signal sAxilWriteMaster : AxiLiteWriteMasterType;
   signal sAxilWriteSlave  : AxiLiteWriteSlaveType;
+  signal taxisMasters     : AxiStreamMasterArray(LANES_G downto 0);
   
   type RegType is record
     axilWriteSlave : AxiLiteWriteSlaveType;
@@ -107,13 +112,11 @@ architecture mapping of MigToPcieDma is
   constant MON_MIG_STATUS_AWIDTH_C : integer := 8;
   constant MON_WRITE_DESC_AWIDTH_C : integer := 8;
 
-  constant AXIS_CONFIG_C : AxiStreamConfigType := AXI_STREAM_CONFIG_INIT_C;
-  constant AXI_CONFIG_C  : AxiConfigType := (
-    ADDR_WIDTH_C => 40,
-    DATA_BYTES_C => 16,
-    ID_BITS_C    =>  2,
-    LEN_BITS_C   =>  6 );
-  
+  signal monClkRate : Slv29Array(MONCLKS_G-1 downto 0);
+  signal monClkSlow : slv       (MONCLKS_G-1 downto 0);
+  signal monClkFast : slv       (MONCLKS_G-1 downto 0);
+  signal monClkLock : slv       (MONCLKS_G-1 downto 0);
+
   constant DEBUG_C : boolean := DEBUG_G;
 
   component ila_0
@@ -123,7 +126,25 @@ architecture mapping of MigToPcieDma is
   
 begin
 
+  axisMasters <= taxisMasters;
+  
+  GEN_DEBUG : if DEBUG_C generate
+    U_ILAA : ila_0
+      port map ( clk                  => axiClk,
+                 probe0(           0) => axiRst,
+                 probe0(           1) => rdDescReq(0).valid,
+                 probe0(33 downto  2) => rdDescReq(0).address(31 downto 0),
+                 probe0(65 downto 34) => rdDescReq(0).size   (31 downto 0),
+                 probe0(          66) => rdDescRetAck(0),
+                 probe0(          67) => taxisMasters(0).tValid,
+                 probe0(99 downto 68) => taxisMasters(0).tData(31 downto 0),
+                 probe0(         100) => taxisMasters(0).tLast,
+                 probe0(         101) => axisSlaves  (0).tReady,
+                 probe0(255 downto 102) => (others=>'0') );
+  end generate;
+
   usrRst <= axiRst;
+
   
   U_AxilAsync : entity work.AxiLiteAsync
     port map ( sAxiClk         => axilClk,
@@ -142,8 +163,9 @@ begin
   GEN_CHAN : for i in 0 to LANES_G-1 generate
 
     U_DmaRead : entity work.AxiStreamDmaV2Read
-      generic map ( AXIS_CONFIG_G => AXIS_CONFIG_C,
-                    AXI_CONFIG_G  => AXI_CONFIG_C )
+      generic map ( AXIS_READY_EN_G => true,
+                    AXIS_CONFIG_G   => AXIS_CONFIG_G,
+                    AXI_CONFIG_G    => APP2MIG_AXI_CONFIG_C )
       port map ( axiClk          => axiClk,
                  axiRst          => axiRst,
                  dmaRdDescReq    => rdDescReq(i),
@@ -151,8 +173,8 @@ begin
                  dmaRdDescRet    => rdDescRet(i),
                  dmaRdDescRetAck => rdDescRetAck(i),
                  dmaRdIdle       => open,
-                 axiCache        => (others=>'0'),
-                 axisMaster      => axisMasters(i),
+                 axiCache        => x"3",
+                 axisMaster      => taxisMasters(i),
                  axisSlave       => axisSlaves (i),
                  axisCtrl        => AXI_STREAM_CTRL_UNUSED_C,
                  axiReadMaster   => axiReadMasters(i),
@@ -189,10 +211,29 @@ begin
     end generate;
   end generate;
 
-  axisMasters      (LANES_G)   <= monMigStatusMaster(LANES_G-1);
+  taxisMasters      (LANES_G)   <= monMigStatusMaster(LANES_G-1);
   monMigStatusSlave(LANES_G-1) <= axisSlaves        (LANES_G);
 
-  comb : process ( axiRst, r, sAxilReadMaster, sAxilWriteMaster, migStatus ) is
+  GEN_MONCLK : for i in 0 to MONCLKS_G-1 generate
+    U_MONCLK : entity work.SyncClockFreq
+     generic map (
+             REF_CLK_FREQ_G    => 200.0E+6,
+             CLK_LOWER_LIMIT_G =>  25.0E+6,
+             CLK_UPPER_LIMIT_G => 260.0E+6,
+             CNT_WIDTH_G       => 29 )
+      port map (
+        freqOut     => monClkRate(i),
+        freqUpdated => open,
+        locked      => monClkLock  (i),
+        tooFast     => monClkFast  (i),
+        tooSlow     => monClkSlow  (i),
+        clkIn       => monClk      (i),
+        locClk      => axiClk,
+        refClk      => axiClk );
+  end generate;
+     
+  comb : process ( axiRst, r, sAxilReadMaster, sAxilWriteMaster, migStatus,
+                   monClkRate, monClkLock, monClkFast, monClkSlow ) is
     variable v       : RegType;
     variable regCon  : AxiLiteEndPointType;
     variable regAddr : slv(11 downto 0);
@@ -205,8 +246,8 @@ begin
 
     regAddr := toSlv(0,12);
     axiSlaveRegister(regCon, regAddr, 0, v.monEnable );
-    regAddr := regAddr + 16;
 
+    regAddr := toSlv(128,12);
     for i in 0 to LANES_G-1 loop
       axiSlaveRegister(regCon, regAddr, 0, v.migConfig(i).blockSize);
       regAddr := regAddr + 4;
@@ -216,6 +257,22 @@ begin
       axiSlaveRegisterR(regCon, regAddr,12, migStatus(i).blocksQueued);
       regAddr := regAddr + 4;
       axiSlaveRegisterR(regCon, regAddr, 0, migStatus(i).writeQueCnt);
+      regAddr := regAddr + 4;
+      axiSlaveRegisterR(regCon, regAddr, 0, migStatus(i).wrIndex);
+      regAddr := regAddr + 4;
+      axiSlaveRegisterR(regCon, regAddr, 0, migStatus(i).wcIndex);
+      regAddr := regAddr + 4;
+      axiSlaveRegisterR(regCon, regAddr, 0, migStatus(i).rdIndex);
+      regAddr := regAddr + 4;
+      regAddr := regAddr + 4;
+    end loop;
+
+    regAddr := toSlv(256,12);
+    for i in 0 to MONCLKS_G-1 loop
+      axiSlaveRegisterR(regCon, regAddr,  0, monClkRate(i));
+      axiSlaveRegisterR(regCon, regAddr, 29, monClkSlow(i));
+      axiSlaveRegisterR(regCon, regAddr, 30, monClkFast(i));
+      axiSlaveRegisterR(regCon, regAddr, 31, monClkLock(i));
       regAddr := regAddr + 4;
     end loop;
       

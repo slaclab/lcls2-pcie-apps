@@ -5,7 +5,7 @@
 -- Author     : Matt Weaver <weaver@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-07-10
--- Last update: 2018-02-22
+-- Last update: 2018-11-09
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -33,7 +33,8 @@ use work.AxiPkg.all;
 entity AxiRecord is
   generic ( filename : string := "default.xtc" );
   port ( axiClk     : in  sl;
-         axiMaster  : in  AxiWriteMasterType );
+         axiMaster  : in  AxiWriteMasterType;
+         axiSlave   : in  AxiWriteSlaveType );
 end AxiRecord;
 
 architecture behavior of AxiRecord is
@@ -78,34 +79,38 @@ begin
   file results : text;
   variable oline : line;
   variable word  : slv(31 downto 0);
+  variable ldone : sl;
+  variable lvalid : sl;
   begin
     file_open(results, filename, write_mode);
     loop
       wait until rising_edge(axiClk);
-      if axiMaster.awvalid='1' then
+      if axiMaster.awvalid='1' and axiSlave.awready='1' then
         write(oline, HexString(axiMaster.awaddr(63 downto 32)), right, 8);
         write(oline, HexString(axiMaster.awaddr(31 downto  0)), right, 8);
         write(oline, '.', right);
         word := x"00" & axiMaster.awid(7 downto 0) & axiMaster.awlen & resize(axiMaster.awsize,8);
         write(oline, HexString(word), right, 8);
-        if axiMaster.wvalid='0' then
-          wait until axiMaster.wvalid='1';
-        end if;
-        write(oline, '.', right);
-        write(oline, HexString(axiMaster.wdata( 63 downto 32)), right, 8);
-        write(oline, HexString(axiMaster.wdata( 31 downto  0)), right, 8);
-        write(oline, '.', right);
-        write(oline, HexString(axiMaster.wdata(127 downto 96)), right, 8);
-        write(oline, HexString(axiMaster.wdata( 95 downto 64)), right, 8);
-        write(oline, '.', right);
-        write(oline, HexString(axiMaster.wdata(191 downto 160)), right, 8);
-        write(oline, HexString(axiMaster.wdata(159 downto 128)), right, 8);
-        write(oline, '.', right);
-        write(oline, HexString(axiMaster.wdata(255 downto 224)), right, 8);
-        write(oline, HexString(axiMaster.wdata(223 downto 192)), right, 8);
-        write(oline, '.', right);
-        write(oline, HexString(axiMaster.wstrb(63 downto 32)), right, 8);
-        write(oline, HexString(axiMaster.wstrb(31 downto  0)), right, 8);
+        ldone := '0';
+        while ldone='0' loop
+          lvalid := '0';
+          while lvalid='0' loop
+            if axiMaster.wvalid='0' or axiSlave.wready='0' then
+              wait until rising_edge(axiClk);
+            else
+              lvalid := '1';
+            end if;
+          end loop;
+          for i in 0 to 15 loop
+            if axiMaster.wstrb(8*i)='1' then
+              write(oline, '.', right);
+              write(oline, HexString(axiMaster.wdata( 64*i+63 downto 64*i+32)), right, 8);
+              write(oline, HexString(axiMaster.wdata( 64*i+31 downto 64*i+ 0)), right, 8);
+            end if;
+          end loop;
+          ldone := axiMaster.wlast;
+          wait until rising_edge(axiClk);
+        end loop;
         writeline(results, oline);
       end if;
     end loop;

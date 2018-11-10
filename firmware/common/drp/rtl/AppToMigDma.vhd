@@ -2,7 +2,7 @@
 -- File       : AppToMigWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2018-10-20
+-- Last update: 2018-11-03
 -------------------------------------------------------------------------------
 -- Description: Wrapper for Xilinx Axi Data Mover
 -- Axi stream input (dscReadMasters.command) launches an AxiReadMaster to
@@ -128,12 +128,6 @@ architecture mapping of AppToMigDma is
       TUSER_BITS_C  => 2,
       TUSER_MODE_C  => TUSER_NORMAL_C);
 
-  constant AXI_CONFIG_C : AxiConfigType := (
-    ADDR_WIDTH_C => 40,
-    DATA_BYTES_C => 16,
-    ID_BITS_C    => 2,
-    LEN_BITS_C   => 6 );
-  
   component ila_0
     port ( clk          : in sl;
            probe0       : in slv(255 downto 0) );
@@ -219,8 +213,9 @@ begin
                mAxisSlave  => mAxisSlave );
   
   U_DmaWrite : entity work.AxiStreamDmaV2Write
-    generic map ( AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C,
-                  AXI_CONFIG_G  => AXI_CONFIG_C )
+    generic map ( AXI_READY_EN_G => true,
+                  AXIS_CONFIG_G  => AXIO_STREAM_CONFIG_C,
+                  AXI_CONFIG_G   => APP2MIG_AXI_CONFIG_C )
     port map ( axiClk         => mAxiClk,
                axiRst         => mAxiRst,
                dmaWrDescReq   => wrDescReq,
@@ -228,7 +223,7 @@ begin
                dmaWrDescRet   => wrDescRet,
                dmaWrDescRetAck=> wrDescRetAck,
                dmaWrIdle      => open,
-               axiCache       => (others=>'0'),
+               axiCache       => x"3",
                axisMaster     => mAxisMaster,
                axisSlave      => mAxisSlave,
                axiWriteMaster => mAxiWriteMaster,
@@ -291,7 +286,7 @@ begin
       v.wrDescAck.dropEn  := '0';
       v.wrDescAck.maxSize := resize(wlen,32);
       v.wrDescAck.contEn  := '1';
-      v.wrDescAck.buffId  := toSlv(itag,32);
+      v.wrDescAck.buffId  := toSlv(itag,16);
       if (r.wrTag(itag) = IDLE_T and
           r.recvdQueCnt /= 0 and
           r.wrIndex + 16 /= r.rdIndex) then  -- prevent overwrite
@@ -334,7 +329,7 @@ begin
       v.rdDescReq.valid          := '1';
       v.rdDescReq.address        := resize(raddr,64);
       v.rdDescReq.size           := resize(rlen,32);
-      v.rdDescReq.buffId         := resize(r.rdIndex,32);
+      v.rdDescReq.buffId         := resize(r.rdIndex,16);
       v.rdIndex                  := r.rdIndex + 1;
     end if;
 
@@ -355,7 +350,10 @@ begin
     status.blocksFree         <= r.blocksFree;
     status.blocksQueued       <= resize(r.wrIndex - r.rdIndex, BIS);
     status.writeQueCnt        <= r.writeQueCnt;
-
+    status.wrIndex            <= r.wrIndex;
+    status.wcIndex            <= r.wcIndex;
+    status.rdIndex            <= r.rdIndex;
+    
     wrDescAck                 <= r.wrDescAck;
     wrDescRetAck              <= v.wrDescRetAck;
     rdDescReq                 <= r.rdDescReq;

@@ -2,7 +2,7 @@
 -- File       : MigXbar.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-08-02
--- Last update: 2018-02-26
+-- Last update: 2018-11-06
 -------------------------------------------------------------------------------
 -- Description: V2Wrapper for the "store-and-forward" AXI FIFO
 -------------------------------------------------------------------------------
@@ -267,7 +267,15 @@ begin
    sAxiReadSlaves  <= isAxiReadSlaves;
 
    U_ReadFifo : entity work.AxiReadPathFifo
-     generic map ( AXI_CONFIG_G => AXI_CONFIG_C )
+     generic map ( AXI_CONFIG_G             => AXI_CONFIG_C,
+--                   ID_FIXED_EN_G            => true,  -- Needed by Xbar
+--                   SIZE_FIXED_EN_G          => true,
+                   BURST_FIXED_EN_G         => true,
+--                   LEN_FIXED_EN_G           => true,
+                   LOCK_FIXED_EN_G          => true,
+                   PROT_FIXED_EN_G          => true,
+                   CACHE_FIXED_EN_G         => true,
+                   ADDR_LSB_G               => 4 )
      port map ( sAxiClk         => sAxiClk,
                 sAxiRst         => sAxiRst,
                 sAxiReadMaster  => imAxiReadMaster,
@@ -278,7 +286,15 @@ begin
                 mAxiReadSlave   => mAxiReadSlave );
    
    U_WriteFifo : entity work.AxiWritePathFifo
-     generic map ( AXI_CONFIG_G => AXI_CONFIG_C )
+     generic map ( AXI_CONFIG_G             => AXI_CONFIG_C,
+--                   ID_FIXED_EN_G            => true,  -- Needed by Xbar
+                   SIZE_FIXED_EN_G          => true,
+                   BURST_FIXED_EN_G         => true,
+                   LEN_FIXED_EN_G           => true,
+                   LOCK_FIXED_EN_G          => true,
+                   PROT_FIXED_EN_G          => true,
+                   CACHE_FIXED_EN_G         => true,
+                   ADDR_LSB_G               => 4 )
      port map ( sAxiClk         => sAxiClk,
                 sAxiRst         => sAxiRst,
                 sAxiWriteMaster => imAxiWriteMaster,
@@ -288,19 +304,6 @@ begin
                 mAxiWriteMaster => mAxiWriteMaster,
                 mAxiWriteSlave  => mAxiWriteSlave );
 
-   --GEN_WRITE : for i in 0 to 1 generate
-   --  U_WriteFifo : entity work.AxiWritePathFifo
-   --    generic map ( AXI_CONFIG_G => AXI_CONFIG_C )
-   --    port map ( sAxiClk         => sAxiClk,
-   --               sAxiRst         => sAxiRst,
-   --               sAxiWriteMaster => imAxiWriteMaster,
-   --               sAxiWriteSlave  => imAxiWriteSlave,
-   --               mAxiClk         => sAxiClk,
-   --               mAxiRst         => sAxiRst,
-   --               mAxiWriteMaster => mAxiWriteMaster,
-   --               mAxiWriteSlave  => mAxiWriteSlave );
-   --end generate;
-   
    U_Sync : entity work.Synchronizer
       generic map (
          TPD_G => TPD_G)

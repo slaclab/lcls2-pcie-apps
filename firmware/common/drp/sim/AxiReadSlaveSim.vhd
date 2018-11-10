@@ -2,7 +2,7 @@
 -- File       : AxiReadSlaveSim.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2018-03-11
+-- Last update: 2018-11-09
 -------------------------------------------------------------------------------
 -- Description: Wrapper for Xilinx Axi Data Mover
 -- Axi stream input (dscReadMasters.command) launches an AxiReadMaster to
@@ -43,8 +43,9 @@ architecture mapping of AxiReadSlaveSim is
     busy  : sl;
     rlen  : integer;
     rword : integer;
+    rread : integer;
     addr  : slv(63 downto 0);
-    rsize : slv(7 downto 0);
+    rsize : slv(4 downto 0);
   end record;
 
   constant REG_INIT_C : RegType := (
@@ -52,6 +53,7 @@ architecture mapping of AxiReadSlaveSim is
     busy  => '0',
     rlen  => 0,
     rword => 0,
+    rread => 0,
     addr  => (others=>'0'),
     rsize => (others=>'0') );
 
@@ -82,7 +84,7 @@ begin
         v.rlen  := conv_integer(axiReadMaster.arlen)+1;
         v.addr  := axiReadMaster.araddr;
         v.rword := 0;
-        q := conv_integer(axiReadMaster.arsize);
+        q := conv_integer(axiReadMaster.arsize)-2;
         v.rsize    := (others=>'0');
         v.rsize(q) := '1';
         v.slave.rvalid := '0';
@@ -96,13 +98,18 @@ begin
       if r.rword = 0 then
         v.slave.rdata := (others=>'1');
         v.slave.rdata(63 downto 0) := r.addr;
-        for i in 8 to conv_integer(r.rsize)-1 loop
-          v.slave.rdata(i*8+7 downto i*8) := toSlv(r.rword*conv_integer(r.rsize) + i,8);
+        v.rread := r.rread+1;
+        for i in 0 to conv_integer(r.rsize)-1 loop
+          v.slave.rdata(i*32+31 downto i*32) :=
+            toSlv(v.rread,8) & 
+            toSlv(r.rword*conv_integer(r.rsize) + i,24);
         end loop;
       else
         v.slave.rdata := (others=>'0');
         for i in 0 to conv_integer(r.rsize)-1 loop
-          v.slave.rdata(i*8+7 downto i*8) := toSlv(r.rword*conv_integer(r.rsize) + i,8);
+          v.slave.rdata(i*32+31 downto i*32) :=
+            toSlv(v.rread,8) & 
+            toSlv(r.rword*conv_integer(r.rsize) + i,24);
         end loop;
       end if;
       if v.rword = r.rlen then

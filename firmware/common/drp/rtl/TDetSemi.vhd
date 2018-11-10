@@ -2,7 +2,7 @@
 -- File       : TDetSemi.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-09-05
+-- Last update: 2018-11-01
 -------------------------------------------------------------------------------
 -- Description: TDetSemi File
 -------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ use unisim.vcomponents.all;
 entity TDetSemi is
   generic (
     TPD_G            : time             := 1 ns;
+    NUM_LANES_G      : integer          := 4;
     DEBUG_G          : boolean          := false );
   port (
     ------------------------      
@@ -49,48 +50,50 @@ entity TDetSemi is
     axilWriteMaster : in  AxiLiteWriteMasterType;
     axilWriteSlave  : out AxiLiteWriteSlaveType;
     -- DMA Interface
-    dmaClks         : out slv                 (3 downto 0);
-    dmaRsts         : out slv                 (3 downto 0);
-    dmaObMasters    : in  AxiStreamMasterArray(3 downto 0);
-    dmaObSlaves     : out AxiStreamSlaveArray (3 downto 0);
-    dmaIbMasters    : out AxiStreamMasterArray(3 downto 0);
-    dmaIbSlaves     : in  AxiStreamSlaveArray (3 downto 0);
-    dmaIbAlmostFull : in  slv                 (3 downto 0);
-    dmaIbFull       : in  slv                 (3 downto 0);
+    dmaClks         : out slv                 (NUM_LANES_G-1 downto 0);
+    dmaRsts         : out slv                 (NUM_LANES_G-1 downto 0);
+    dmaObMasters    : in  AxiStreamMasterArray(NUM_LANES_G-1 downto 0);
+    dmaObSlaves     : out AxiStreamSlaveArray (NUM_LANES_G-1 downto 0);
+    dmaIbMasters    : out AxiStreamMasterArray(NUM_LANES_G-1 downto 0);
+    dmaIbSlaves     : in  AxiStreamSlaveArray (NUM_LANES_G-1 downto 0);
+    dmaIbAlmostFull : in  slv                 (NUM_LANES_G-1 downto 0);
+    dmaIbFull       : in  slv                 (NUM_LANES_G-1 downto 0);
     axiCtrl         : in  AxiCtrlType := AXI_CTRL_UNUSED_C;
     ---------------------
     --  TDetSemi Ports
     ---------------------
     tdetClk         : in  sl;
     tdetClkRst      : in  sl;
-    tdetTiming      : out TDetTimingArray(3 downto 0);
-    tdetEvent       : in  TDetEventArray (3 downto 0);
-    tdetStatus      : in  TDetStatusArray(3 downto 0);
+    tdetTiming      : out TDetTimingArray     (NUM_LANES_G-1 downto 0);
+    tdetStatus      : in  TDetStatusArray     (NUM_LANES_G-1 downto 0);
+    tdetEventMaster : in  AxiStreamMasterArray(NUM_LANES_G-1 downto 0);
+    tdetEventSlave  : out AxiStreamSlaveArray (NUM_LANES_G-1 downto 0);
+    tdetTransMaster : in  AxiStreamMasterArray(NUM_LANES_G-1 downto 0);
+    tdetTransSlave  : out AxiStreamSlaveArray (NUM_LANES_G-1 downto 0);
     modPrsL         : in  sl );
 end TDetSemi;
 
 architecture mapping of TDetSemi is
 
-  constant NUM_LANES_C       : natural := 4;
+  signal intObMasters     : AxiStreamMasterArray(NUM_LANES_G-1 downto 0);
+  signal intObSlaves      : AxiStreamSlaveArray (NUM_LANES_G-1 downto 0);
+  signal dmaObAlmostFull  : slv                 (NUM_LANES_G-1 downto 0) := (others=>'0');
 
-  signal intObMasters     : AxiStreamMasterArray(NUM_LANES_C-1 downto 0);
-  signal intObSlaves      : AxiStreamSlaveArray (NUM_LANES_C-1 downto 0);
-  signal dmaObAlmostFull  : slv                 (NUM_LANES_C-1 downto 0) := (others=>'0');
+  signal txOpCodeEn       : slv                 (NUM_LANES_G-1 downto 0);
+  signal txOpCode         : Slv8Array           (NUM_LANES_G-1 downto 0);
+  signal rxOpCodeEn       : slv                 (NUM_LANES_G-1 downto 0);
+  signal rxOpCode         : Slv8Array           (NUM_LANES_G-1 downto 0);
 
-  signal txOpCodeEn       : slv                 (NUM_LANES_C-1 downto 0);
-  signal txOpCode         : Slv8Array           (NUM_LANES_C-1 downto 0);
-  signal rxOpCodeEn       : slv                 (NUM_LANES_C-1 downto 0);
-  signal rxOpCode         : Slv8Array           (NUM_LANES_C-1 downto 0);
+  signal idmaClks         : slv                 (NUM_LANES_G-1 downto 0);
+  signal idmaRsts         : slv                 (NUM_LANES_G-1 downto 0);
 
-  signal idmaClks         : slv                 (NUM_LANES_C-1 downto 0);
-  signal idmaRsts         : slv                 (NUM_LANES_C-1 downto 0);
-
-  signal sAxisCtrl : AxiStreamCtrlArray(NUM_LANES_C-1 downto 0) := (others=>AXI_STREAM_CTRL_UNUSED_C);
+  signal sAxisCtrl : AxiStreamCtrlArray(NUM_LANES_G-1 downto 0) := (others=>AXI_STREAM_CTRL_UNUSED_C);
 
   type AxiRegType is record
     id        : slv(31 downto 0);
     partition : slv( 2 downto 0);
-    enable    : sl;
+    enable    : slv(NUM_LANES_G-1 downto 0);
+    aFull     : slv(NUM_LANES_G-1 downto 0);
     clear     : sl;
     length    : slv(23 downto 0);
     axilWriteSlave  : AxiLiteWriteSlaveType;
@@ -99,7 +102,8 @@ architecture mapping of TDetSemi is
   constant AXI_REG_INIT_C : AxiRegType := (
     id        => (others=>'0'),
     partition => (others=>'0'),
-    enable    => '0',
+    enable    => (others=>'0'),
+    aFull     => (others=>'0'),
     clear     => '0',
     length    => (others=>'0'),
     axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
@@ -109,8 +113,8 @@ architecture mapping of TDetSemi is
   signal ain  : AxiRegType;
   signal as   : AxiRegType;
   
-  signal statusv, vstatus : Slv117Array    (NUM_LANES_C-1 downto 0);
-  signal status           : TDetStatusArray(NUM_LANES_C-1 downto 0);
+  signal statusv, vstatus : Slv117Array    (NUM_LANES_G-1 downto 0);
+  signal status           : TDetStatusArray(NUM_LANES_G-1 downto 0);
 
   type StateType is (IDLE_S,
                      WAIT_S,
@@ -121,12 +125,13 @@ architecture mapping of TDetSemi is
   type StateArray is array(natural range<>) of StateType;
   
   type RegType is record
-    state    : StateType;
-    length   : slv(23 downto 0);
-    count    : slv(31 downto 0);
-    inc      : sl;
-    ack      : sl;
-    txMaster : AxiStreamMasterType;
+    state       : StateType;
+    length      : slv(23 downto 0);
+    count       : slv(31 downto 0);
+    inc         : sl;
+    eventSlave  : AxiStreamSlaveType;
+    transSlave  : AxiStreamSlaveType;
+    txMaster    : AxiStreamMasterType;
   end record;
 
   constant REG_INIT_C : RegType := (
@@ -134,13 +139,14 @@ architecture mapping of TDetSemi is
     length      => (others=>'0'),
     count       => (others=>'0'),
     inc         => '0',
-    ack         => '0',
+    eventSlave  => AXI_STREAM_SLAVE_INIT_C,
+    transSlave  => AXI_STREAM_SLAVE_INIT_C,
     txMaster    => AXI_STREAM_MASTER_INIT_C );
 
   type RegArray is array(natural range<>) of RegType;
 
-  signal r   : RegArray(NUM_LANES_C-1 downto 0) := (others=>REG_INIT_C);
-  signal rin : RegArray(NUM_LANES_C-1 downto 0);
+  signal r   : RegArray(NUM_LANES_G-1 downto 0) := (others=>REG_INIT_C);
+  signal rin : RegArray(NUM_LANES_G-1 downto 0);
 
   constant DEBUG_C : boolean := DEBUG_G;
 
@@ -149,44 +155,12 @@ architecture mapping of TDetSemi is
            probe0  : in slv(255 downto 0) );
   end component;
 
-  signal r0_state : slv(3 downto 0);
-  
 begin
 
   dmaClks <= idmaClks;
   dmaRsts <= idmaRsts;
 
-  GEN_DEBUG : if DEBUG_C generate
-
-    r0_state <= x"0" when r(0).state = WAIT_S else
-                x"1" when r(0).state = IDLE_S else
-                x"2" when r(0).state = HDR1_S else
-                x"3" when r(0).state = HDR2_S else
-                x"4" when r(0).state = HDR3_S else
-                x"5" when r(0).state = SEND_S else
-                x"6";
-    
-    U_ILA : ila_0
-      port map ( clk                  => tdetClk,
-                 probe0(           0) => tdetClkRst,
-                 probe0(           1) => tdetEvent(0).valid,
-                 probe0(           2) => tdetEvent(0).isEvent,
-                 probe0(18 downto  3) => tdetEvent(0).header.pulseId(15 downto 0),
-                 probe0(26 downto 19) => tdetEvent(0).header.count  ( 7 downto 0),
-                 probe0(42 downto 27) => tdetEvent(0).header.l1t,
-                 probe0(50 downto 43) => tdetEvent(0).header.payload,
-                 probe0(54 downto 51) => r0_state,
-                 probe0(          55) => dmaIbSlaves(0).tReady,
-                 probe0(          56) => dmaIbAlmostFull(0),
-                 probe0(          57) => r(0).ack,
-                 probe0(          58) => as.enable,
-                 probe0(61 downto 59) => as.partition,
-                 probe0(69 downto 62) => as.id(7 downto 0),
-                 probe0(77 downto 70) => r(0).count(7 downto 0),
-                 probe0(255 downto 78) => (others=>'0') );
-  end generate;
-
-  GEN_LANE : for i in 0 to NUM_LANES_C-1 generate
+  GEN_LANE : for i in 0 to NUM_LANES_G-1 generate
     idmaClks(i)     <= tdetClk;
     idmaRsts(i)     <= tdetClkRst;
     dmaIbMasters(i) <= r(i).txMaster;
@@ -209,13 +183,10 @@ begin
 
     status(i) <= toTDetStatus(vstatus(i));
 
-    U_AFullS : entity work.Synchronizer
-      port map ( clk => tdetClk, dataIn => dmaIbAlmostFull(i), dataOut => tdetTiming(i).aFull );
-
   end generate;
   
   acomb : process ( a, axilRst, axilReadMaster, axilWriteMaster, modPrsL, status ) is
-    variable v : AxiRegType;
+    variable v  : AxiRegType;
     variable ep : AxiLiteEndpointType;
   begin
     v := a;
@@ -224,14 +195,14 @@ begin
     axiSlaveRegister( ep, x"00", 0, v.partition );
     axiSlaveRegister( ep, x"00", 3, v.clear );
     axiSlaveRegister( ep, x"00", 4, v.length );
-    axiSlaveRegister( ep, x"00",31, v.enable );
+    axiSlaveRegister( ep, x"00",28, v.enable );
     
     axiSlaveRegister( ep, x"04", 0, v.id );
 
     axiSlaveRegisterR( ep, x"08", 0, status(0).partitionAddr );
     axiSlaveRegisterR( ep, x"0c", 0, modPrsL);
 
-    for i in 0 to NUM_LANES_C-1 loop
+    for i in 0 to NUM_LANES_G-1 loop
       axiSlaveRegisterR( ep, toSlv(16*i+16,8), 0, status(i).cntL0 );
       axiSlaveRegisterR( ep, toSlv(16*i+16,8),24, status(i).cntOflow );
       axiSlaveRegisterR( ep, toSlv(16*i+20,8), 0, status(i).cntL1A );
@@ -266,22 +237,26 @@ begin
   U_PartitionS : entity work.SynchronizerVector
     generic map ( WIDTH_G => 3 )
     port map ( clk => tdetClk, dataIn => a.partition, dataOut => as.partition );
-  U_EnableS : entity work.Synchronizer
+  U_EnableS : entity work.SynchronizerVector
+    generic map ( WIDTH_G => NUM_LANES_G )
     port map ( clk => tdetClk, dataIn => a.enable, dataOut => as.enable );
+  U_AFullS : entity work.SynchronizerVector
+    generic map ( WIDTH_G => NUM_LANES_G )
+    port map ( clk => tdetClk, dataIn => dmaIbAlmostFull, dataOut => as.aFull );
   U_ClearS : entity work.Synchronizer
     port map ( clk => tdetClk, dataIn => a.clear, dataOut => as.clear );
   U_LengthS : entity work.SynchronizerVector
     generic map ( WIDTH_G => a.length'length )
     port map ( clk => tdetClk, dataIn => a.length, dataOut => as.length );
 
-  comb : process ( r, tdetClkRst, tdetEvent, as, dmaIbSlaves ) is
+  comb : process ( r, tdetClkRst, tdetEventMaster, tdetTransMaster, as, dmaIbSlaves ) is
     variable v : RegType;
     variable i,j : integer;
   begin
-    for i in 0 to NUM_LANES_C-1 loop
+    for i in 0 to NUM_LANES_G-1 loop
       v := r(i);
-
-      v.ack := '0';
+      v.eventSlave.tReady := '0';
+      v.transSlave.tReady := '0';
       
       if dmaIbSlaves(i).tReady = '1' then
         v.txMaster.tValid := '0';
@@ -291,12 +266,19 @@ begin
         when WAIT_S =>
           v.state := IDLE_S;
         when IDLE_S =>
-          if as.enable = '1' and tdetEvent(i).valid = '1' then
+          if as.enable(i) = '1' then
             v.state           := HDR1_S;
             ssiSetUserSof(PGP3_AXIS_CONFIG_C, v.txMaster, '1');
             v.txMaster.tValid := '1';
             v.txMaster.tLast  := '0';
-            v.txMaster.tData(63 downto 0) := toSlv(tdetEvent(i).header)(63 downto 0);
+            if tdetEventMaster(i).tValid = '1' then
+              v.txMaster.tData(63 downto 0) := tdetEventMaster(i).tData(63 downto 0);
+            elsif tdetTransMaster(i).tValid = '1' then
+              v.txMaster.tData(63 downto 0) := tdetTransMaster(i).tData(63 downto 0);
+            else
+              v.txMaster.tValid := '0';
+              v.state           := IDLE_S;
+            end if;
             v.txMaster.tKeep  := genTKeep(PGP3_AXIS_CONFIG_C);
           end if;
         when HDR1_S =>
@@ -305,7 +287,11 @@ begin
             ssiSetUserSof(PGP3_AXIS_CONFIG_C, v.txMaster, '0');
             v.txMaster.tValid := '1';
             v.txMaster.tLast  := '0';
-            v.txMaster.tData(63 downto 0) := toSlv(tdetEvent(i).header)(127 downto 64); 
+            if tdetEventMaster(i).tValid = '1' then
+              v.txMaster.tData(63 downto 0) := tdetEventMaster(i).tData(127 downto 64);
+            else
+              v.txMaster.tData(63 downto 0) := tdetTransMaster(i).tData(127 downto 64);
+            end if;
             v.txMaster.tKeep  := genTKeep(PGP3_AXIS_CONFIG_C);
           end if;
         when HDR2_S =>
@@ -313,22 +299,28 @@ begin
             v.state           := HDR3_S;
             v.txMaster.tValid := '1';
             v.txMaster.tLast  := '0';
-            v.txMaster.tData(63 downto 0) := toSlv(tdetEvent(i).header)(191 downto 128);
+            if tdetEventMaster(i).tValid = '1' then
+              v.txMaster.tData(63 downto 0) := tdetEventMaster(i).tData(191 downto 128);
+            else
+              v.txMaster.tData(63 downto 0) := tdetTransMaster(i).tData(191 downto 128);
+            end if;
             v.txMaster.tKeep  := genTKeep(PGP3_AXIS_CONFIG_C);
           end if;
         when HDR3_S =>
           if v.txMaster.tValid = '0' then
             v.txMaster.tValid := '1';
-            v.txMaster.tLast  := '1';
             v.txMaster.tData(63 downto 0) := toSlv(0,64);
             v.txMaster.tKeep  := genTKeep(PGP3_AXIS_CONFIG_C);
-            v.state := WAIT_S;
-            v.ack   := '1';
-            if tdetEvent(i).isEvent = '1' then
-              v.txMaster.tLast  := '0';
-              v.state   := SEND_S;
-              v.length  := as.length;
-              v.inc     := '1';
+            if tdetEventMaster(i).tValid = '1' then
+              v.txMaster.tLast    := '0';
+              v.eventSlave.tReady := '1';
+              v.length            := as.length;
+              v.inc               := '1';
+              v.state             := SEND_S;
+            else
+              v.txMaster.tLast    := '1';
+              v.transSlave.tReady := '1';
+              v.state             := WAIT_S;
             end if;
           end if;
         when SEND_S =>
@@ -339,15 +331,13 @@ begin
             v.txMaster.tValid := '1';
             v.txMaster.tLast  := '1';
             v.length          := toSlv(0,as.length'length);
-            v.state           := IDLE_S;
             j := conv_integer(r(i).length);
             if j <= PGP3_AXIS_CONFIG_C.TDATA_BYTES_C/4 then
-              v.txMaster.tKeep := (others=>'0');
-              v.txMaster.tKeep(4*j-1 downto 0) := (others=>'1');
+              v.txMaster.tKeep  := genTKeep(4*j);
+              v.state           := IDLE_S;
             else
-              v.txMaster.tKeep := (others=>'0');
-              v.txMaster.tKeep(PGP3_AXIS_CONFIG_C.TDATA_BYTES_C-1 downto 0) := (others=>'1');
               v.txMaster.tLast := '0';
+              v.txMaster.tKeep := genTKeep(PGP3_AXIS_CONFIG_C);
               v.length         := r(i).length - PGP3_AXIS_CONFIG_C.TDATA_BYTES_C/4;
               v.state          := SEND_S;
             end if;
@@ -360,6 +350,9 @@ begin
         when others => null;
       end case;
 
+      tdetEventSlave(i)         <= v.eventSlave;
+      tdetTransSlave(i)         <= v.transSlave;
+
       if tdetClkRst = '1' or as.clear = '1' then
         v := REG_INIT_C;
       end if;
@@ -368,8 +361,8 @@ begin
 
       tdetTiming  (i).id        <= as.id;
       tdetTiming  (i).partition <= as.partition;
-      tdetTiming  (i).enable    <= as.enable;
-      tdetTiming  (i).ack       <= v.ack;
+      tdetTiming  (i).enable    <= as.enable(i);
+      tdetTiming  (i).aFull     <= as.aFull (i);
     end loop;
     
   end process;
@@ -377,7 +370,7 @@ begin
   process (tdetClk) is
   begin
     if rising_edge(tdetClk) then
-      for i in 0 to NUM_LANES_C-1 loop
+      for i in 0 to NUM_LANES_G-1 loop
         r(i) <= rin(i);
       end loop;
     end if;
