@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- File       : Mig0.vhd
+-- File       : Mig0V2.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-08-03
--- Last update: 2018-10-20
+-- Last update: 2018-11-10
 -------------------------------------------------------------------------------
 -- Description: Wrapper for the MIG core
 -------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ use work.MigPkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity Mig0 is
+entity Mig0V2 is
    generic (
       TPD_G : time := 1 ns);
    port (
@@ -45,9 +45,9 @@ entity Mig0 is
       ddrClkN         : in    sl;
       ddrOut          : out   DdrOutType;
       ddrInOut        : inout DdrInOutType);
-end Mig0;
+end Mig0V2;
 
-architecture mapping of Mig0 is
+architecture mapping of Mig0V2 is
 
    component XilinxKcu1500Mig0Core
       port (
