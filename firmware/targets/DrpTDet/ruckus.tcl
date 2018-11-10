@@ -7,14 +7,15 @@ loadRuckusTcl $::env(TOP_DIR)/submodules/axi-pcie-core/hardware/XilinxKcu1500
 loadRuckusTcl $::env(TOP_DIR)/submodules/axi-pcie-core/hardware/XilinxKcu1500/ddr
 loadRuckusTcl $::env(TOP_DIR)/submodules/axi-pcie-core/hardware/XilinxKcu1500/pcie-extended
 loadRuckusTcl $::env(TOP_DIR)/submodules/lcls-timing-core
+loadRuckusTcl $::env(TOP_DIR)/submodules/l2si-core/base
 
 loadRuckusTcl $::env(TOP_DIR)/common/drp
+loadRuckusTcl $::env(TOP_DIR)/common/drp/coregen
 
 set EXT_PATH /u1/weaver/l2si/firmware/common
 loadRuckusTcl "${EXT_PATH}/base"
 loadRuckusTcl "${EXT_PATH}/xpm"
 loadRuckusTcl "${EXT_PATH}/dti"
-#loadRuckusTcl "${EXT_PATH}/drp"
 
 # Load local source Code and constraints
 loadSource      -dir "$::DIR_PATH/hdl"

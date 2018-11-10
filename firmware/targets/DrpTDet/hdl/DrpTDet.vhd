@@ -2,7 +2,7 @@
 -- File       : DrpTDet.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
--- Last update: 2018-10-22
+-- Last update: 2018-11-09
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -47,6 +47,8 @@ entity DrpTDet is
       timingRxN     : in    sl;
       timingTxP     : out   sl;
       timingTxN     : out   sl;
+      userRefClkP   : in    sl;
+      userRefClkN   : in    sl;
       --------------
       --  Core Ports
       --------------
@@ -74,7 +76,7 @@ entity DrpTDet is
       flashMosi    : out   sl;
       flashMiso    : in    sl;
       flashHoldL   : out   sl;
-      flashWp      : out   slv          (1 downto 0);
+      flashWp      : out   sl;
       -- DDR Ports
       ddrClkP      : in    slv          (1 downto 0);
       ddrClkN      : in    slv          (1 downto 0);
@@ -105,6 +107,7 @@ architecture top_level of DrpTDet is
    signal rst200     : slv(1 downto 0);
    signal irst200    : slv(1 downto 0);
    signal urst200    : slv(1 downto 0);
+   signal userClk156 : sl;
    signal userReset  : slv(1 downto 0);
    signal userSwDip  : slv(3 downto 0);
    signal userLed    : slv(7 downto 0);
@@ -136,13 +139,24 @@ architecture top_level of DrpTDet is
    signal memReadMasters  : AxiReadMasterArray (7 downto 0);
    signal memReadSlaves   : AxiReadSlaveArray  (7 downto 0);
 
-   constant RNG_AXIL_MASTERS_C : IntegerArray(3 downto 0) := (5,4,3,0);
-   constant NUM_AXIL_MASTERS_SUM : integer := 6;
-   signal mAxilReadMasters  : AxiLiteReadMasterArray (RNG_AXIL_MASTERS_C(3) downto 0);
-   signal mAxilReadSlaves   : AxiLiteReadSlaveArray  (RNG_AXIL_MASTERS_C(3) downto 0);
-   signal mAxilWriteMasters : AxiLiteWriteMasterArray(RNG_AXIL_MASTERS_C(3) downto 0);
-   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray (RNG_AXIL_MASTERS_C(3) downto 0);
-   constant AXIL0_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(3 downto 0) := (
+   constant MIGTPCI_INDEX_C   : integer := 0;
+   constant TDETSEM_INDEX_C   : integer := 1;
+   constant TDETTIM_INDEX_C   : integer := 2;
+   constant I2C_INDEX_C       : integer := 3;
+
+   constant NUM_AXIL0_MASTERS_C : integer := 4;
+   signal mAxil0ReadMasters  : AxiLiteReadMasterArray (NUM_AXIL0_MASTERS_C-1 downto 0) := (others=>AXI_LITE_READ_MASTER_INIT_C);
+   signal mAxil0ReadSlaves   : AxiLiteReadSlaveArray  (NUM_AXIL0_MASTERS_C-1 downto 0) := (others=>AXI_LITE_READ_SLAVE_EMPTY_OK_C);
+   signal mAxil0WriteMasters : AxiLiteWriteMasterArray(NUM_AXIL0_MASTERS_C-1 downto 0) := (others=>AXI_LITE_WRITE_MASTER_INIT_C);
+   signal mAxil0WriteSlaves  : AxiLiteWriteSlaveArray (NUM_AXIL0_MASTERS_C-1 downto 0) := (others=>AXI_LITE_WRITE_SLAVE_EMPTY_OK_C);
+
+   constant NUM_AXIL1_MASTERS_C : integer := 2;
+   signal mAxil1ReadMasters  : AxiLiteReadMasterArray (NUM_AXIL1_MASTERS_C-1 downto 0) := (others=>AXI_LITE_READ_MASTER_INIT_C);
+   signal mAxil1ReadSlaves   : AxiLiteReadSlaveArray  (NUM_AXIL1_MASTERS_C-1 downto 0) := (others=>AXI_LITE_READ_SLAVE_EMPTY_OK_C);
+   signal mAxil1WriteMasters : AxiLiteWriteMasterArray(NUM_AXIL1_MASTERS_C-1 downto 0) := (others=>AXI_LITE_WRITE_MASTER_INIT_C);
+   signal mAxil1WriteSlaves  : AxiLiteWriteSlaveArray (NUM_AXIL1_MASTERS_C-1 downto 0) := (others=>AXI_LITE_WRITE_SLAVE_EMPTY_OK_C);
+   
+   constant AXIL0_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL0_MASTERS_C-1 downto 0) := (
      0 => (baseAddr     => x"00800000",
            addrBits     => 21,
            connectivity => x"FFFF"),
@@ -155,13 +169,25 @@ architecture top_level of DrpTDet is
      3 => (baseAddr     => x"00E00000",
            addrBits     => 21,
            connectivity => x"FFFF") );
-   constant AXIL1_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(1 downto 0) := (
+   constant AXIL1_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL1_MASTERS_C-1 downto 0) := (
      0 => (baseAddr     => x"00800000",
            addrBits     => 21,
            connectivity => x"FFFF"),
      1 => (baseAddr     => x"00A00000",
            addrBits     => 21,
            connectivity => x"FFFF") );
+
+   signal tdetAxilReadMasters  : AxiLiteReadMasterArray (1 downto 0);
+   signal tdetAxilReadSlaves   : AxiLiteReadSlaveArray  (1 downto 0);
+   signal tdetAxilWriteMasters : AxiLiteWriteMasterArray(1 downto 0);
+   signal tdetAxilWriteSlaves  : AxiLiteWriteSlaveArray (1 downto 0);
+
+   signal mtpIbMasters        : AxiStreamMasterArray   (9 downto 0);
+   signal mtpIbSlaves         : AxiStreamSlaveArray    (9 downto 0);
+   signal mtpAxilReadMasters  : AxiLiteReadMasterArray (1 downto 0);
+   signal mtpAxilReadSlaves   : AxiLiteReadSlaveArray  (1 downto 0);
+   signal mtpAxilWriteMasters : AxiLiteWriteMasterArray(1 downto 0);
+   signal mtpAxilWriteSlaves  : AxiLiteWriteSlaveArray (1 downto 0);
 
    signal migConfig : MigConfigArray(7 downto 0) := (others=>MIG_CONFIG_INIT_C);
    signal migStatus : MigStatusArray(7 downto 0);
@@ -174,9 +200,14 @@ architecture top_level of DrpTDet is
    signal tdetClk    : sl;
    signal tdetRst    : sl;
    signal tdetTiming : TDetTimingArray(NDET_C-1 downto 0);
-   signal tdetEvent  : TDetEventArray (NDET_C-1 downto 0);
    signal tdetStatus : TDetStatusArray(NDET_C-1 downto 0);
-
+   signal tdetEventM : AxiStreamMasterArray (NDET_C-1 downto 0);
+   signal tdetEventS : AxiStreamSlaveArray  (NDET_C-1 downto 0);
+   signal tdetTransM : AxiStreamMasterArray (NDET_C-1 downto 0);
+   signal tdetTransS : AxiStreamSlaveArray  (NDET_C-1 downto 0);
+   signal timingRefClk : sl;
+   signal userRefClock : sl;
+   
    constant DEVICE_MAP_C : I2cAxiLiteDevArray(3 downto 0) := (
     -----------------------
     -- PC821 I2C DEVICES --
@@ -189,9 +220,6 @@ architecture top_level of DrpTDet is
     2 => MakeI2cAxiLiteDevType( "1011101", 8, 8, '0' ),
     -- Fan                    I2C Mux = 3
     3 => MakeI2cAxiLiteDevType( "1001100", 8, 8, '0' ) );
-
-   signal usrClkP, usrClkN : slv(1 downto 0);
-   signal emcClock         : slv(1 downto 0);
 
    signal rdDescReq : AxiReadDmaDescReqArray(7 downto 0);
    signal rdDescRet : AxiReadDmaDescRetArray(7 downto 0);
@@ -209,15 +237,49 @@ architecture top_level of DrpTDet is
      TUSER_BITS_C  => 2,
      TUSER_MODE_C  => TUSER_NORMAL_C);
 
+   signal monClkRate : Slv29Array(1 downto 0);
+   signal monClkLock : slv       (1 downto 0);
+   signal monClkFast : slv       (1 downto 0);
+   signal monClkSlow : slv       (1 downto 0);
+   
+   component ila_0
+     port ( clk   : in sl;
+            probe0 : in slv(255 downto 0) );
+   end component;
 begin
 
   i2c_rst_l      <= '1';
   qsfpModPrsL(0) <= qsfp0ModPrsL;
   qsfpModPrsL(1) <= qsfp1ModPrsL;
 
+  --
+  --  Use MGTREFCLK1 (non-programmable) for 156.25 MHz base clock
+  --
+  U_BUFG_GT : BUFG_GT
+    port map (
+      I       => userRefClock,
+      CE      => '1',
+      CLR     => '0',
+      CEMASK  => '1',
+      CLRMASK => '1',
+      DIV     => "000",              -- Divide by 1
+      O       => userClk156);
+
+  U_pgpRefClk : IBUFDS_GTE3
+    generic map (
+      REFCLK_EN_TX_PATH  => '0',
+      REFCLK_HROW_CK_SEL => "00",    -- 2'b00: ODIV2
+      REFCLK_ICNTL_RX    => "00")
+    port map (
+      I     => userRefClkP,
+      IB    => userRefClkN,
+      CEB   => '0',
+      ODIV2 => userRefClock,
+      O     => open );
+  
   U_AxilXbar0 : entity work.AxiLiteCrossbar
     generic map ( NUM_SLAVE_SLOTS_G  => 1,
-                  NUM_MASTER_SLOTS_G => 4,
+                  NUM_MASTER_SLOTS_G => AXIL0_CROSSBAR_MASTERS_CONFIG_C'length,
                   MASTERS_CONFIG_G   => AXIL0_CROSSBAR_MASTERS_CONFIG_C )
     port map    ( axiClk              => axilClks        (0),
                   axiClkRst           => axilRsts        (0),
@@ -225,14 +287,14 @@ begin
                   sAxiWriteSlaves (0) => axilWriteSlaves (0),
                   sAxiReadMasters (0) => axilReadMasters (0),
                   sAxiReadSlaves  (0) => axilReadSlaves  (0),
-                  mAxiWriteMasters    => mAxilWriteMasters(3 downto 0),
-                  mAxiWriteSlaves     => mAxilWriteSlaves (3 downto 0),
-                  mAxiReadMasters     => mAxilReadMasters (3 downto 0),
-                  mAxiReadSlaves      => mAxilReadSlaves  (3 downto 0) );
+                  mAxiWriteMasters    => mAxil0WriteMasters,
+                  mAxiWriteSlaves     => mAxil0WriteSlaves ,
+                  mAxiReadMasters     => mAxil0ReadMasters ,
+                  mAxiReadSlaves      => mAxil0ReadSlaves  );
 
   U_AxilXbar1 : entity work.AxiLiteCrossbar
     generic map ( NUM_SLAVE_SLOTS_G  => 1,
-                  NUM_MASTER_SLOTS_G => 2,
+                  NUM_MASTER_SLOTS_G => AXIL1_CROSSBAR_MASTERS_CONFIG_C'length,
                   MASTERS_CONFIG_G   => AXIL1_CROSSBAR_MASTERS_CONFIG_C )
     port map    ( axiClk              => axilClks        (1),
                   axiClkRst           => axilRsts        (1),
@@ -240,45 +302,69 @@ begin
                   sAxiWriteSlaves (0) => axilWriteSlaves (1),
                   sAxiReadMasters (0) => axilReadMasters (1),
                   sAxiReadSlaves  (0) => axilReadSlaves  (1),
-                  mAxiWriteMasters    => mAxilWriteMasters(5 downto 4),
-                  mAxiWriteSlaves     => mAxilWriteSlaves (5 downto 4),
-                  mAxiReadMasters     => mAxilReadMasters (5 downto 4),
-                  mAxiReadSlaves      => mAxilReadSlaves  (5 downto 4) );
-  
+                  mAxiWriteMasters    => mAxil1WriteMasters,
+                  mAxiWriteSlaves     => mAxil1WriteSlaves ,
+                  mAxiReadMasters     => mAxil1ReadMasters ,
+                  mAxiReadSlaves      => mAxil1ReadSlaves  );
+
+  tdetAxilReadMasters (0) <= mAxil0ReadMasters (TDETSEM_INDEX_C);
+  tdetAxilWriteMasters(0) <= mAxil0WriteMasters(TDETSEM_INDEX_C);
+  mAxil0ReadSlaves (TDETSEM_INDEX_C) <= tdetAxilReadSlaves (0);
+  mAxil0WriteSlaves(TDETSEM_INDEX_C) <= tdetAxilWriteSlaves(0);
+
+  tdetAxilReadMasters (1) <= mAxil1ReadMasters (TDETSEM_INDEX_C);
+  tdetAxilWriteMasters(1) <= mAxil1WriteMasters(TDETSEM_INDEX_C);
+  mAxil1ReadSlaves (TDETSEM_INDEX_C) <= tdetAxilReadSlaves (1);
+  mAxil1WriteSlaves(TDETSEM_INDEX_C) <= tdetAxilWriteSlaves(1);
+
+  mtpAxilReadMasters (0) <= mAxil0ReadMasters (MIGTPCI_INDEX_C);
+  mtpAxilWriteMasters(0) <= mAxil0WriteMasters(MIGTPCI_INDEX_C);
+  mAxil0ReadSlaves (MIGTPCI_INDEX_C) <= mtpAxilReadSlaves (0);
+  mAxil0WriteSlaves(MIGTPCI_INDEX_C) <= mtpAxilWriteSlaves(0);
+
+  mtpAxilReadMasters (1) <= mAxil1ReadMasters (MIGTPCI_INDEX_C);
+  mtpAxilWriteMasters(1) <= mAxil1WriteMasters(MIGTPCI_INDEX_C);
+  mAxil1ReadSlaves (MIGTPCI_INDEX_C) <= mtpAxilReadSlaves (1);
+  mAxil1WriteSlaves(MIGTPCI_INDEX_C) <= mtpAxilWriteSlaves(1);
+                    
   U_I2C : entity work.AxiI2cRegMaster
     generic map ( DEVICE_MAP_G   => DEVICE_MAP_C,
                   AXI_CLK_FREQ_G => 125.0E+6 )
     port map ( scl            => scl,
                sda            => sda,
-               axiReadMaster  => mAxilReadMasters (RNG_AXIL_MASTERS_C(0)+3),
-               axiReadSlave   => mAxilReadSlaves  (RNG_AXIL_MASTERS_C(0)+3),
-               axiWriteMaster => mAxilWriteMasters(RNG_AXIL_MASTERS_C(0)+3),
-               axiWriteSlave  => mAxilWriteSlaves (RNG_AXIL_MASTERS_C(0)+3),
+               axiReadMaster  => mAxil0ReadMasters (I2C_INDEX_C),
+               axiReadSlave   => mAxil0ReadSlaves  (I2C_INDEX_C),
+               axiWriteMaster => mAxil0WriteMasters(I2C_INDEX_C),
+               axiWriteSlave  => mAxil0WriteSlaves (I2C_INDEX_C),
                axiClk         => axilClks(0),
                axiRst         => axilRsts(0) );
 
   U_Timing : entity work.TDetTiming
     generic map ( NDET_G          => 8,
-                  AXIL_BASEADDR_G => AXIL0_CROSSBAR_MASTERS_CONFIG_C(2).baseAddr )
+                  AXIL_BASEADDR_G => AXIL0_CROSSBAR_MASTERS_CONFIG_C(TDETTIM_INDEX_C).baseAddr )
     port map ( -- AXI-Lite Interface
       axilClk          => axilClks(0),
       axilRst          => axilRsts(0),
-      axilReadMaster   => maxilReadMasters (RNG_AXIL_MASTERS_C(0)+2),
-      axilReadSlave    => maxilReadSlaves  (RNG_AXIL_MASTERS_C(0)+2),
-      axilWriteMaster  => maxilWriteMasters(RNG_AXIL_MASTERS_C(0)+2),
-      axilWriteSlave   => maxilWriteSlaves (RNG_AXIL_MASTERS_C(0)+2),
+      axilReadMaster   => mAxil0ReadMasters (TDETTIM_INDEX_C),
+      axilReadSlave    => mAxil0ReadSlaves  (TDETTIM_INDEX_C),
+      axilWriteMaster  => mAxil0WriteMasters(TDETTIM_INDEX_C),
+      axilWriteSlave   => mAxil0WriteSlaves (TDETTIM_INDEX_C),
       -- Timing Interface
       tdetClk          => tdetClk   ,
       tdetTiming       => tdetTiming,
-      tdetEvent        => tdetEvent ,
       tdetStatus       => tdetStatus,
+      tdetEventMaster  => tdetEventM ,
+      tdetEventSlave   => tdetEventS ,
+      tdetTransMaster  => tdetTransM ,
+      tdetTransSlave   => tdetTransS ,
       -- Timing Phy Ports
       timingRxP        => timingRxP,
       timingRxN        => timingRxN,
       timingTxP        => timingTxP,
       timingTxN        => timingTxN,
       timingRefClkInP  => timingRefClkP,
-      timingRefClkInN  => timingRefClkN );
+      timingRefClkInN  => timingRefClkN,
+      timingRefClkOut  => timingRefClk );
 
   tdetClk <= mmcmClkOut(0)(2);
   tdetRst <= mmcmRstOut(0)(2);
@@ -304,14 +390,14 @@ begin
     U_MMCM : entity work.ClockManagerUltraScale
       generic map ( INPUT_BUFG_G       => false,
                     NUM_CLOCKS_G       => 3,
-                    CLKIN_PERIOD_G     => 4.0,
+                    CLKIN_PERIOD_G     => 6.4,
                     DIVCLK_DIVIDE_G    => 1,
-                    CLKFBOUT_MULT_F_G  => 5.0,  -- 1.25 GHz
+                    CLKFBOUT_MULT_F_G  => 8.0,  -- 1.25 GHz
                     CLKOUT0_DIVIDE_F_G => 6.25, -- 200 MHz
                     CLKOUT1_DIVIDE_G   => 10,   -- 125 MHz
                     CLKOUT2_DIVIDE_G   =>  8 )  -- 156.25 MHz
-      port map ( clkIn     => sysClks(1-i),
-                 rstIn     => sysRsts(1-i),
+      port map ( clkIn     => userClk156,
+                 rstIn     => '0',
                  clkOut    => mmcmClkOut(i),
                  rstOut    => mmcmRstOut(i) );
     
@@ -324,10 +410,10 @@ begin
         -- AXI-Lite Interface (axilClk domain)
         axilClk         => axilClks        (i),
         axilRst         => axilRsts        (i),
-        axilReadMaster  => mAxilReadMasters (RNG_AXIL_MASTERS_C(2*i)+1),
-        axilReadSlave   => mAxilReadSlaves  (RNG_AXIL_MASTERS_C(2*i)+1),
-        axilWriteMaster => mAxilWriteMasters(RNG_AXIL_MASTERS_C(2*i)+1),
-        axilWriteSlave  => mAxilWriteSlaves (RNG_AXIL_MASTERS_C(2*i)+1),
+        axilReadMaster  => tdetAxilReadMasters (i),
+        axilReadSlave   => tdetAxilReadSlaves  (i),
+        axilWriteMaster => tdetAxilWriteMasters(i),
+        axilWriteSlave  => tdetAxilWriteSlaves (i),
         -- DMA Interface (dmaClk domain)
         dmaClks         => hwClks        (4*i+3 downto 4*i),
         dmaRsts         => hwRsts        (4*i+3 downto 4*i),
@@ -343,8 +429,11 @@ begin
         tdetClk         => tdetClk,
         tdetClkRst      => tdetRst,
         tdetTiming      => tdetTiming(4*i+3 downto 4*i),
-        tdetEvent       => tdetEvent (4*i+3 downto 4*i),
         tdetStatus      => tdetStatus(4*i+3 downto 4*i),
+        tdetEventMaster => tdetEventM(4*i+3 downto 4*i),
+        tdetEventSlave  => tdetEventS(4*i+3 downto 4*i),
+        tdetTransMaster => tdetTransM(4*i+3 downto 4*i),
+        tdetTransSlave  => tdetTransS(4*i+3 downto 4*i),
         modPrsL         => qsfpModPrsL(i) );
 
      GEN_HWDMA : for j in 4*i+0 to 4*i+3 generate
@@ -374,7 +463,7 @@ begin
          port map ( sAxisClk    => sysClks     (i),
                     sAxisRst    => sysRsts     (i),
                     sAxisMaster => dmaObMasters(j+i),
-                    sAxisSlave  => dmaObSlaves (j+1),
+                    sAxisSlave  => dmaObSlaves (j+i),
                     sAxisCtrl   => open,
                     mAxisClk    => hwClks      (j),
                     mAxisRst    => hwRsts      (j),
@@ -383,7 +472,10 @@ begin
      end generate;
 
      U_Mig2Pcie : entity work.MigToPcieDma
-       generic map ( LANES_G          => 4 )
+       generic map ( LANES_G          => 4,
+                     MONCLKS_G        => 4,
+                     AXIS_CONFIG_G    => AXIO_STREAM_CONFIG_C,
+                     DEBUG_G          => true )
 --                     DEBUG_G          => (i<1) )
        port map ( axiClk          => clk200(i),
                   axiRst          => rst200(i),
@@ -394,16 +486,44 @@ begin
                   rdDescAck       => rdDescReqAck  (4*i+3 downto 4*i),
                   rdDescRet       => rdDescRet     (4*i+3 downto 4*i),
                   rdDescRetAck    => rdDescRetAck  (4*i+3 downto 4*i),
-                  axisMasters     => dmaIbMasters  (5*i+4 downto 5*i),
-                  axisSlaves      => dmaIbSlaves   (5*i+4 downto 5*i),
+                  axisMasters     => mtpIbMasters  (5*i+4 downto 5*i),
+                  axisSlaves      => mtpIbSlaves   (5*i+4 downto 5*i),
                   axilClk         => axilClks        (i),
                   axilRst         => axilRsts        (i),
-                  axilWriteMaster => mAxilWriteMasters(RNG_AXIL_MASTERS_C(2*i)+0),
-                  axilWriteSlave  => mAxilWriteSlaves (RNG_AXIL_MASTERS_C(2*i)+0),
-                  axilReadMaster  => mAxilReadMasters (RNG_AXIL_MASTERS_C(2*i)+0),
-                  axilReadSlave   => mAxilReadSlaves  (RNG_AXIL_MASTERS_C(2*i)+0),
+                  axilWriteMaster => mtpAxilWriteMasters(i),
+                  axilWriteSlave  => mtpAxilWriteSlaves (i),
+                  axilReadMaster  => mtpAxilReadMasters (i),
+                  axilReadSlave   => mtpAxilReadSlaves  (i),
+                  monClk(0)       => axilClks       (1-i),
+                  monClk(1)       => timingRefClk,
+                  monClk(2)       => clk200         (0),
+                  monClk(3)       => clk200         (1),
                   migConfig       => migConfig      (4*i+3 downto 4*i),
                   migStatus       => migStatus      (4*i+3 downto 4*i) );
+
+    GEN_DMAIB : for j in 5*i to 5*i+4 generate
+      U_IbFifo : entity work.AxiStreamFifoV2
+         generic map (
+            -- General Configurations
+            INT_PIPE_STAGES_G   => 1,
+            PIPE_STAGES_G       => 1,
+            -- FIFO configurations
+            FIFO_ADDR_WIDTH_G   => 4,
+            -- AXI Stream Port Configurations
+            SLAVE_AXI_CONFIG_G  => AXIO_STREAM_CONFIG_C,
+            MASTER_AXI_CONFIG_G => AXIO_STREAM_CONFIG_C)
+         port map (
+            -- Slave Port
+            sAxisClk    => clk200(i),
+            sAxisRst    => rst200(i),
+            sAxisMaster => mtpIbMasters(j),
+            sAxisSlave  => mtpIbSlaves (j),
+            -- Master Port
+            mAxisClk    => sysClks(i),
+            mAxisRst    => sysRsts(i),
+            mAxisMaster => dmaIbMasters(j),
+            mAxisSlave  => dmaIbSlaves (j));
+    end generate;
   end generate;
 
   U_Core : entity work.XilinxKcu1500Core
@@ -412,12 +532,13 @@ begin
       DRIVER_TYPE_ID_G  => toSlv(0,32),
       DMA_SIZE_G        => 5,
       BUILD_INFO_G      => BUILD_INFO_G,
-      DMA_AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C )
+      DMA_AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C,
+      DMA_AXIS_RDY_EN_G => true )
     port map (
       ------------------------      
       --  Top Level Interfaces
       ------------------------
-      userClk156      => open,
+      userClk156      => open,  -- one programmable clock
 --      userSwDip       => userSwDip,
 --      userLed         => userLed,
       -- System Clock and Reset
@@ -459,7 +580,7 @@ begin
       flashMosi       => flashMosi ,
       flashMiso       => flashMiso ,
       flashHoldL      => flashHoldL,
-      flashWp         => flashWp(0),
+      flashWp         => flashWp,
        -- PCIe Ports 
       pciRstL         => pciRstL,
       pciRefClkP      => pciRefClkP,
@@ -474,7 +595,8 @@ begin
                   BUILD_INFO_G      => BUILD_INFO_G,
                   DRIVER_TYPE_ID_G  => toSlv(1,32),
                   DMA_SIZE_G        => 5,
-                  DMA_AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C )
+                  DMA_AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C,
+                  DMA_AXIS_RDY_EN_G => true )
     port map (
       ------------------------      
       --  Top Level Interfaces
@@ -539,5 +661,15 @@ begin
   -- Unused user signals
   userLed <= (others => '0');
 
-
+  U_ILA_IB_AXIS : ila_0
+    port map ( clk                    => clk200(0),
+               probe0(127 downto   0) => dmaIbMasters(0).tData(127 downto 0),
+               probe0(143 downto 128) => dmaIbMasters(0).tKeep(15 downto 0),
+               probe0(144)            => dmaIbMasters(0).tValid,
+               probe0(145)            => dmaIbMasters(0).tLast,
+               probe0(146)            => dmaIbSlaves (0).tReady,
+               probe0(255 downto 147) => (others=>'0') );
+  
 end top_level;
+
+                    
