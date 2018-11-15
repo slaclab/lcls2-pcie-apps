@@ -90,8 +90,8 @@ architecture top_level of RateTestKcu1500 is
 
    constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 16 byte (128-bit) AXIS interface
 
-   signal sysClk     : sl;
-   signal sysRst     : sl;
+   signal dmaClk     : sl;
+   signal dmaRst     : sl;
    signal userClk156 : sl;
 
    signal axilReadMaster  : AxiLiteReadMasterType;
@@ -127,15 +127,15 @@ begin
          -- System Clock and Reset
          userClk156      => userClk156,
          -- DMA Interfaces
-         dmaClk          => sysClk,
-         dmaRst          => sysRst,
+         dmaClk          => dmaClk,
+         dmaRst          => dmaRst,
          dmaObMasters    => dmaObMasters,
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves,
          -- AXI-Lite Interface
-         appClk          => sysClk,
-         appRst          => sysRst,
+         appClk          => dmaClk,
+         appRst          => dmaRst,
          appReadMaster   => axilReadMaster,
          appReadSlave    => axilReadSlave,
          appWriteMaster  => axilWriteMaster,
@@ -179,8 +179,8 @@ begin
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => AXI_CONFIG_C)
       port map (
-         axiClk              => sysClk,
-         axiClkRst           => sysRst,
+         axiClk              => dmaClk,
+         axiClkRst           => dmaRst,
          sAxiWriteMasters(0) => axilWriteMaster,
          sAxiWriteSlaves(0)  => axilWriteSlave,
          sAxiReadMasters(0)  => axilReadMaster,
@@ -201,8 +201,8 @@ begin
          --  Top Level Interfaces
          ------------------------         
          -- System Interfaces
-         sysClk          => sysClk,
-         sysRst          => sysRst,
+         sysClk          => dmaClk,
+         sysRst          => dmaRst,
          userClk156      => userClk156,
          -- AXI-Lite Interface (sysClk domain)
          --axilReadMaster  => intReadMasters(0),
@@ -219,8 +219,8 @@ begin
          dmaIbMasters    => dmaIbMasters(4 downto 4),
          dmaIbSlaves     => dmaIbSlaves(4 downto 4),
          -- Timing information
-         appTimingClk    => sysClk,
-         appTimingRst    => sysRst,
+         appTimingClk    => dmaClk,
+         appTimingRst    => dmaRst,
          appTimingBus    => timingBus,
          pgpTxClk        => open,
          pgpTxIn         => (others=>PGP2B_TX_IN_INIT_C),
@@ -256,12 +256,12 @@ begin
             MASTER_AXI_PIPE_STAGES_G   => 1,
             MASTER_AXI_STREAM_CONFIG_G => ssiAxiStreamConfig(16, TKEEP_COMP_C))
          port map (
-            mAxisClk        => sysClk,
-            mAxisRst        => sysRst,
+            mAxisClk        => dmaClk,
+            mAxisRst        => dmaRst,
             mAxisMaster     => dmaIbMasters(i),
             mAxisSlave      => dmaIbSlaves(i),
-            locClk          => sysClk,
-            locRst          => sysRst,
+            locClk          => dmaClk,
+            locRst          => dmaRst,
             axilReadMaster  => intReadMasters(i),
             axilReadSlave   => intReadSlaves(i),
             axilWriteMaster => intWriteMasters(i),
