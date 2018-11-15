@@ -127,6 +127,8 @@ begin
          -- System Clock and Reset
          userClk156      => userClk156,
          -- DMA Interfaces
+         dmaClk          => sysClk,
+         dmaRst          => sysRst,
          dmaObMasters    => dmaObMasters,
          dmaObSlaves     => dmaObSlaves,
          dmaIbMasters    => dmaIbMasters,
