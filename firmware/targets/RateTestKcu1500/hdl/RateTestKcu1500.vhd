@@ -93,8 +93,6 @@ architecture top_level of RateTestKcu1500 is
    signal sysClk     : sl;
    signal sysRst     : sl;
    signal userClk156 : sl;
-   signal userSwDip  : slv(3 downto 0);
-   signal userLed    : slv(7 downto 0);
 
    signal axilReadMaster  : AxiLiteReadMasterType;
    signal axilReadSlave   : AxiLiteReadSlaveType;
@@ -110,9 +108,6 @@ architecture top_level of RateTestKcu1500 is
    signal dmaObSlaves  : AxiStreamSlaveArray(7 downto 0);
    signal dmaIbMasters : AxiStreamMasterArray(7 downto 0);
    signal dmaIbSlaves  : AxiStreamSlaveArray(7 downto 0);
-
-   signal hwIbMasters  : AxiStreamMasterArray(7 downto 0);
-   signal hwIbSlaves   : AxiStreamSlaveArray(7 downto 0);
 
    signal timingBus       : TimingBusType;
    signal pgpTxClk        : sl;
@@ -217,10 +212,10 @@ begin
          axilWriteMaster => AXI_LITE_WRITE_MASTER_INIT_C,
          axilWriteSlave  => open,
          -- DMA Interface (sysClk domain)
-         dmaObMasters    => dmaObMasters(0 downto 0),
-         dmaObSlaves     => dmaObSlaves(0 downto 0),
-         dmaIbMasters    => hwIbMasters(0 downto 0),
-         dmaIbSlaves     => hwIbSlaves(0 downto 0),
+         dmaObMasters    => dmaObMasters(4 downto 4),
+         dmaObSlaves     => dmaObSlaves(4 downto 4),
+         dmaIbMasters    => dmaIbMasters(4 downto 4),
+         dmaIbSlaves     => dmaIbSlaves(4 downto 4),
          -- Timing information
          appTimingClk    => sysClk,
          appTimingRst    => sysRst,
@@ -245,15 +240,9 @@ begin
          qsfp1TxP        => qsfp1TxP,
          qsfp1TxN        => qsfp1TxN);
 
-   -- Unused user signals
-   --userSwDip  : slv(3 downto 0);
-   userLed <= (others=>'0');
-
-   --dmaIbMasters(7 downto 1) <= hwIbmasters(7 downto 1);
-   --hwIbSlaves(7 downto 1)   <= dmaIbSlaves(7 downto 1);
-
-   --dmaIbMasters(0) <= hwIbmasters(0);
-   --hwIbSlaves(0)   <= AXI_STREAM_SLAVE_INIT_C;
+   dmaIbMasters(7 downto 5) <= (others=>AXI_STREAM_MASTER_INIT_C);
+   dmaObSlaves(7 downto 5)  <= (others=>AXI_STREAM_SLAVE_INIT_C);
+   dmaObSlaves(3 downto 0)  <= (others=>AXI_STREAM_SLAVE_INIT_C);
 
    U_GenTx: for i in 0 to 3 generate
       hwIbSlaves(i) <= AXI_STREAM_SLAVE_INIT_C;
