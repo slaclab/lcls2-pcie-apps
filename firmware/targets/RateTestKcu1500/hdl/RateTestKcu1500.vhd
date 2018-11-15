@@ -195,8 +195,10 @@ begin
 
    U_App : entity work.Hardware
       generic map (
-         TPD_G            => TPD_G,
-         AXI_BASE_ADDR_G  => AXI_CONFIG_C(0).baseAddr)
+         TPD_G             => TPD_G,
+         DMA_SIZE_G        => 1,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
+         AXI_BASE_ADDR_G   => AXI_CONFIG_C(0).baseAddr)
       port map (
          ------------------------      
          --  Top Level Interfaces
@@ -215,10 +217,10 @@ begin
          axilWriteMaster => AXI_LITE_WRITE_MASTER_INIT_C,
          axilWriteSlave  => open,
          -- DMA Interface (sysClk domain)
-         dmaObMasters    => dmaObMasters,
-         dmaObSlaves     => dmaObSlaves,
-         dmaIbMasters    => hwIbMasters,
-         dmaIbSlaves     => hwIbSlaves,
+         dmaObMasters    => dmaObMasters(0 downto 0),
+         dmaObSlaves     => dmaObSlaves(0 downto 0),
+         dmaIbMasters    => hwIbMasters(0 downto 0),
+         dmaIbSlaves     => hwIbSlaves(0 downto 0),
          -- Timing information
          appTimingClk    => sysClk,
          appTimingRst    => sysRst,
