@@ -56,8 +56,6 @@ entity RateTestKcu1500 is
       emcClk       : in    sl;
       userClkP     : in    sl;
       userClkN     : in    sl;
-      swDip        : in    slv(3 downto 0);
-      led          : out   slv(7 downto 0);
       -- QSFP[0] Ports
       qsfp0RstL    : out   sl;
       qsfp0LpMode  : out   sl;
@@ -74,11 +72,6 @@ entity RateTestKcu1500 is
       flashMiso    : in    sl;
       flashHoldL   : out   sl;
       flashWp      : out   sl;
-      -- DDR Ports
-      ddrClkP      : in    slv(3 downto 0);
-      ddrClkN      : in    slv(3 downto 0);
-      ddrOut       : out   DdrOutArray(3 downto 0);
-      ddrInOut     : inout DdrInOutArray(3 downto 0);
       -- PCIe Ports
       pciRstL      : in    sl;
       pciRefClkP   : in    sl;
@@ -119,12 +112,6 @@ architecture top_level of RateTestKcu1500 is
    signal hwIbMasters  : AxiStreamMasterArray(7 downto 0);
    signal hwIbSlaves   : AxiStreamSlaveArray(7 downto 0);
 
-   signal memReady        : slv(3 downto 0);
-   signal memWriteMasters : AxiWriteMasterArray(15 downto 0);
-   signal memWriteSlaves  : AxiWriteSlaveArray(15 downto 0);
-   signal memReadMasters  : AxiReadMasterArray(15 downto 0);
-   signal memReadSlaves   : AxiReadSlaveArray(15 downto 0);
-
    signal timingBus       : TimingBusType;
    signal pgpTxClk        : sl;
 
@@ -140,11 +127,7 @@ begin
          --  Top Level Interfaces
          ------------------------        
          -- System Clock and Reset
-         sysClk          => sysClk,
-         sysRst          => sysRst,
          userClk156      => userClk156,
-         userSwDip       => userSwDip,
-         userLed         => userLed,
          -- DMA Interfaces
          dmaObMasters    => dmaObMasters,
          dmaObSlaves     => dmaObSlaves,
@@ -157,12 +140,6 @@ begin
          appReadSlave    => axilReadSlave,
          appWriteMaster  => axilWriteMaster,
          appWriteSlave   => axilWriteSlave,
-         -- Memory bus (sysClk domain)
-         memReady        => memReady,
-         memWriteMasters => memWriteMasters,
-         memWriteSlaves  => memWriteSlaves,
-         memReadMasters  => memReadMasters,
-         memReadSlaves   => memReadSlaves,
          --------------
          --  Core Ports
          --------------   
@@ -170,8 +147,6 @@ begin
          emcClk          => emcClk,
          userClkP        => userClkP,
          userClkN        => userClkN,
-         swDip           => swDip,
-         led             => led,
          -- QSFP[0] Ports
          qsfp0RstL       => qsfp0RstL,
          qsfp0LpMode     => qsfp0LpMode,
@@ -188,11 +163,6 @@ begin
          flashMiso       => flashMiso,
          flashHoldL      => flashHoldL,
          flashWp         => flashWp,
-         -- DDR Ports
-         ddrClkP         => ddrClkP,
-         ddrClkN         => ddrClkN,
-         ddrOut          => ddrOut,
-         ddrInOut        => ddrInOut,
          -- PCIe Ports 
          pciRstL         => pciRstL,
          pciRefClkP      => pciRefClkP,
@@ -269,13 +239,6 @@ begin
          qsfp1RxN        => qsfp1RxN,
          qsfp1TxP        => qsfp1TxP,
          qsfp1TxN        => qsfp1TxN);
-
-   -- Unused memory signals
-   --memReady        : slv(3 downto 0);
-   memWriteMasters <= (others=>AXI_WRITE_MASTER_INIT_C);
-   --memWriteSlaves  : AxiWriteSlaveArray(15 downto 0);
-   memReadMasters  <= (others=>AXI_READ_MASTER_INIT_C);
-   --memReadSlaves   : AxiReadSlaveArray(15 downto 0);
 
    -- Unused user signals
    --userSwDip  : slv(3 downto 0);
