@@ -245,7 +245,6 @@ begin
    dmaObSlaves(3 downto 0)  <= (others=>AXI_STREAM_SLAVE_FORCE_C);
 
    U_GenTx: for i in 0 to 3 generate
-      hwIbSlaves(i) <= AXI_STREAM_SLAVE_INIT_C;
 
       U_PrbsTx: entity work.SsiPrbsTx 
          generic map (
