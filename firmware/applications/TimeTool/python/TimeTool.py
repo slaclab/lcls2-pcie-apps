@@ -19,45 +19,39 @@
 
 import pyrogue as pr
 
+class TimeToolPrescaler(pr.Device):
+    def __init__(   self,       
+            name        = "TimeToolPrescaler",
+            **kwargs):
+        super().__init__(name=name, **kwargs) 
+        
+        self.add(pr.RemoteVariable(    
+            name         = "PrescalingRate",
+            offset       =  0x00,
+            bitSize      =  32,
+            bitOffset    =  0,
+            mode         = "RW",
+        ))   
+
+class TimeToolFEX_placeholder(pr.Device):
+    def __init__(   self,       
+            name        = "TimeToolFEX_placeholder",
+            **kwargs):
+        super().__init__(name=name, **kwargs) 
+
 class TimeToolCore(pr.Device):
     def __init__(   self,       
             name        = "TimeTool",
             **kwargs):
         super().__init__(name=name, **kwargs) 
 
-        #to allow pyrogue to see a new register duplicate the code below using a differen "offset" and "name"
-        #see timetooldev.py and ClinkTop.vhd and _ClinkTop.py for examples how to make python send data to firmware.
-        self.add(pr.RemoteVariable(    
-            name         = "AddValue",
-            offset       =  0x00,
-            bitSize      =  8,
-            bitOffset    =  0,
-            base         = pr.UInt,
-            mode         = "RW",
+        # Add devices
+        self.add(TimeToolPrescaler( 
+            name    = 'Prescaler', 
+            offset  = 0x000000, 
         ))
-        self.add(pr.RemoteVariable(    
-            name         = "DialInOpCode",
-            offset       =  0x00,
-            bitSize      =  8,
-            bitOffset    =  8,
-            base         = pr.UInt,
-            mode         = "RW",
-        ))
-        self.add(pr.RemoteVariable(    
-            name         = "DialInTriggerDelay",
-            offset       =  0x00,
-            bitSize      =  8,
-            bitOffset    = 16,
-            base         = pr.UInt,
-            mode         = "RW",
-        ))
-
-        self.add(pr.RemoteVariable(    
-            name         = "dialInPreScaling",
-            offset       =  0x00,
-            bitSize      =  8,
-            bitOffset    = 24,
-            base         = pr.UInt,
-            mode         = "RW",
-        ))
-
+        self.add(TimeToolFEX_placeholder( 
+            name    = 'Placeholder', 
+            offset  = 0x100000, 
+        ))        
+        
