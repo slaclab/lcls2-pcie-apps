@@ -39,6 +39,14 @@ class TimeToolFEX_placeholder(pr.Device):
             **kwargs):
         super().__init__(name=name, **kwargs) 
 
+        self.add(pr.RemoteVariable(    
+            name         = "AddValue",
+            offset       =  0x00,
+            bitSize      =  8,
+            bitOffset    =  0,
+            mode         = "RW",
+        ))           
+        
 class TimeToolCore(pr.Device):
     def __init__(   self,       
             name        = "TimeTool",
