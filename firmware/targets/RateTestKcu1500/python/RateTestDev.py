@@ -32,11 +32,11 @@ class RateTestDev(pr.Root):
         # PGP Card registers
         #self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))
 
-        #self._pgpVc0 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',0,True) # Registers
-        #self._prbsRx = pyrogue.utilities.prbs.PrbsRx(name="prbsRx", width=128)
-        #self.add(self._prbsRx)
+        self._pgpVc0 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',0,True) # Registers
+        self._prbsRx = pyrogue.utilities.prbs.PrbsRx(name="prbsRx", width=128)
+        self.add(self._prbsRx)
 
-        #pyrogue.streamConnect(self._pgpVc0,self._prbsRx)
+        pyrogue.streamConnect(self._pgpVc0,self._prbsRx)
 
         # Start the system
         self.start(pollEn=True)

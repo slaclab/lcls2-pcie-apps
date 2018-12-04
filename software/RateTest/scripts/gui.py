@@ -3,6 +3,11 @@ import pyrogue.gui
 import RateTestDev
 import sys
 
+import rogue
+
+rogue.Logging.setFilter('pyrogue.prbs.rx',rogue.Logging.Debug)
+#rogue.Logging.setLevel(rogue.Logging.Debug)
+
 cl = RateTestDev.RateTestDev()
 
 # Create GUI
