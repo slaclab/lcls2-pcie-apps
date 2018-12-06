@@ -15,12 +15,25 @@ source -quiet $::env(RUCKUS_DIR)/vivado_env_var.tcl
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
 # Bypass the debug chipscope generation
-return
+#return
 
 ############################
 ## Open the synthesis design
 ############################
 open_run synth_1
+
+############################
+## Get a list of nets
+############################
+set netFile ${PROJ_DIR}/net_log.txt
+set fd [open ${netFile} "w"]
+set nl ""
+
+append nl [get_nets {*}]
+
+regsub -all -line { } $nl "\n" nl
+puts $fd $nl
+close $fd
 
 ###############################
 ## Set the name of the ILA core
@@ -35,18 +48,25 @@ CreateDebugCore ${ilaName}
 #######################
 ## Set the record depth
 #######################
-set_property C_DATA_DEPTH 1024 [get_debug_cores ${ilaName}]
+set_property C_DATA_DEPTH 4096 [get_debug_cores ${ilaName}]
 
 #################################
 ## Set the clock for the ILA core
 #################################
-SetDebugCoreClk ${ilaName} {U_ClinkTop/U_Cbl0Half1/clinkClk}
+SetDebugCoreClk ${ilaName} {dmaClk}
 
 #######################
 ## Set the debug Probes
 #######################
 
-ConfigProbe ${ilaName} {U_ClinkTop/U_Cbl0Half1/}
+ConfigProbe ${ilaName} {dmaIbMasters[0][tData][*]}
+ConfigProbe ${ilaName} {dmaIbMasters[0][tDest][*]}
+ConfigProbe ${ilaName} {dmaIbMasters[0][tKeep][*]}
+ConfigProbe ${ilaName} {dmaIbMasters[0][tLast]}
+ConfigProbe ${ilaName} {dmaIbMasters[0][tUser][*]}
+ConfigProbe ${ilaName} {dmaIbMasters[0][tValid]}
+ConfigProbe ${ilaName} {dmaIbSlaves[0][tReady]}
+
 #ConfigProbe ${ilaName} {U_TimeToolCore/r[axilReadSlave][*}
 #ConfigProbe ${ilaName} {U_TimeToolCore/axilWriteMaster[*}
 #ConfigProbe ${ilaName} {U_TimeToolCore/r[axilWriteSlave][*}

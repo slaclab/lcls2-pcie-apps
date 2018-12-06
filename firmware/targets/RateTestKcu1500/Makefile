@@ -1,4 +1,4 @@
-#export GIT_IGNORE 1
+export GIT_IGNORE 1
 
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000026
