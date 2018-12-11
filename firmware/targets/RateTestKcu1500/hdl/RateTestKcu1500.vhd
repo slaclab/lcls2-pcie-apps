@@ -253,7 +253,7 @@ begin
             TPD_G                      => TPD_G,
             PRBS_SEED_SIZE_G           => 128,
             GEN_SYNC_FIFO_G            => true,
-            MASTER_AXI_PIPE_STAGES_G   => 1,
+            MASTER_AXI_PIPE_STAGES_G   => 0,
             MASTER_AXI_STREAM_CONFIG_G => ssiAxiStreamConfig(16, TKEEP_COMP_C))
          port map (
             mAxisClk        => dmaClk,

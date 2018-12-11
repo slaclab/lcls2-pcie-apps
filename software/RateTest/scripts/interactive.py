@@ -3,7 +3,7 @@ import pyrogue.gui
 import RateTestDev
 import sys
 
-cl = RateTestDev.RateTestDev()
+cl = RateTestDev.RateTestDev(dataEn=False)
 
 def enableTx():
     cl.prbsTx0.TxEn.set(True)
