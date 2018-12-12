@@ -2,7 +2,7 @@
 -- File       : TDetSemi.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-11-01
+-- Last update: 2018-12-09
 -------------------------------------------------------------------------------
 -- Description: TDetSemi File
 -------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ architecture mapping of TDetSemi is
     state       : StateType;
     length      : slv(23 downto 0);
     count       : slv(31 downto 0);
-    inc         : sl;
+    event       : sl;
     eventSlave  : AxiStreamSlaveType;
     transSlave  : AxiStreamSlaveType;
     txMaster    : AxiStreamMasterType;
@@ -138,7 +138,7 @@ architecture mapping of TDetSemi is
     state       => IDLE_S,
     length      => (others=>'0'),
     count       => (others=>'0'),
-    inc         => '0',
+    event       => '0',
     eventSlave  => AXI_STREAM_SLAVE_INIT_C,
     transSlave  => AXI_STREAM_SLAVE_INIT_C,
     txMaster    => AXI_STREAM_MASTER_INIT_C );
@@ -262,6 +262,11 @@ begin
         v.txMaster.tValid := '0';
       end if;
 
+      if as.enable(i) = '0' then
+        v.eventSlave.tReady := '1';
+        v.transSlave.tReady := '1';
+      end if;
+      
       case r(i).state is
         when WAIT_S =>
           v.state := IDLE_S;
@@ -272,8 +277,10 @@ begin
             v.txMaster.tValid := '1';
             v.txMaster.tLast  := '0';
             if tdetEventMaster(i).tValid = '1' then
+              v.event := '1';
               v.txMaster.tData(63 downto 0) := tdetEventMaster(i).tData(63 downto 0);
             elsif tdetTransMaster(i).tValid = '1' then
+              v.event := '0';
               v.txMaster.tData(63 downto 0) := tdetTransMaster(i).tData(63 downto 0);
             else
               v.txMaster.tValid := '0';
@@ -287,7 +294,7 @@ begin
             ssiSetUserSof(PGP3_AXIS_CONFIG_C, v.txMaster, '0');
             v.txMaster.tValid := '1';
             v.txMaster.tLast  := '0';
-            if tdetEventMaster(i).tValid = '1' then
+            if r(i).event = '1' then
               v.txMaster.tData(63 downto 0) := tdetEventMaster(i).tData(127 downto 64);
             else
               v.txMaster.tData(63 downto 0) := tdetTransMaster(i).tData(127 downto 64);
@@ -299,7 +306,7 @@ begin
             v.state           := HDR3_S;
             v.txMaster.tValid := '1';
             v.txMaster.tLast  := '0';
-            if tdetEventMaster(i).tValid = '1' then
+            if r(i).event = '1' then
               v.txMaster.tData(63 downto 0) := tdetEventMaster(i).tData(191 downto 128);
             else
               v.txMaster.tData(63 downto 0) := tdetTransMaster(i).tData(191 downto 128);
@@ -311,11 +318,10 @@ begin
             v.txMaster.tValid := '1';
             v.txMaster.tData(63 downto 0) := toSlv(0,64);
             v.txMaster.tKeep  := genTKeep(PGP3_AXIS_CONFIG_C);
-            if tdetEventMaster(i).tValid = '1' then
+            if r(i).event = '1' then
               v.txMaster.tLast    := '0';
               v.eventSlave.tReady := '1';
               v.length            := as.length;
-              v.inc               := '1';
               v.state             := SEND_S;
             else
               v.txMaster.tLast    := '1';
@@ -341,8 +347,8 @@ begin
               v.length         := r(i).length - PGP3_AXIS_CONFIG_C.TDATA_BYTES_C/4;
               v.state          := SEND_S;
             end if;
-            if r(i).inc = '1' then
-              v.inc      := '0';
+            if r(i).event = '1' then
+              v.event    := '0';
               v.count    := r(i).count + 1;
               v.txMaster.tData(31 downto 0) := resize(r(i).count,32);
             end if;

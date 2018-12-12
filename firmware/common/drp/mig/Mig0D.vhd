@@ -2,7 +2,7 @@
 -- File       : Mig0D.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-08-03
--- Last update: 2018-10-20
+-- Last update: 2018-11-11
 -------------------------------------------------------------------------------
 -- Description: Wrapper for the MIG core
 -------------------------------------------------------------------------------
@@ -28,7 +28,8 @@ library unisim;
 use unisim.vcomponents.all;
 
 entity Mig0D is
-   generic ( TPD_G        : time          := 1 ns );
+   generic ( TPD_G        : time          := 1 ns;
+             AXI_CONFIG_G : AxiConfigType );
    port (
       -- AXI MEM Interface (sysClk domain)
       axiReady        : out   sl;
@@ -133,6 +134,11 @@ architecture mapping of Mig0D is
    signal ddrWriteSlave  : AxiWriteSlaveType  := AXI_WRITE_SLAVE_INIT_C;
    signal ddrReadMaster  : AxiReadMasterType  := AXI_READ_MASTER_INIT_C;
    signal ddrReadSlave   : AxiReadSlaveType   := AXI_READ_SLAVE_INIT_C;
+
+   signal iddrWriteMaster : AxiWriteMasterType := AXI_WRITE_MASTER_INIT_C;
+   signal iddrWriteSlave  : AxiWriteSlaveType  := AXI_WRITE_SLAVE_INIT_C;
+   signal iddrReadMaster  : AxiReadMasterType  := AXI_READ_MASTER_INIT_C;
+   signal iddrReadSlave   : AxiReadSlaveType   := AXI_READ_SLAVE_INIT_C;
 
    signal memWriteMaster : AxiWriteMasterType := AXI_WRITE_MASTER_INIT_C;
    signal memWriteSlave  : AxiWriteSlaveType  := AXI_WRITE_SLAVE_INIT_C;
@@ -262,8 +268,8 @@ begin
        -- Slave Interfaces
          sAxiClk          => axiClk,
          sAxiRst          => axiRst,
-         sAxiWriteMaster  => axiWriteMaster,
-         sAxiWriteSlave   => axiWriteSlave,
+         sAxiWriteMaster  => iddrWriteMaster,
+         sAxiWriteSlave   => iddrWriteSlave,
          -- Master Interface
          mAxiClk          => ddrClk,
          mAxiRst          => ddrRst,
@@ -276,12 +282,30 @@ begin
        -- Slave Interfaces
          sAxiClk          => axiClk,
          sAxiRst          => axiRst,
-         sAxiReadMaster   => axiReadMaster,
-         sAxiReadSlave    => axiReadSlave,
+         sAxiReadMaster   => iddrReadMaster,
+         sAxiReadSlave    => iddrReadSlave,
          -- Master Interface
          mAxiClk          => ddrClk,
          mAxiRst          => ddrRst,
          mAxiReadMaster   => ddrReadMaster,
          mAxiReadSlave    => ddrReadSlave );
+
+   U_Resize : entity work.AxiResize
+     generic map ( SLAVE_AXI_CONFIG_G  => AXI_CONFIG_G,
+                   MASTER_AXI_CONFIG_G => AXI_CONFIG_C )
+     port map (
+       -- Clock and reset
+       axiClk          => axiClk,
+       axiRst          => axiRst,
+       -- Slave Port
+       sAxiReadMaster  => axiReadMaster,
+       sAxiReadSlave   => axiReadSlave,
+       sAxiWriteMaster => axiWriteMaster,
+       sAxiWriteSlave  => axiWriteSlave,
+       -- Master Port
+       mAxiReadMaster  => iddrReadMaster,
+       mAxiReadSlave   => iddrReadSlave,
+       mAxiWriteMaster => iddrWriteMaster,
+       mAxiWriteSlave  => iddrWriteSlave );
 
 end mapping;

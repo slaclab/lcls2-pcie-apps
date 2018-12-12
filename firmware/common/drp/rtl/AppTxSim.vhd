@@ -2,7 +2,7 @@
 -- File       : AppTxSim.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-03-07
+-- Last update: 2018-11-11
 -------------------------------------------------------------------------------
 -- Description: Application File
 -------------------------------------------------------------------------------
@@ -135,7 +135,7 @@ begin
                  probe0(255 downto 81) => (others=>'0') );
   end generate;
 
-  U_Axil : entity work.AxiLiteEmpty
+  U_Axil : entity work.AxiLiteRegs
     generic map ( NUM_WRITE_REG_G => 2 )
     port map (
       axiClk         => axilClk,

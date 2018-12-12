@@ -5,7 +5,7 @@
 -- Author     : Matt Weaver <weaver@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-07-10
--- Last update: 2018-06-22
+-- Last update: 2018-11-11
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -35,26 +35,30 @@ entity AxiStreamDeinterleave is
           axisRst         : in  sl;
           sAxisMaster     : in  AxiStreamMasterArray( LANES_G-1 downto 0 );
           sAxisSlave      : out AxiStreamSlaveArray ( LANES_G-1 downto 0 );
-          -- Only presented as an array to workaround byte width limitation
-          mAxisMaster     : out AxiStreamMasterArray( LANES_G-1 downto 0 );
+          mAxisMaster     : out AxiStreamMasterType;
           mAxisSlave      : in  AxiStreamSlaveType );
 end AxiStreamDeinterleave;
 
 architecture top_level_app of AxiStreamDeinterleave is
 
+  constant MAXIS_CONFIG_C : AxiStreamConfigType := (
+    TSTRB_EN_C    => false,
+    TDATA_BYTES_C => LANES_G*AXIS_CONFIG_G.TDATA_BYTES_C,
+    TDEST_BITS_C  => AXIS_CONFIG_G.TDEST_BITS_C,
+    TID_BITS_C    => AXIS_CONFIG_G.TID_BITS_C,
+    TKEEP_MODE_C  => AXIS_CONFIG_G.TKEEP_MODE_C,
+    TUSER_BITS_C  => AXIS_CONFIG_G.TUSER_BITS_C,
+    TUSER_MODE_C  => AXIS_CONFIG_G.TUSER_MODE_C );
+    
   type RegType is record
     master  : AxiStreamMasterType;
-    tData   : slv(LANES_G*AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto 0);
-    tKeep   : slv(LANES_G*AXIS_CONFIG_G.TDATA_BYTES_C-1   downto 0);
-    tDest   : slv(LANES_G*AXIS_CONFIG_G.TDEST_BITS_C-1    downto 0);
+    tDest   : slv                 (LANES_G*AXIS_CONFIG_G.TDEST_BITS_C-1 downto 0);
     discard : slv                 (LANES_G-1 downto 0);
     slaves  : AxiStreamSlaveArray (LANES_G-1 downto 0);
   end record;
 
   constant REG_INIT_C : RegType := (
-    master  => axiStreamMasterInit(AXIS_CONFIG_G),
-    tData   => (others=>'0'),
-    tKeep   => (others=>'0'),
+    master  => axiStreamMasterInit(MAXIS_CONFIG_C),
     tDest   => (others=>'0'),
     discard => (others=>'0'),
     slaves  => (others=>AXI_STREAM_SLAVE_INIT_C));
@@ -106,14 +110,14 @@ begin
       end loop;
 
       if ready = '1' and v.master.tValid = '0' then
-        v.master.tValid := '1';
+        v.master := sAxisMaster(0);
 
         for i in 0 to LANES_G-1 loop
           for j in 0 to AXIS_CONFIG_G.TDATA_BYTES_C-1 loop
             m := 8*j;
             n := 8*(LANES_G*j+i);
-            v.tData(n+7 downto n) := sAxisMaster(i).tData(m+7 downto m);
-            v.tKeep(LANES_G*j+i)  := sAxisMaster(i).tKeep(j);
+            v.master.tData(n+7 downto n) := sAxisMaster(i).tData(m+7 downto m);
+            v.master.tKeep(LANES_G*j+i)  := sAxisMaster(i).tKeep(j);
           end loop;
         end loop;
 
@@ -175,16 +179,17 @@ begin
     end if;
 
     sAxisSlave  <= v.slaves;
-
-    for i in 0 to LANES_G-1 loop
-      mAxisMaster(i)       <= r.master;
-      mAxisMaster(i).tData(AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto 0) <=
-        r.tData((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto
-                (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C*8);
-      mAxisMaster(i).tKeep(AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) <=
-        r.tKeep((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C-1 downto
-                (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C);
-    end loop;
+    mAxisMaster <= r.master;
+    
+    --for i in 0 to LANES_G-1 loop
+    --  mAxisMaster(i)       <= r.master;
+      --mAxisMaster(i).tData(AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto 0) <=
+      --  r.tData((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto
+      --          (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C*8);
+      --mAxisMaster(i).tKeep(AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) <=
+      --  r.tKeep((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C-1 downto
+      --          (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C);
+    --end loop;
     
     if axisRst = '1' then
       v := REG_INIT_C;

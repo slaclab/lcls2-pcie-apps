@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : AppToMigWrapper.vhd
+-- File       : AppIlvToMigDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
 -- Last update: 2018-12-03
@@ -29,17 +29,17 @@ use work.AxiPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiDmaPkg.all;
-use work.Pgp3Pkg.all;
 use work.AppMigPkg.all;
 
-entity AppToMigDma is
-  generic ( AXI_BASE_ADDR_G     : slv(31 downto 0) := (others=>'0');
-            DEBUG_G             : boolean          := false );
+entity AppIlvToMigDma is
+  generic ( LANES_G             : integer          := 4;
+            AXIS_CONFIG_G       : AxiStreamConfigType;
+            AXI_BASE_ADDR_G     : slv(31 downto 0) := (others=>'0') );
   port    ( -- Clock and reset
-    sAxisClk         : in  sl; -- 156MHz
-    sAxisRst         : in  sl;
-    sAxisMaster      : in  AxiStreamMasterType;
-    sAxisSlave       : out AxiStreamSlaveType ;
+    sAxisClk         : in  slv                 (LANES_G-1 downto 0);
+    sAxisRst         : in  slv                 (LANES_G-1 downto 0);
+    sAxisMaster      : in  AxiStreamMasterArray(LANES_G-1 downto 0);
+    sAxisSlave       : out AxiStreamSlaveArray (LANES_G-1 downto 0);
     sAlmostFull      : out sl;
     sFull            : out sl;
     -- AXI4 Interface to MIG
@@ -57,12 +57,14 @@ entity AppToMigDma is
     config           : in  MigConfigType;
     -- Status
     status           : out MigStatusType );
-end AppToMigDma;
+end AppIlvToMigDma;
 
-architecture mapping of AppToMigDma is
+architecture mapping of AppIlvToMigDma is
 
-  signal mAxisMaster : AxiStreamMasterType;
-  signal mAxisSlave  : AxiStreamSlaveType;
+  signal imAxisMaster : AxiStreamMasterArray(LANES_G-1 downto 0);
+  signal imAxisSlave  : AxiStreamSlaveArray (LANES_G-1 downto 0);
+  signal mAxisMaster  : AxiStreamMasterType;
+  signal mAxisSlave   : AxiStreamSlaveType;
 
   signal doutTransfer  : slv(22 downto 0);
   
@@ -114,27 +116,35 @@ architecture mapping of AppToMigDma is
   signal r   : RegType := REG_INIT_C;
   signal rin : RegType;
 
-  signal isAxisSlave : AxiStreamSlaveType;
-  signal isPause     : sl;
-  signal isFull      : sl;
+  constant AXIS_ILV_CONFIG_C : AxiStreamConfigType := (
+      TSTRB_EN_C    => false,
+      TDATA_BYTES_C => 4*AXIS_CONFIG_G.TDATA_BYTES_C,
+      TDEST_BITS_C  => AXIS_CONFIG_G.TDEST_BITS_C,
+      TID_BITS_C    => 0,
+      TKEEP_MODE_C  => AXIS_CONFIG_G.TKEEP_MODE_C,
+      TUSER_BITS_C  => AXIS_CONFIG_G.TUSER_BITS_C,
+      TUSER_MODE_C  => AXIS_CONFIG_G.TUSER_MODE_C );
   
   -- DMA AXI Stream Configuration
   constant AXIO_STREAM_CONFIG_C : AxiStreamConfigType := (
       TSTRB_EN_C    => false,
-      TDATA_BYTES_C => 16,
+      TDATA_BYTES_C => AXIS_ILV_CONFIG_C.TDATA_BYTES_C,
       TDEST_BITS_C  => 0,
       TID_BITS_C    => 0,
-      TKEEP_MODE_C  => TKEEP_NORMAL_C,
+      TKEEP_MODE_C  => TKEEP_COUNT_C,
       TUSER_BITS_C  => 2,
       TUSER_MODE_C  => TUSER_NORMAL_C);
 
+  constant AXI_ILV_CONFIG_C : AxiConfigType := (
+      ADDR_WIDTH_C => APP2MIG_AXI_CONFIG_C.ADDR_WIDTH_C,
+      DATA_BYTES_C => AXIS_ILV_CONFIG_C.TDATA_BYTES_C,
+      ID_BITS_C    => APP2MIG_AXI_CONFIG_C.ID_BITS_C,
+      LEN_BITS_C   => 6 );
+    
   component ila_0
     port ( clk          : in sl;
            probe0       : in slv(255 downto 0) );
   end component;
-
-  signal sBlocksFree   : slv(BIS-1 downto 0);
-  signal sBlocksFreeD  : slv(9 downto 0);
 
   signal rdenb          : sl;
   signal rdTransferAddr : slv(BIS-1 downto 0);  -- read complete
@@ -146,48 +156,8 @@ architecture mapping of AppToMigDma is
   
 begin
 
-  GEN_DEBUG : if DEBUG_G generate
-    sBlocksFreeD <= resize(sBlocksFree,10);
-    U_ILA_APP : ila_0
-      port map ( clk          => sAxisClk,
-                 probe0(0)    => sAxisRst,
-                 probe0(1)    => sAxisMaster.tValid,
-                 probe0(2)    => sAxisMaster.tLast,
-                 probe0(3)    => isAxisSlave.tReady,
-                 probe0(4)    => isPause,
-                 probe0( 68 downto  5) => sAxisMaster.tData(63 downto 0),
-                 probe0( 76 downto 69) => (others=>'0'),
-                 probe0( 77 )          => '0',
-                 probe0( 78 )          => isFull,
-                 probe0( 88 downto 79) => sBlocksFreeD,
-                 probe0(255 downto 89) => (others=>'0') );
-  end generate;
-
-  sAxisSlave                <= isAxisSlave;
-  sAlmostFull               <= isPause;
-  sFull                     <= isFull;
-  
-  mPause <= '1' when (r.blocksFree < config.blocksPause) else '0';
-  mFull  <= '1' when ((r.blocksFree < 4) or (config.inhibit='1')) else '0';
-
-  U_Free  : entity work.SynchronizerFifo
-    generic map ( DATA_WIDTH_G => BIS )
-    port map ( wr_clk  => mAxiClk,
-               din     => r.blocksFree,
-               rd_clk  => sAxisClk,
-               dout    => sBlocksFree );
-  
-  U_Pause : entity work.Synchronizer
-    port map ( clk     => sAxisClk,
-               rst     => sAxisRst,
-               dataIn  => mPause,
-               dataOut => isPause );
-
-  U_Full : entity work.Synchronizer
-    port map ( clk     => sAxisClk,
-               rst     => sAxisRst,
-               dataIn  => mFull,
-               dataOut => isFull );
+  sAlmostFull <= '1' when (r.blocksFree < config.blocksPause) else '0';
+  sFull       <= '1' when ((r.blocksFree < 4) or (config.inhibit='1')) else '0';
 
   U_Ready : entity work.Synchronizer
     port map ( clk     => mAxiClk,
@@ -195,27 +165,63 @@ begin
                dataIn  => memReady,
                dataOut => status.memReady );
   
-  --
-  --  Insert a fifo to cross clock domains
-  --
-  U_AxisFifo : entity work.AxiStreamFifoV2
-    generic map ( FIFO_ADDR_WIDTH_G   => 8,
-                  SLAVE_AXI_CONFIG_G  => PGP3_AXIS_CONFIG_C,
-                  MASTER_AXI_CONFIG_G => AXIO_STREAM_CONFIG_C )
-    port map ( sAxisClk    => sAxisClk,
-               sAxisRst    => sAxisRst,
-               sAxisMaster => sAxisMaster,
-               sAxisSlave  => isAxisSlave,
-               sAxisCtrl   => open,
-               mAxisClk    => mAxiClk,
-               mAxisRst    => mAxiRst,
+  GEN_LANE : for i in 0 to LANES_G-1 generate
+    --
+    --  Insert a fifo to cross clock domains
+    --
+    U_AxisFifo : entity work.AxiStreamFifoV2
+      generic map ( FIFO_ADDR_WIDTH_G   => 10,
+                    SLAVE_AXI_CONFIG_G  => AXIS_CONFIG_G,
+                    MASTER_AXI_CONFIG_G => AXIS_CONFIG_G )
+      port map ( sAxisClk    => sAxisClk    (i),
+                 sAxisRst    => sAxisRst    (i),
+                 sAxisMaster => sAxisMaster (i),
+                 sAxisSlave  => sAxisSlave  (i),
+                 sAxisCtrl   => open,
+                 mAxisClk    => mAxiClk,
+                 mAxisRst    => mAxiRst,
+                 mAxisMaster => imAxisMaster(i),
+                 mAxisSlave  => imAxisSlave (i));
+
+    --tData((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto
+    --      (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C*8) <=
+    --  mAxisMaster(i).tData(AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto 0);
+    --tKeep((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C-1 downto
+    --      (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C) <=
+    --  mAxisMaster(i).tKeep(AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0);
+  end generate;
+  
+  U_Deinterleave : entity work.AxiStreamDeinterleave
+    generic map ( LANES_G        => LANES_G,
+                  AXIS_CONFIG_G  => AXIS_CONFIG_G )
+    port map ( axisClk     => mAxiClk,
+               axisRst     => mAxiRst,
+               sAxisMaster => imAxisMaster,
+               sAxisSlave  => imAxisSlave ,
                mAxisMaster => mAxisMaster,
                mAxisSlave  => mAxisSlave );
   
+  --
+  --  Insert a fifo to cross clock domains
+  --
+  --U_AxisFifo : entity work.AxiStreamFifoV2
+  --  generic map ( FIFO_ADDR_WIDTH_G   => 8,
+  --                SLAVE_AXI_CONFIG_G  => AXIS_ILV_CONFIG_C,
+  --                MASTER_AXI_CONFIG_G => AXIO_STREAM_CONFIG_C )
+  --  port map ( sAxisClk    => sAxisClk,
+  --             sAxisRst    => sAxisRst,
+  --             sAxisMaster => sAxisMaster,
+  --             sAxisSlave  => isAxisSlave,
+  --             sAxisCtrl   => open,
+  --             mAxisClk    => mAxiClk,
+  --             mAxisRst    => mAxiRst,
+  --             mAxisMaster => mAxisMaster,
+  --             mAxisSlave  => mAxisSlave );
+  
   U_DmaWrite : entity work.AxiStreamDmaV2Write
     generic map ( AXI_READY_EN_G => true,
-                  AXIS_CONFIG_G  => AXIO_STREAM_CONFIG_C,
-                  AXI_CONFIG_G   => APP2MIG_AXI_CONFIG_C )
+                  AXIS_CONFIG_G  => AXIS_ILV_CONFIG_C,
+                  AXI_CONFIG_G   => AXI_ILV_CONFIG_C )
     port map ( axiClk         => mAxiClk,
                axiRst         => mAxiRst,
                dmaWrDescReq   => wrDescReq,

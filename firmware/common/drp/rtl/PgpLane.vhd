@@ -2,7 +2,7 @@
 -- File       : PgpLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-08-19
+-- Last update: 2018-11-10
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -31,6 +31,7 @@ entity PgpLane is
       TPD_G            : time             := 1 ns;
       LANE_G           : natural          := 0;
       NUM_VC_G         : positive         := 16;
+      AXIL_CLK_FREQ_G  : real             := 125.0E+6;
       AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
       AXI_BASE_ADDR_G  : slv(31 downto 0) := (others => '0'));
    port (
@@ -69,24 +70,14 @@ end PgpLane;
 
 architecture mapping of PgpLane is
 
-   constant NUM_AXI_MASTERS_C : natural := 4;
+   constant NUM_AXI_MASTERS_C : natural := 2;
 
    constant MISC_INDEX_C   : natural := 0;
-   constant RX_MON_INDEX_C : natural := 1;
-   constant TX_MON_INDEX_C : natural := 2;
-   constant PGP_INDEX_C    : natural := 3;
+   constant PGP_INDEX_C    : natural := 1;
 
    constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := (
       MISC_INDEX_C    => (
          baseAddr     => (AXI_BASE_ADDR_G+x"0000_0000"),
-         addrBits     => 12,
-         connectivity => x"FFFF"),
-      RX_MON_INDEX_C  => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0000_1000"),
-         addrBits     => 12,
-         connectivity => x"FFFF"),
-      TX_MON_INDEX_C  => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0000_2000"),
          addrBits     => 12,
          connectivity => x"FFFF"),
       PGP_INDEX_C     => (
@@ -159,9 +150,9 @@ begin
       generic map (
          TPD_G             => TPD_G,
          NUM_VC_G          => NUM_VC_G,
-         AXIL_CLK_FREQ_G   => (SYS_CLK_FREQ_C/2.0),
-         AXIL_BASE_ADDR_G  => AXI_CONFIG_C(PGP_INDEX_C).baseAddr,
-         AXIL_ERROR_RESP_G => AXI_ERROR_RESP_G )
+         EN_PGP_MON_G      => true,
+         AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
+         AXIL_BASE_ADDR_G  => AXI_CONFIG_C(PGP_INDEX_C).baseAddr )
 --         DEBUG_G           => (LANE_G=0) )
       port map (
          -- Stable Clock and Reset
@@ -286,54 +277,6 @@ begin
          axilReadSlave   => axilReadSlaves(MISC_INDEX_C),
          axilWriteMaster => axilWriteMasters(MISC_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(MISC_INDEX_C));
-
-   --------------------------------
-   -- Monitor the PGP RX VC streams
-   --------------------------------
-   LANE_MON_RX : entity work.AxiStreamMonAxiL
-      generic map(
-         TPD_G            => TPD_G,
-         COMMON_CLK_G     => false,
-         AXIS_CLK_FREQ_G  => 156.25E+6,
-         AXIS_NUM_SLOTS_G => NUM_VC_G,
-         AXIS_CONFIG_G    => PGP3_AXIS_CONFIG_C)
-      port map(
-         -- AXIS Stream Interface
-         axisClk          => pgpClk,
-         axisRst          => pgpRst,
-         axisMaster       => pgpRxMasters,
-         axisSlave        => (others => AXI_STREAM_SLAVE_FORCE_C),  -- TREADY not used in PGP RX path
-         -- AXI lite slave port for register access
-         axilClk          => axilClk,
-         axilRst          => axilRst,
-         sAxilWriteMaster => axilWriteMasters(RX_MON_INDEX_C),
-         sAxilWriteSlave  => axilWriteSlaves(RX_MON_INDEX_C),
-         sAxilReadMaster  => axilReadMasters(RX_MON_INDEX_C),
-         sAxilReadSlave   => axilReadSlaves(RX_MON_INDEX_C));
-
-   --------------------------------
-   -- Monitor the PGP TX VC streams
-   --------------------------------
-   LANE_MON_TX : entity work.AxiStreamMonAxiL
-      generic map(
-         TPD_G            => TPD_G,
-         COMMON_CLK_G     => false,
-         AXIS_CLK_FREQ_G  => 156.25E+6,
-         AXIS_NUM_SLOTS_G => NUM_VC_G,
-         AXIS_CONFIG_G    => PGP3_AXIS_CONFIG_C)
-      port map(
-         -- AXIS Stream Interface
-         axisClk          => pgpClk,
-         axisRst          => pgpRst,
-         axisMaster       => pgpTxMasters,
-         axisSlave        => pgpTxSlaves,
-         -- AXI lite slave port for register access
-         axilClk          => axilClk,
-         axilRst          => axilRst,
-         sAxilWriteMaster => axilWriteMasters(TX_MON_INDEX_C),
-         sAxilWriteSlave  => axilWriteSlaves(TX_MON_INDEX_C),
-         sAxilReadMaster  => axilReadMasters(TX_MON_INDEX_C),
-         sAxilReadSlave   => axilReadSlaves(TX_MON_INDEX_C));
 
    --U_TxOpCode : entity work.SynchronizerFifo
    --  generic map ( DATA_WIDTH_G => 8,

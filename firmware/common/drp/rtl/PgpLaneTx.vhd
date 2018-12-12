@@ -2,7 +2,7 @@
 -- File       : PgpLaneTx.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-01-10
+-- Last update: 2018-11-10
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -58,6 +58,8 @@ architecture mapping of PgpLaneTx is
    signal linkReady : sl;
    signal flushEn   : sl;
 
+   constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := PGP3_AXIS_CONFIG_C;
+   
 begin
 
    linkReady <= pgpTxOut.linkReady and pgpRxOut.linkReady;

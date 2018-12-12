@@ -2,7 +2,7 @@
 -- File       : PgpLaneWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-06-23
+-- Last update: 2018-11-11
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ entity PgpLaneWrapper is
       TPD_G            : time             := 1 ns;
       REFCLK_WIDTH_G   : positive         := 2;
       NUM_VC_G         : positive         := 16;
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
+      AXIL_CLK_FREQ_G  : real             := 125.0E6;
       AXI_BASE_ADDR_G  : slv(31 downto 0) := (others => '0'));
    port (
       -- QSFP[0] Ports
@@ -126,8 +126,7 @@ begin
 
       U_QPLL : entity work.Pgp3GthUsQpll
          generic map (
-            TPD_G             => TPD_G,
-            AXIL_ERROR_RESP_G => AXI_ERROR_RESP_G)
+            TPD_G             => TPD_G )
          port map (
             -- Stable Clock and Reset
             stableClk  => axilClk,
@@ -158,7 +157,6 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
          NUM_SLAVE_SLOTS_G  => 1,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => AXI_CONFIG_C)
@@ -184,8 +182,8 @@ begin
             TPD_G            => TPD_G,
             LANE_G           => i,
             NUM_VC_G         => NUM_VC_G,
-            AXI_BASE_ADDR_G  => AXI_CONFIG_C(i).baseAddr,
-            AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+            AXIL_CLK_FREQ_G  => AXIL_CLK_FREQ_G,
+            AXI_BASE_ADDR_G  => AXI_CONFIG_C(i).baseAddr )
          port map (
             -- QPLL Interface
             qpllLock        => qpllLock(i),

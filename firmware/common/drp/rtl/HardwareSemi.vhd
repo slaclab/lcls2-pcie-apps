@@ -2,7 +2,7 @@
 -- File       : HardwareSemi.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-06-28
+-- Last update: 2018-11-11
 -------------------------------------------------------------------------------
 -- Description: HardwareSemi File
 -------------------------------------------------------------------------------
@@ -26,6 +26,7 @@ use work.AxiPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
+use work.Pgp3Pkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -33,6 +34,7 @@ use unisim.vcomponents.all;
 entity HardwareSemi is
    generic (
       TPD_G            : time             := 1 ns;
+      AXIL_CLK_FREQ_G  : real             := 125.0E6;
       AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
       AXI_BASE_ADDR_G  : slv(31 downto 0) := x"0000_0000");
    port (
@@ -162,8 +164,8 @@ begin
       generic map (
          TPD_G            => TPD_G,
          REFCLK_WIDTH_G   => 1,
-         NUM_VC_G         => 1,        
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
+         NUM_VC_G         => 1,
+         AXIL_CLK_FREQ_G  => AXIL_CLK_FREQ_G,
          AXI_BASE_ADDR_G  => AXI_BASE_ADDR_G)
       port map (
          -- QSFP[0] Ports
@@ -206,7 +208,7 @@ begin
    end generate;
    
    U_TxSim : entity work.AppTxSim
-     generic map ( DMA_AXIS_CONFIG_C => DMA_AXIS_CONFIG_C )
+     generic map ( DMA_AXIS_CONFIG_C => PGP3_AXIS_CONFIG_C )
      port map ( axilClk         => axilClk,
                 axilRst         => axilRst,
                 axilReadMaster  => axilReadMasters (SIM_INDEX_C),

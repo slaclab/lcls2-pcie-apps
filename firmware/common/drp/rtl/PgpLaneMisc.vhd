@@ -2,7 +2,7 @@
 -- File       : PgpLaneMisc.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-11-14
--- Last update: 2018-08-19
+-- Last update: 2018-11-10
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -146,10 +146,10 @@ begin
          rremLinkId <= remLinkId;
        end if;
      end if;
-   end process; pseq;
+   end process pseq;
 
    SyncRemLinkId : entity work.SynchronizerVector
-     generic map ( WIDTH_G => 32 )'
+     generic map ( WIDTH_G => 32 )
      port map ( clk      => axilClk,
                 dataIn   => rremLinkId,
                 dataOut  => sremLinkId );
