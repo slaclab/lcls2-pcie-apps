@@ -1,7 +1,7 @@
-export GIT_IGNORE 1
+export GIT_IGNORE 0
 
 # Define Firmware Version Number
-export PRJ_VERSION = 0x00000026
+export PRJ_VERSION = 0x00000100
 
 # Define the Hardware Type in the axi-pcie-core
 export PCIE_HW_TYPE = XilinxKcu1500
