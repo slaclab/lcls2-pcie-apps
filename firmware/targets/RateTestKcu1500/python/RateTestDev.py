@@ -102,14 +102,15 @@ class RateTestDev(pr.Root):
             self._prbsTx[i] = surf.protocols.ssi.SsiPrbsTx(name="prbsTx[{}]".format(i),memBase=self._dataMap,offset=0x00800000 + (i*0x100000)) 
             self.add(self._prbsTx[i])
 
-            self._pgpVc[i] = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',i*256,True)
+            if dataEn:
+                self._pgpVc[i] = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',i*256,True)
+                self._prbsRx[i] = pyrogue.utilities.prbs.PrbsRx(name="prbsRx[{}]".format(i), width=256)
+                self.add(self._prbsRx[i])
 
-            self._prbsRx[i] = pyrogue.utilities.prbs.PrbsRx(name="prbsRx[{}]".format(i), width=256)
-            self.add(self._prbsRx[i])
+                pyrogue.streamConnect(self._pgpVc[i],self._prbsRx[i])
 
-            pyrogue.streamConnect(self._pgpVc[i],self._prbsRx[i])
-
-        self.add(PrbsSummary(tx=self._prbsTx,rx=self._prbsRx))
+        if dataEn:
+            self.add(PrbsSummary(tx=self._prbsTx,rx=self._prbsRx))
 
         # Start the system
         self.start(pollEn=True)

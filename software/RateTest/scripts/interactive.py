@@ -6,22 +6,22 @@ import sys
 cl = RateTestDev.RateTestDev(dataEn=False)
 
 def enableTx():
-    cl.prbsTx0.TxEn.set(True)
-    cl.prbsTx1.TxEn.set(True)
-    cl.prbsTx2.TxEn.set(True)
-    cl.prbsTx3.TxEn.set(True)
+    cl.prbsTx[0].TxEn.set(True)
+    cl.prbsTx[1].TxEn.set(True)
+    cl.prbsTx[2].TxEn.set(True)
+    cl.prbsTx[3].TxEn.set(True)
 
 def disableTx():
-    cl.prbsTx0.TxEn.set(False)
-    cl.prbsTx1.TxEn.set(False)
-    cl.prbsTx2.TxEn.set(False)
-    cl.prbsTx3.TxEn.set(False)
+    cl.prbsTx[0].TxEn.set(False)
+    cl.prbsTx[1].TxEn.set(False)
+    cl.prbsTx[2].TxEn.set(False)
+    cl.prbsTx[3].TxEn.set(False)
 
 def setSize(size):
-    cl.prbsTx0.PacketLength.set(size)
-    cl.prbsTx1.PacketLength.set(size)
-    cl.prbsTx2.PacketLength.set(size)
-    cl.prbsTx3.PacketLength.set(size)
+    cl.prbsTx[0].PacketLength.set(size)
+    cl.prbsTx[1].PacketLength.set(size)
+    cl.prbsTx[2].PacketLength.set(size)
+    cl.prbsTx[3].PacketLength.set(size)
 
 def status():
     print("LinkWidth={}".format(cl.AxiPcieCore.AxiPciePhy.LinkWidth.get()))
