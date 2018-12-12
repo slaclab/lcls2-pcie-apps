@@ -29,7 +29,7 @@ set netFile ${PROJ_DIR}/net_log.txt
 set fd [open ${netFile} "w"]
 set nl ""
 
-append nl [get_nets {*}]
+append nl [get_nets {U_Core/U_AxiPcieDma/*}]
 
 regsub -all -line { } $nl "\n" nl
 puts $fd $nl
@@ -59,13 +59,21 @@ SetDebugCoreClk ${ilaName} {dmaClk}
 ## Set the debug Probes
 #######################
 
-ConfigProbe ${ilaName} {dmaIbMasters[0][tData][*]}
-ConfigProbe ${ilaName} {dmaIbMasters[0][tDest][*]}
-ConfigProbe ${ilaName} {dmaIbMasters[0][tKeep][*]}
-ConfigProbe ${ilaName} {dmaIbMasters[0][tLast]}
-ConfigProbe ${ilaName} {dmaIbMasters[0][tUser][*]}
-ConfigProbe ${ilaName} {dmaIbMasters[0][tValid]}
-ConfigProbe ${ilaName} {dmaIbSlaves[0][tReady]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/dmaIbMasters[0][tData][*]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/dmaIbMasters[0][tDest][*]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/dmaIbMasters[0][tKeep][*]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/dmaIbMasters[0][tLast]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/dmaIbMasters[0][tUser][*]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/dmaIbMasters[0][tValid]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/dmaIbSlaves[0][tReady]}
+
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/sAxisMasters[0][tData][*]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/sAxisMasters[0][tDest][*]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/sAxisMasters[0][tKeep][*]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/sAxisMasters[0][tLast]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/sAxisMasters[0][tUser][*]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/sAxisMasters[0][tValid]}
+ConfigProbe ${ilaName} {U_Core/U_AxiPcieDma/sAxisSlaves[0][tReady]}
 
 #ConfigProbe ${ilaName} {U_TimeToolCore/r[axilReadSlave][*}
 #ConfigProbe ${ilaName} {U_TimeToolCore/axilWriteMaster[*}
