@@ -2,7 +2,7 @@
 -- File       : DrpTDet.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
--- Last update: 2018-11-09
+-- Last update: 2018-12-11
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -237,15 +237,20 @@ architecture top_level of DrpTDet is
      TUSER_BITS_C  => 2,
      TUSER_MODE_C  => TUSER_NORMAL_C);
 
+   constant DMA_STREAM_CONFIG_C : AxiStreamConfigType := (
+     TSTRB_EN_C    => false,
+     TDATA_BYTES_C => 32,
+     TDEST_BITS_C  => 0,
+     TID_BITS_C    => 0,
+     TKEEP_MODE_C  => TKEEP_NORMAL_C,
+     TUSER_BITS_C  => 2,
+     TUSER_MODE_C  => TUSER_NORMAL_C);
+
    signal monClkRate : Slv29Array(1 downto 0);
    signal monClkLock : slv       (1 downto 0);
    signal monClkFast : slv       (1 downto 0);
    signal monClkSlow : slv       (1 downto 0);
    
-   component ila_0
-     port ( clk   : in sl;
-            probe0 : in slv(255 downto 0) );
-   end component;
 begin
 
   i2c_rst_l      <= '1';
@@ -458,7 +463,7 @@ begin
                     status          => migStatus      (j) );
        U_ObFifo : entity work.AxiStreamFifoV2
          generic map ( FIFO_ADDR_WIDTH_G   => 4,
-                       SLAVE_AXI_CONFIG_G  => AXIO_STREAM_CONFIG_C,
+                       SLAVE_AXI_CONFIG_G  => DMA_STREAM_CONFIG_C,
                        MASTER_AXI_CONFIG_G => PGP3_AXIS_CONFIG_C )
          port map ( sAxisClk    => sysClks     (i),
                     sAxisRst    => sysRsts     (i),
@@ -511,7 +516,7 @@ begin
             FIFO_ADDR_WIDTH_G   => 4,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => AXIO_STREAM_CONFIG_C,
-            MASTER_AXI_CONFIG_G => AXIO_STREAM_CONFIG_C)
+            MASTER_AXI_CONFIG_G => DMA_STREAM_CONFIG_C)
          port map (
             -- Slave Port
             sAxisClk    => clk200(i),
@@ -532,8 +537,7 @@ begin
       DRIVER_TYPE_ID_G  => toSlv(0,32),
       DMA_SIZE_G        => 5,
       BUILD_INFO_G      => BUILD_INFO_G,
-      DMA_AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C,
-      DMA_AXIS_RDY_EN_G => true )
+      DMA_AXIS_CONFIG_G => DMA_STREAM_CONFIG_C )
     port map (
       ------------------------      
       --  Top Level Interfaces
@@ -595,8 +599,7 @@ begin
                   BUILD_INFO_G      => BUILD_INFO_G,
                   DRIVER_TYPE_ID_G  => toSlv(1,32),
                   DMA_SIZE_G        => 5,
-                  DMA_AXIS_CONFIG_G => AXIO_STREAM_CONFIG_C,
-                  DMA_AXIS_RDY_EN_G => true )
+                  DMA_AXIS_CONFIG_G => DMA_STREAM_CONFIG_C )
     port map (
       ------------------------      
       --  Top Level Interfaces
@@ -661,15 +664,6 @@ begin
   -- Unused user signals
   userLed <= (others => '0');
 
-  U_ILA_IB_AXIS : ila_0
-    port map ( clk                    => clk200(0),
-               probe0(127 downto   0) => dmaIbMasters(0).tData(127 downto 0),
-               probe0(143 downto 128) => dmaIbMasters(0).tKeep(15 downto 0),
-               probe0(144)            => dmaIbMasters(0).tValid,
-               probe0(145)            => dmaIbMasters(0).tLast,
-               probe0(146)            => dmaIbSlaves (0).tReady,
-               probe0(255 downto 147) => (others=>'0') );
-  
 end top_level;
 
                     

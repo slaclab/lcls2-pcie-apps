@@ -2,7 +2,7 @@
 -- File       : MigToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2018-11-07
+-- Last update: 2018-11-11
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -34,7 +34,7 @@ entity MigToPcieDma is
    generic (  LANES_G          : integer          := 4;
               MONCLKS_G        : integer          := 4;
               AXIS_CONFIG_G    : AxiStreamConfigType;
-              DEBUG_G          : boolean          := true );
+              DEBUG_G          : boolean          := false );
    port    ( -- Clock and reset
              axiClk           : in  sl; -- 200MHz
              axiRst           : in  sl; -- need a user reset to clear the pipeline

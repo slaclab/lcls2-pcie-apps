@@ -12,10 +12,10 @@ loadRuckusTcl $::env(TOP_DIR)/submodules/l2si-core/base
 loadRuckusTcl $::env(TOP_DIR)/common/drp
 loadRuckusTcl $::env(TOP_DIR)/common/drp/coregen
 
-set EXT_PATH /u1/weaver/l2si/firmware/common
-loadRuckusTcl "${EXT_PATH}/base"
-loadRuckusTcl "${EXT_PATH}/xpm"
-loadRuckusTcl "${EXT_PATH}/dti"
+#set EXT_PATH /u1/weaver/l2si/firmware/common
+#loadRuckusTcl "${EXT_PATH}/base"
+#loadRuckusTcl "${EXT_PATH}/xpm"
+#loadRuckusTcl "${EXT_PATH}/dti"
 
 # Load local source Code and constraints
 loadSource      -dir "$::DIR_PATH/hdl"
