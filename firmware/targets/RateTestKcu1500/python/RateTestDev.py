@@ -19,18 +19,20 @@ class PrbsSummary(pr.Device):
         pr.Device.__init__(self,name='PrbsSummary')
 
         self._prbsSizeDep  = [v.PacketLength for k,v in tx.items()]
-        self._prbsEnDep    = [v.TxEn       for k,v in tx.items()]
-        self._prbsCountDep = [v.rxCount    for k,v in rx.items()]
-        self._prbsErrorDep = [v.rxErrors   for k,v in rx.items()]
-        self._prbsRateDep  = [v.rxRate     for k,v in rx.items()]
-        self._prbsBwDep    = [v.rxBw       for k,v in rx.items()]
+        self._prbsEnDep    = [v.TxEn         for k,v in tx.items()]
+        self._prbsCheckDep = [v.checkPayload for k,v in rx.items()]
+        self._prbsCountDep = [v.rxCount      for k,v in rx.items()]
+        self._prbsErrorDep = [v.rxErrors     for k,v in rx.items()]
+        self._prbsRateDep  = [v.rxRate       for k,v in rx.items()]
+        self._prbsBwDep    = [v.rxBw         for k,v in rx.items()]
 
         self.add(pr.LinkVariable(name='PrbsSize',disp='{:#x}',dependencies=self._prbsSizeDep,linkedSet=self._setPrbsSize,linkedGet=self._getPrbsSize))
         self.add(pr.LinkVariable(name='PrbsEn',disp=[True,False],dependencies=self._prbsEnDep,linkedSet=self._setPrbsEn,linkedGet=self._getPrbsEn))
-        self.add(pr.LinkVariable(name='PrbsCount',dependencies=self._prbsCountDep,linkedGet=self._getPrbsCount,mode='RO',disp='{:0.1f}'))
-        self.add(pr.LinkVariable(name='PrbsErrors',dependencies=self._prbsErrorDep,linkedGet=self._getPrbsErrors,mode='RO',disp='{:0.1f}'))
-        self.add(pr.LinkVariable(name='PrbsRate',dependencies=self._prbsRateDep,linkedGet=self._getPrbsRate,units='Frames/s',mode='RO',disp='{:0.1f}'))
-        self.add(pr.LinkVariable(name='PrbsBw',dependencies=self._prbsBwDep,linkedGet=self._getPrbsBw,units='Bytes/s',mode='RO',disp='{:0.1f}'))
+        self.add(pr.LinkVariable(name='PrbsCheck',dependencies=self._prbsCheckDep,linkedGet=self._getPrbsCheck,linkedSet=self._setPrbsCheck,disp=[True,False]))
+        self.add(pr.LinkVariable(name='PrbsCount',dependencies=self._prbsCountDep,linkedGet=self._getPrbsCount,mode='RO',disp='{}'))
+        self.add(pr.LinkVariable(name='PrbsErrors',dependencies=self._prbsErrorDep,linkedGet=self._getPrbsErrors,mode='RO',disp='{}'))
+        self.add(pr.LinkVariable(name='PrbsRate',dependencies=self._prbsRateDep,linkedGet=self._getPrbsRate,units='Frames/s',mode='RO',disp='{:0.2e}'))
+        self.add(pr.LinkVariable(name='PrbsBw',dependencies=self._prbsBwDep,linkedGet=self._getPrbsBw,units='Bytes/s',mode='RO',disp='{:0.2e}'))
 
     def _setPrbsSize(self,value):
         for i in self._prbsSizeDep:
@@ -69,6 +71,13 @@ class PrbsSummary(pr.Device):
         for i in self._prbsBwDep:
             cnt += i.get(read)
         return cnt
+
+    def _setPrbsCheck(self,value):
+        for i in self._prbsCheckDep:
+            i.set(value)
+
+    def _getPrbsCheck(self,read):
+        return self._prbsCheckDep[0].get(read)
 
 
 class RateTestDev(pr.Root):
