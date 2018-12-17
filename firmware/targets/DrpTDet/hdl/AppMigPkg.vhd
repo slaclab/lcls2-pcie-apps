@@ -36,7 +36,7 @@ package AppMigPkg is
    -- Initialization constants
    constant MIG_CONFIG_INIT_C : MigConfigType := ( 
      blockSize   => toSlv(4,4),  -- 2MB
-     blocksPause => toSlv(32,BLOCK_INDEX_SIZE_C),
+     blocksPause => toSlv(64,BLOCK_INDEX_SIZE_C),
      inhibit     => '1' );
 
    -- Array

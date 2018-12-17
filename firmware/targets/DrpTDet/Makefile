@@ -5,7 +5,8 @@ export OVERRIDE_SUBMODULE_LOCKS = 1
 #  PRJ_VERSION = 0x00000000 - original with XVC
 #  PRJ_VERSION = 0x00000001 - no XVC
 #  PRJ_VERSION = 0x00000002 - upgrade to surf[master], axi-pcie-core[master]
-export PRJ_VERSION = 0x00000002
+#  PRJ_VERSION = 0x00000003 - Upgrade l2si-core for XPM changes
+export PRJ_VERSION = 0x00000003
 
 # Define the Hardware Type in the axi-pcie-core
 export PCIE_HW_TYPE = XilinxKcu1500
