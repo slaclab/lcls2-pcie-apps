@@ -2,7 +2,7 @@
 -- File       : MigToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2018-11-11
+-- Last update: 2018-12-15
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -117,6 +117,15 @@ architecture mapping of MigToPcieDma is
   signal monClkFast : slv       (MONCLKS_G-1 downto 0);
   signal monClkLock : slv       (MONCLKS_G-1 downto 0);
 
+  constant MON_AXIS_CONFIG_C : AxiStreamConfigType := (
+    TSTRB_EN_C    => false,
+    TDATA_BYTES_C => 4,
+    TDEST_BITS_C  => 0,
+    TID_BITS_C    => 0,
+    TKEEP_MODE_C  => TKEEP_NORMAL_C,
+    TUSER_BITS_C  => 0,
+    TUSER_MODE_C  => TUSER_NONE_C );
+    
   constant DEBUG_C : boolean := DEBUG_G;
 
   component ila_0
@@ -211,8 +220,15 @@ begin
     end generate;
   end generate;
 
-  taxisMasters      (LANES_G)   <= monMigStatusMaster(LANES_G-1);
-  monMigStatusSlave(LANES_G-1) <= axisSlaves        (LANES_G);
+  U_MON_OUTLET : entity work.AxiStreamResize
+    generic map ( SLAVE_AXI_CONFIG_G  => MON_AXIS_CONFIG_C,
+                  MASTER_AXI_CONFIG_G => AXIS_CONFIG_G )
+    port map ( axisClk  => axiClk,
+               axisRst  => axiRst,
+               sAxisMaster => monMigStatusMaster(LANES_G-1),
+               sAxisSlave  => monMigStatusSlave (LANES_G-1),
+               mAxisMaster => taxisMasters      (LANES_G),
+               mAxisSlave  => axisSlaves        (LANES_G) );
 
   GEN_MONCLK : for i in 0 to MONCLKS_G-1 generate
     U_MONCLK : entity work.SyncClockFreq
@@ -283,7 +299,8 @@ begin
     sAxilReadSlave  <= r.axilReadSlave;
     
     v.monReadout := '0';
-
+    v.monSample  := '0';
+    
     if r.monEnable = '1' then
       if r.monSampleCnt = r.monSampleInt then
         v.monSample    := '1';
