@@ -32,6 +32,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
     def _acceptFrame(self,frame):
         p = bytearray(frame.getPayload())
         frame.read(p,0)
+        print(len(p))
         self.frameCount.set(self.frameCount.value() + 1,False)
 
      
@@ -95,7 +96,7 @@ class TimeToolDev(pr.Root):
         dataMap = rogue.hardware.axi.AxiMemMap('/dev/datadev_0')
 
         # Cameralink
-        #self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
+        self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
 
         # Time tool application
         self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00C00000))
