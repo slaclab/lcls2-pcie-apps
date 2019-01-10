@@ -1,0 +1,41 @@
+Rogue/pyrogue version v3.0.2. https://github.com/slaclab/rogue
+1544117934.644882:pyrogue.axi.AxiStreamDma: AxiStreamDma::acceptReq: Timeout after 1.0 seconds
+1544117935.645900:pyrogue.axi.AxiStreamDma: AxiStreamDma::acceptReq: Timeout after 1.0 seconds
+1544117936.646920:pyrogue.axi.AxiStreamDma: AxiStreamDma::acceptReq: Timeout after 1.0 seconds
+1544117937.647969:pyrogue.axi.AxiStreamDma: AxiStreamDma::acceptReq: Timeout after 1.0 seconds
+1544117938.648989:pyrogue.axi.AxiStreamDma: AxiStreamDma::acceptReq: Timeout after 1.0 seconds
+1544117939.650006:pyrogue.axi.AxiStreamDma: AxiStreamDma::acceptReq: Timeout after 1.0 seconds
+1544117940.650141:pyrogue.axi.AxiStreamDma: AxiStreamDma::acceptReq: Timeout after 1.0 seconds
+1544117941.651159:pyrogue.axi.AxiStreamDma: AxiStreamDma::acceptReq: Timeout after 1.0 seconds
+Traceback (most recent call last):
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/gui/variables.py", line 220, in addTree
+    self.devTop = VariableDev(tree=self.tree,parent=self.top,dev=root,noExpand=False)
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/gui/variables.py", line 48, in __init__
+    self.setup(False)
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/gui/variables.py", line 72, in setup
+    self._children.append(VariableDev(tree=self._tree,parent=self._widget,dev=val,noExpand=noExpand))
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/gui/variables.py", line 48, in __init__
+    self.setup(False)
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/gui/variables.py", line 72, in setup
+    self._children.append(VariableDev(tree=self._tree,parent=self._widget,dev=val,noExpand=noExpand))
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/gui/variables.py", line 48, in __init__
+    self.setup(False)
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/gui/variables.py", line 67, in setup
+    self._children.append(VariableLink(tree=self._tree,parent=self._widget,variable=val))
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/gui/variables.py", line 131, in __init__
+    self.varListener(None,self._variable.value(),self._variable.valueDisp())
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/_Variable.py", line 239, in value
+    return self.get(read=False)
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/_Variable.py", line 618, in get
+    return varFuncHelper(self._linkedGet,pargs,self._log,self.path)
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/_Variable.py", line 667, in varFuncHelper
+    return func(**args)
+  File "/u1/sioan/lcls2-pcie-apps/firmware/submodules/surf/python/surf/axi/_AxiVersion.py", line 88, in <lambda>
+    linkedGet    = lambda: str(datetime.timedelta(seconds=self.UpTimeCnt.value())),
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/_Variable.py", line 239, in value
+    return self.get(read=False)
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/_Variable.py", line 226, in get
+    ret = self._block.get(self)
+  File "/u/if/cpo/miniconda3/envs/timetool64/lib/python3.6/site-packages/pyrogue/_Block.py", line 389, in get
+    with self._lock:
+KeyboardInterrupt

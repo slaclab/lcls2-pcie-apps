@@ -33,6 +33,9 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         p = bytearray(frame.getPayload())
         frame.read(p,0)
         print(len(p))
+        to_print = np.array(p)[-1:]
+        print(np.array(p)[:96],to_print) #comment out for long term test
+        print("____________________________________________________")
         self.frameCount.set(self.frameCount.value() + 1,False)
 
      

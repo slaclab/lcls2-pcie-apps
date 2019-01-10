@@ -148,11 +148,11 @@ begin
       if v.counter=v.prescalingRate  then
 
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
-                v.master := inMaster;
+                v.master := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
             else
-                v.master.tValid := '0';
+                v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
             end if;
-      else
+      else  --this 'else' sends the null frame
             v.master.tValid  := inMaster.tLast;
             v.master.tLast   := inMaster.tLast;
       

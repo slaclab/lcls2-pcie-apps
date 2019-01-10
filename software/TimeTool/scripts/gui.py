@@ -3,7 +3,7 @@ import pyrogue.gui
 import TimeToolDev
 import sys
 
-cl = TimeToolDev.TimeToolDev(False)
+cl = TimeToolDev.TimeToolDev(True)
 
 # Create GUI
 appTop = pyrogue.gui.application(sys.argv)

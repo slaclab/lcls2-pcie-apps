@@ -108,8 +108,6 @@ begin
    --breaking out the data from detector
    --------------------------------------------
 
-   --all modules that can't keep up with reater will need input fifo
-
    U_AxiStreamRepeater : entity work.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
