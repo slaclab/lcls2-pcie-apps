@@ -144,10 +144,10 @@ begin
          dataOutMaster   => masterFEXorPrescalerToCombiner(0),
          dataOutSlave    => slaveFEXorPrescalerToCombiner(0),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(0),
-         axilReadSlave   => axilReadSlaves(0),
-         axilWriteMaster => axilWriteMasters(0),
-         axilWriteSlave  => axilWriteSlaves(0));
+         axilReadMaster  => axilReadMasters(1),
+         axilReadSlave   => axilReadSlaves(1),
+         axilWriteMaster => axilWriteMasters(1),
+         axilWriteSlave  => axilWriteSlaves(1));
 
 
    --------------------------------------------
@@ -169,10 +169,10 @@ begin
          dataOutMaster   => masterFEXorPrescalerToCombiner(1),
          dataOutSlave    => slaveFEXorPrescalerToCombiner(1),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(1),
-         axilReadSlave   => axilReadSlaves(1),
-         axilWriteMaster => axilWriteMasters(1),
-         axilWriteSlave  => axilWriteSlaves(1));
+         axilReadMaster  => axilReadMasters(0),
+         axilReadSlave   => axilReadSlaves(0),
+         axilWriteMaster => axilWriteMasters(0),
+         axilWriteSlave  => axilWriteSlaves(0));
 
 
    --------------------------------------------

@@ -7,9 +7,9 @@ import gc
  
 cl = TimeToolDev.TimeToolDev(True)
 #time.sleep(0.4)
-cl.HW.TimingCore.GtLoopback.set(2)			#use evg timing
+#cl.HW.TimingCore.GtLoopback.set(2)			#use evg timing
 #time.sleep(0.4)
-cl.HW.TimingCore.ConfigLclsTimingV1() 			#Doesn't work yet
+#cl.HW.TimingCore.ConfigLclsTimingV1() 			#Doesn't work yet
 #time.sleep(0.4)
 
 #working pyrogue script with no gui.(GUI still needed for initial setup).  Will print the last 16 elements from the byte-array p (see TimeToolDev.py) to the screen

@@ -70,6 +70,7 @@ architecture mapping of TimeToolPrescaler is
       axilWriteSlave  : AxiLiteWriteSlaveType;
       counter         : slv(31 downto 0);
       prescalingRate  : slv(31 downto 0);
+      axi_test        : slv(31 downto 0);
 
    end record RegType;
 
@@ -79,7 +80,8 @@ architecture mapping of TimeToolPrescaler is
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter         => (others=>'0'),
-      prescalingRate  => (others=>'0'));
+      prescalingRate  => (others=>'0'),
+      axi_test        => (others=>'0'));
 
 ---------------------------------------
 -------record intitial value-----------
@@ -135,7 +137,8 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"00000", 24, v.prescalingRate);
+      axiSlaveRegister (axilEp, x"000", 0, v.prescalingRate);
+      axiSlaveRegister (axilEp, x"000", 8, v.axi_test);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
@@ -145,7 +148,8 @@ begin
       ------------------------------
       v.slave.tReady := not outCtrl.pause;
 
-      if v.counter=v.prescalingRate  then
+      --if v.counter=v.prescalingRate  then
+      if v.counter = 0  then
 
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
                 v.master := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)

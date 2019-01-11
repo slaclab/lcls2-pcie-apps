@@ -35,29 +35,23 @@ class TimeToolCore(pr.Device):
             base         = pr.UInt,
             mode         = "RW",
         ))
-        self.add(pr.RemoteVariable(    
-            name         = "DialInOpCode",
-            offset       =  0x00,
-            bitSize      =  8,
-            bitOffset    =  8,
-            base         = pr.UInt,
-            mode         = "RW",
-        ))
-        self.add(pr.RemoteVariable(    
-            name         = "DialInTriggerDelay",
-            offset       =  0x00,
-            bitSize      =  8,
-            bitOffset    = 16,
-            base         = pr.UInt,
-            mode         = "RW",
-        ))
 
         self.add(pr.RemoteVariable(    
             name         = "dialInPreScaling",
-            offset       =  0x00,
+            #offset       =  0x00,
+            offset       =  0x10000,
             bitSize      =  8,
-            bitOffset    = 24,
+            bitOffset    =  0,
             base         = pr.UInt,
             mode         = "RW",
         ))
 
+        self.add(pr.RemoteVariable(    
+            name         = "axi_test",
+            #offset       =  0x00,
+            offset       =  0x20000,
+            bitSize      =  8,
+            bitOffset    =  0,
+            base         = pr.UInt,
+            mode         = "RW",
+        ))
