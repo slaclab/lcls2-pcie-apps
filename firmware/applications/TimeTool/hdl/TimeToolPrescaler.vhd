@@ -165,9 +165,6 @@ begin
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
-      v.axi_test := v.prescalingRate;
-
-
       ------------------------------
       -- Data Mover
       ------------------------------
