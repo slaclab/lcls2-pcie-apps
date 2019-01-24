@@ -22,10 +22,15 @@ use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.BuildInfoPkg.all;
 
-entity AxiLiteAddressTesting is end AxiLiteAddressTesting;
+use work.AxiStreamPkg.all;
+use work.TimingPkg.all;
+use work.Pgp2bPkg.all;
 
-architecture testbed of AxiLiteAddressTesting is
+entity TimeToolCoreTB is end TimeToolCoreTB;
 
+architecture testbed of TimeToolCoreTB is
+
+   constant DMA_SIZE_C : positive := 1;
    constant NUM_AXI_MASTERS_C : natural := 2;
    constant AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"0000_0000";
 
@@ -48,10 +53,26 @@ architecture testbed of AxiLiteAddressTesting is
 
    signal axilClk         : sl                     := '0';
    signal axilRst         : sl                     := '0';
+
    signal axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal axilWriteSlave  : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
    signal axilReadMaster  : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
    signal axilReadSlave   : AxiLiteReadSlaveType   := AXI_LITE_READ_SLAVE_INIT_C;
+
+   signal intReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+
+   signal appInMaster  : AxiStreamMasterType;
+   signal appInSlave   : AxiStreamSlaveType;
+   signal appOutMaster : AxiStreamMasterType;
+   signal appOutSlave  : AxiStreamSlaveType;
+
+   signal timingBus : TimingBusType;
+
+   signal pgpTxClk : slv(DMA_SIZE_C-1 downto 0);
+   signal pgpTxIn  : Pgp2bTxInArray(DMA_SIZE_C-1 downto 0);
 
 begin
 
@@ -81,7 +102,7 @@ begin
          rst  => axilRst);
 
    -----------------------
-   -- Modules to be tested
+   -- Module to be tested
    -----------------------
    --U_Version : entity work.AxiVersion
    --   generic map (
@@ -95,6 +116,10 @@ begin
    --      axiReadSlave   => axilReadSlave,
    --      axiWriteMaster => axilWriteMaster,
    --      axiWriteSlave  => axilWriteSlave);
+
+   -----------------------
+   -- Module to be tested
+   -----------------------
 
    U_Version : entity work.TimeToolCore
       generic map (
@@ -110,10 +135,10 @@ begin
          dataOutMaster   => appOutMaster,
          dataOutSlave    => appOutSlave,
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => intReadMasters(1),
-         axilReadSlave   => intReadSlaves(1),
-         axilWriteMaster => intWriteMasters(1),
-         axilWriteSlave  => intWriteSlaves(1),
+         axilReadMaster  => axilReadMaster,
+         axilReadSlave   => axilReadSlave,
+         axilWriteMaster => axilWriteMaster,
+         axilWriteSlave  => axilWriteSlave,
          -- Timing information (sysClk domain)
          timingBus       => timingBus,
          -- PGP TX OP-codes (pgpTxClk domains)

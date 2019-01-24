@@ -65,6 +65,8 @@ end TimeToolCore;
 architecture mapping of TimeToolCore is
 
    constant NUM_AXI_MASTERS_C : natural := 2;
+
+   constant DMA_SIZE_C : positive := 1;
    
    constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_G, 21, 20);
 
