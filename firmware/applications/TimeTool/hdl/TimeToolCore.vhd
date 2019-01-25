@@ -131,29 +131,6 @@ begin
          mAxisMasters => masterRepeaterToFEXorPrescaler,
          mAxisSlaves  => slaveRepeaterToFEXorPrescaler);
 
-   --------------------------------------------
-   --sending one of the repeated signals from module above to FEX or prescaling
-   --------------------------------------------
-
-
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
-      generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
-      port map (
-         -- System Clock and Reset
-         sysClk          => sysClk,
-         sysRst          => sysRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster    => masterRepeaterToFEXorPrescaler(0),
-         dataInSlave     => slaveRepeaterToFEXorPrescaler(0),
-         dataOutMaster   => masterFEXorPrescalerToCombiner(0),
-         dataOutSlave    => slaveFEXorPrescalerToCombiner(0),
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(1),
-         axilReadSlave   => axilReadSlaves(1),
-         axilWriteMaster => axilWriteMasters(1),
-         axilWriteSlave  => axilWriteSlaves(1));
 
 
    --------------------------------------------
@@ -170,15 +147,39 @@ begin
          sysClk          => sysClk,
          sysRst          => sysRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster    => masterRepeaterToFEXorPrescaler(1),
-         dataInSlave     => slaveRepeaterToFEXorPrescaler(1),
-         dataOutMaster   => masterFEXorPrescalerToCombiner(1),
-         dataOutSlave    => slaveFEXorPrescalerToCombiner(1),
+         dataInMaster    => masterRepeaterToFEXorPrescaler(0),
+         dataInSlave     => slaveRepeaterToFEXorPrescaler(0),
+         dataOutMaster   => masterFEXorPrescalerToCombiner(0),
+         dataOutSlave    => slaveFEXorPrescalerToCombiner(0),
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMasters(0),
          axilReadSlave   => axilReadSlaves(0),
          axilWriteMaster => axilWriteMasters(0),
          axilWriteSlave  => axilWriteSlaves(0));
+
+   --------------------------------------------
+   --sending one of the repeated signals from module above to FEX or prescaling
+   --------------------------------------------
+
+
+   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+      generic map (
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- System Clock and Reset
+         sysClk          => sysClk,
+         sysRst          => sysRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster    => masterRepeaterToFEXorPrescaler(1),
+         dataInSlave     => slaveRepeaterToFEXorPrescaler(1),
+         dataOutMaster   => masterFEXorPrescalerToCombiner(1),
+         dataOutSlave    => slaveFEXorPrescalerToCombiner(1),
+         -- AXI-Lite Interface (sysClk domain)
+         axilReadMaster  => axilReadMasters(1),
+         axilReadSlave   => axilReadSlaves(1),
+         axilWriteMaster => axilWriteMasters(1),
+         axilWriteSlave  => axilWriteSlaves(1));
 
 
    --------------------------------------------
