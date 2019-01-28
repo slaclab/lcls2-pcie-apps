@@ -44,6 +44,15 @@ architecture testbed of TimeToolKcu1500TB is
 
    constant CLK_PERIOD_G : time := 10 ns;
 
+   constant SRC_CONFIG_C : AxiStreamConfigType := (
+      TSTRB_EN_C    => false,
+      TDATA_BYTES_C => 16, -- 128 bits
+      TDEST_BITS_C  => 0,
+      TID_BITS_C    => 0,
+      TKEEP_MODE_C  => TKEEP_COMP_C,
+      TUSER_BITS_C  => 2,
+      TUSER_MODE_C  => TUSER_FIRST_LAST_C);
+
    signal userClk156   : sl;
    signal dmaClk       : sl;
    signal dmaRst       : sl;
@@ -74,8 +83,10 @@ architecture testbed of TimeToolKcu1500TB is
    signal pgpTxClk : slv(DMA_SIZE_C-1 downto 0);
    signal pgpTxIn  : Pgp2bTxInArray(DMA_SIZE_C-1 downto 0);
 
-   signal sysClk   : sl;
-   signal sysRst   : sl;
+   signal axiClk   : sl;
+   signal axiRst   : sl;
+
+   signal testInMaster    : AxiStreamMasterType;
 
 begin
 
@@ -101,9 +112,26 @@ begin
          RST_START_DELAY_G => 0 ns,
          RST_HOLD_TIME_G   => 1000 ns)
       port map (
-         clkP => sysClk,
-         rst  => sysRst);
+         clkP => axiClk,
+         rst  => axiRst);
 
+   --------------------
+   -- Test data
+   --------------------  
+
+      U_PackTx : entity work.AxiStreamBytePackerTbTx
+         generic map (
+            TPD_G         => TPD_G,
+            BYTE_SIZE_C   => 2+1,
+            AXIS_CONFIG_G => SRC_CONFIG_C)
+         port map (
+            axiClk      => axiClk,
+            axiRst      => axiRst,
+            mAxisMaster => appInMaster);
+
+   --------------------
+   -- Modules to be tested
+   --------------------  
 
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
