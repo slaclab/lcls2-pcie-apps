@@ -42,6 +42,8 @@ architecture testbed of TimeToolKcu1500TB is
 
    constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 16 byte (128-bit) AXIS interface
 
+   constant CLK_PERIOD_G : time := 10 ns;
+
    signal userClk156   : sl;
    signal dmaClk       : sl;
    signal dmaRst       : sl;
@@ -72,17 +74,35 @@ architecture testbed of TimeToolKcu1500TB is
    signal pgpTxClk : slv(DMA_SIZE_C-1 downto 0);
    signal pgpTxIn  : Pgp2bTxInArray(DMA_SIZE_C-1 downto 0);
 
+   signal sysClk   : sl;
+   signal sysRst   : sl;
+
 begin
 
-   ---------------------------------
-   -- always false for simulation. Keeping code present for reference when wiring up simulation
-   ---------------------------------
+   --------------------
+   -- Clocks and Resets
+   --------------------
+   U_axilClk_2 : entity work.ClkRst
+      generic map (
+         CLK_PERIOD_G      => CLK_PERIOD_G,
+         RST_START_DELAY_G => 0 ns,
+         RST_HOLD_TIME_G   => 1000 ns)
+      port map (
+         clkP => dmaClk,
+         rst  => dmaRst);
 
-  
 
-   ---------------------------------
-   -- end of exclusion from simulation code. 
-   ---------------------------------
+   --------------------
+   -- Clocks and Resets
+   --------------------
+   U_axilClk : entity work.ClkRst
+      generic map (
+         CLK_PERIOD_G      => CLK_PERIOD_G,
+         RST_START_DELAY_G => 0 ns,
+         RST_HOLD_TIME_G   => 1000 ns)
+      port map (
+         clkP => sysClk,
+         rst  => sysRst);
 
 
    U_XBAR : entity work.AxiLiteCrossbar
