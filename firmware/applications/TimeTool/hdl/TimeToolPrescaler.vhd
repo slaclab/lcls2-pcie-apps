@@ -170,8 +170,7 @@ begin
       ------------------------------
       v.slave.tReady := not outCtrl.pause;
 
-      --if v.counter=v.prescalingRate  then     --temporarily commented out while debuging. use fixed counter below
-      if v.counter = 0  then
+      if v.counter=v.prescalingRate  then     --temporarily commented out while debuging. use fixed counter below
 
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
                 v.master := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)

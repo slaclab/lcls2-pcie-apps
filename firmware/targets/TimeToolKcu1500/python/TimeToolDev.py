@@ -33,14 +33,14 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         p = bytearray(frame.getPayload())
         frame.read(p,0)
         print(len(p))
-        my_mask = np.arange(36)
+        """my_mask = np.arange(36)
         my_mask = np.append(my_mask,np.arange(1024,1024+36))
         my_mask = np.append(my_mask,np.arange(2096-36,2096))
         to_print = np.array(p)[-1:]
         #print(np.array(p)[:96],to_print) #comment out for long term test
         print(np.array(p)[my_mask])
         print("____________________________________________________")
-        self.frameCount.set(self.frameCount.value() + 1,False)
+        self.frameCount.set(self.frameCount.value() + 1,False)"""
 
      
         '''berr = [0,0,0,0,0,0,0,0]
