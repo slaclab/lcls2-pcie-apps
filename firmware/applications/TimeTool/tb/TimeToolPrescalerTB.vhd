@@ -62,10 +62,10 @@ architecture testbed of TimeToolPrescalerTB is
    signal appOutMaster : AxiStreamMasterType;
    signal appOutSlave  : AxiStreamSlaveType;
 
-   signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
+   signal axilWriteSlave  : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
+   signal axilReadMaster  : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
+   signal axilReadSlave   : AxiLiteReadSlaveType   := AXI_LITE_READ_SLAVE_INIT_C;
 
    signal axiClk   : sl;
    signal axiRst   : sl;
@@ -132,10 +132,26 @@ begin
          dataOutMaster   => appOutMaster,
          dataOutSlave    => appOutSlave,
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(1),
-         axilReadSlave   => axilReadSlaves(1),
-         axilWriteMaster => axilWriteMasters(1),
-         axilWriteSlave  => axilWriteSlaves(1));
+         axilReadMaster  => axilReadMaster,
+         axilReadSlave   => axilReadSlave,
+         axilWriteMaster => axilWriteMaster,
+         axilWriteSlave  => axilWriteSlave);
 
+  ---------------------------------
+   -- AXI-Lite Register Transactions
+   ---------------------------------
+   test : process is
+      variable debugData : slv(31 downto 0) := (others => '0');
+   begin
+      debugData := x"1111_1111";
+      ------------------------------------------
+      -- Wait for the AXI-Lite reset to complete
+      ------------------------------------------
+      wait until axiRst = '1';
+      wait until axiRst = '0';
+
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"0000_0000", x"0", true);
+
+   end process test;
 
 end testbed;
