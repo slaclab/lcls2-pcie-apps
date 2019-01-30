@@ -10,3 +10,6 @@ loadRuckusTcl $::env(PROJ_DIR)/../../applications
 
 # Load local source Code and constraints
 loadSource -dir "$::DIR_PATH/hdl"
+
+# Load Simulation
+loadSource -sim_only -dir "$::DIR_PATH/tb"

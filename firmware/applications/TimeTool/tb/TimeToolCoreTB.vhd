@@ -25,6 +25,7 @@ use work.BuildInfoPkg.all;
 use work.AxiStreamPkg.all;
 use work.TimingPkg.all;
 use work.Pgp2bPkg.all;
+use work.SsiPkg.all;
 
 entity TimeToolCoreTB is end TimeToolCoreTB;
 
@@ -33,6 +34,8 @@ architecture testbed of TimeToolCoreTB is
    constant DMA_SIZE_C : positive := 1;
    constant NUM_AXI_MASTERS_C : natural := 2;
    constant AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"0000_0000";
+   
+   constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 16 byte (128-bit) AXIS interface
 
    constant GET_BUILD_INFO_C : BuildInfoRetType := toBuildInfo(BUILD_INFO_C);
    constant MOD_BUILD_INFO_C : BuildInfoRetType := (
@@ -45,8 +48,6 @@ architecture testbed of TimeToolCoreTB is
    constant TPD_G        : time := CLK_PERIOD_G/4;
 
    constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, x"0080_0000", 23, 22);
-
-   --constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_CONFIG_TimeToolKcu1500vhd(1).baseAddr, 21, 20);
 
    signal dmaClk          : sl                     := '0';
    signal dmaRst          : sl                     := '0';
@@ -118,6 +119,18 @@ begin
    --      axiWriteSlave  => axilWriteSlave);
 
    -----------------------
+   -- Module to be tested
+   -----------------------
+   --   U_PackTx : entity work.AxiStreamBytePackerTbTx
+   --         generic map (
+   --         TPD_G         => TPD_G,
+   --         BYTE_SIZE_C   => 128,
+   --         AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+   --         port map (
+   --         axiClk      => dmaClk,
+   --         axiRst      => dmaRst,
+   --         mAxisMaster => appInMaster);
+-----------------------
    -- Module to be tested
    -----------------------
 

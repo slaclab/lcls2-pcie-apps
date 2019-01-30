@@ -46,7 +46,7 @@ architecture testbed of TimeToolPrescalerTB is
 
    constant SRC_CONFIG_C : AxiStreamConfigType := (
       TSTRB_EN_C    => false,
-      TDATA_BYTES_C => 16, -- 128 bits
+      TDATA_BYTES_C => 4, -- 128 bits
       TDEST_BITS_C  => 0,
       TID_BITS_C    => 0,
       TKEEP_MODE_C  => TKEEP_COMP_C,
@@ -103,7 +103,7 @@ begin
    -- Test data
    --------------------  
 
-      U_PackTx : entity work.AxiStreamBytePackerTbTx
+      U_CamOutput : entity work.AxiStreamCameraOutput
          generic map (
             TPD_G         => TPD_G,
             BYTE_SIZE_C   => 2+1,
@@ -150,7 +150,7 @@ begin
       wait until axiRst = '1';
       wait until axiRst = '0';
 
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"0000_0000", x"0", true);
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"0000_0000", x"7", true);
 
    end process test;
 

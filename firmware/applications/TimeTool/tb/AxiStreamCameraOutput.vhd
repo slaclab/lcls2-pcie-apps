@@ -23,9 +23,10 @@ use work.AxiStreamPkg.all;
 
 entity AxiStreamCameraOutput is
    generic (
-      TPD_G         : time                := 1 ns;
-      BYTE_SIZE_C   : positive            := 1;
-      AXIS_CONFIG_G : AxiStreamConfigType := AXI_STREAM_CONFIG_INIT_C);
+      TPD_G           : time                := 1 ns;
+      BYTE_SIZE_C     : positive            := 1;
+      FRAMES_PER_BYTE : positive            := 6;
+      AXIS_CONFIG_G   : AxiStreamConfigType := AXI_STREAM_CONFIG_INIT_C);
    port (
       -- System clock and reset
       axiClk       : in  sl;
@@ -61,13 +62,18 @@ begin
       v.master.tKeep  := (others=>'0');
       v.master.tValid := '1';
 
-      for i in 0 to BYTE_SIZE_C-1 loop
-         v.master.tData(i*8+7 downto i*8) := toSlv(v.byteCount,8);
-         v.master.tKeep(i) := '1';
-         v.byteCount := v.byteCount + 1;
-      end loop;
+      v.master.tData((BYTE_SIZE_C-1)*8+7 downto (BYTE_SIZE_C-1)*8) := toSlv(v.byteCount,8);
+      v.master.tKeep(BYTE_SIZE_C-1 downto 0) := (others=>'1');
+      v.byteCount := v.byteCount + 1;
 
-      if v.byteCount = (r.frameCount+1)*BYTE_SIZE_C then
+
+      --for i in 0 to BYTE_SIZE_C-1 loop
+      --   v.master.tData(i*8+7 downto i*8) := toSlv(v.byteCount,8);
+      --   v.master.tKeep(i) := '1';
+      --   v.byteCount := v.byteCount + 1;
+      --end loop;
+
+      if v.byteCount = (FRAMES_PER_BYTE+1)*BYTE_SIZE_C then
          v.master.tLast := '1';
          v.byteCount    := 0;
          v.frameCount   := v.frameCount + 1;

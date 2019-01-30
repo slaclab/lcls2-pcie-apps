@@ -27,9 +27,9 @@ use work.TimingPkg.all;
 use work.Pgp2bPkg.all;
 use work.SsiPkg.all;
 
-entity TimeToolKcu1500TB is end TimeToolKcu1500TB;
+entity TimeToolFEX_placeholderTB is end TimeToolFEX_placeholderTB;
 
-architecture testbed of TimeToolKcu1500TB is
+architecture testbed of TimeToolFEX_placeholderTB is
 
    constant TPD_G             : time := 1 ns;
    --constant BUILD_INFO_G      : BuildInfoType;
@@ -90,7 +90,7 @@ architecture testbed of TimeToolKcu1500TB is
 
 begin
 
-   appOutSlave.tReady <= '1';      -- this is crashing simulation
+   appInSlave.tReady <= '0';      -- this is crashing simulation
 
    --------------------
    -- Clocks and Resets
@@ -121,15 +121,15 @@ begin
    -- Test data
    --------------------  
 
-      U_PackTx : entity work.AxiStreamCameraOutput
-         generic map (
-            TPD_G         => TPD_G,
-            BYTE_SIZE_C   => 2+1,
-            AXIS_CONFIG_G => SRC_CONFIG_C)
-         port map (
-            axiClk      => axiClk,
-            axiRst      => axiRst,
-            mAxisMaster => appInMaster);
+   --   U_PackTx : entity work.AxiStreamBytePackerTbTx
+   --      generic map (
+   --         TPD_G         => TPD_G,
+   --         BYTE_SIZE_C   => 2+1,
+   --         AXIS_CONFIG_G => SRC_CONFIG_C)
+   --      port map (
+   --         axiClk      => axiClk,
+   --         axiRst      => axiRst,
+   --         mAxisMaster => appInMaster);
 
    --------------------
    -- Modules to be tested
