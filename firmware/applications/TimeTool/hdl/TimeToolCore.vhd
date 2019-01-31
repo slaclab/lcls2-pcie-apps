@@ -199,6 +199,6 @@ begin
          sAxisMasters => masterFEXorPrescalerToCombiner,
          sAxisSlaves  => slaveFEXorPrescalerToCombiner,
          mAxisMaster  => dataOutMaster,
-         mAxisSlave   => dataOutMaster);
+         mAxisSlave   => dataOutSlave);
 
 end mapping;
