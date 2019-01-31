@@ -94,33 +94,45 @@ class TimeToolDev(pr.Root):
 
         pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev')
 
+        # File writer
+        self.dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
+        self.add(self.dataWriter)        
+        
         # Create the stream interface
-        self._pgpVc0 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',0,True) # Registers
-        self._pgpVc1 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',1,True) # Data
-        self._pgpVc2 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',2,True) # Serial
+        self._pgpVc0 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',0,True) # TDEST = 0x0 = Registers
+        self._pgpVc1 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',1,True) # TDEST = 0x1 = Data
+        self._pgpVc2 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',2,True) # TDEST = 0x2 = Serial
 
         # Local map
-        dataMap = rogue.hardware.axi.AxiMemMap('/dev/datadev_0')
+        self.dataMap = rogue.hardware.axi.AxiMemMap('/dev/datadev_0')
 
-        # Cameralink
+        # Cameralink's stream interface at TDEST = 0x2
         self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
 
         # Time tool application
-        self.add(TimeTool.TimeToolCore(memBase=dataMap,offset=0x00C00000))
+        self.add(TimeTool.TimeToolCore(memBase=self.dataMap,offset=0x00C00000))
 
         # PGP Card registers
-        self.add(XilinxKcu1500Pgp2b(name='HW',memBase=dataMap))
-
-        # File writer
-        dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
-        self.add(dataWriter)
-        pr.streamConnect(self._pgpVc1,dataWriter.getChannel(0))
-        pr.streamConnect(self,dataWriter.getChannel(1))
-
+        self.add(XilinxKcu1500Pgp2b(name='HW',memBase=self.dataMap))
+        
+        # Connect the batcher to the TDEST=0x1
+        self.eventBatcher = rogue.protocols.BatcherV1()
+        pr.streamConnectBiDir( self.eventBatcher.transport(), self._pgpVc1 )
+        
+        # Batcher Port#0 = TimeToolFEX_placeholder
+        self.placeholder = self.eventBatcher.application(0x0)
+        pr.streamConnect(self.placeholder,dataWriter.getChannel(0))
+        pr.streamConnect(self,dataWriter.getChannel(0))
+        
+        # Batcher Port#1 = TimeToolPrescaler
+        self.prescaler = self.eventBatcher.application(0x1)
+        pr.streamConnect(self.prescaler,dataWriter.getChannel(1))
+        pr.streamConnect(self,dataWriter.getChannel(1))        
+        
         # Debug slave
         if dataDebug:
             self._dbg = TimeToolRx()
-            pr.streamTap(self._pgpVc1,self._dbg)
+            pr.streamTap(self.prescaler,self._dbg)
             self.add(self._dbg)
 
         # Start the system
