@@ -198,25 +198,7 @@ begin
          -- AXIS Interfaces
          sAxisMasters => masterFEXorPrescalerToCombiner,
          sAxisSlaves  => slaveFEXorPrescalerToCombiner,
-         mAxisMaster  => masterCombinerToBatcher,
-         mAxisSlave   => slaveCombinerToBatcher);
-
-   --------------------------------------------
-   --AxiStreamBatcherEventBuilder Combines them back together
-   --------------------------------------------
-
-   U_AxiStreamBatcher : entity work.AxiStreamBatcher
-      generic map (
-         TPD_G         => TPD_G,
-         AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
-      port map (
-         -- Clock and Reset
-         axisClk      => sysClk,
-         axisRst      => sysRst,
-         -- AXIS Interfaces
-         sAxisMaster  => masterCombinerToBatcher,
-         sAxisSlave   => slaveCombinerToBatcher,
          mAxisMaster  => dataOutMaster,
-         mAxisSlave   => dataOutSlave);
+         mAxisSlave   => dataOutMaster);
 
 end mapping;
