@@ -95,7 +95,7 @@ class TimeToolDev(pr.Root):
         pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev')
 
         # File writer
-        self.dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
+        self.dataWriter = pr.utilities.fileio.StreamWriter(configEn=True)
         self.add(self.dataWriter)        
         
         # Create the stream interface
@@ -121,12 +121,12 @@ class TimeToolDev(pr.Root):
         
         # Batcher Port#0 = TimeToolFEX_placeholder
         self.placeholder = self.eventBatcher.application(0x0)
-        pr.streamConnect(self.placeholder,dataWriter.getChannel(0))
+        pr.streamConnect(self.placeholder,self.dataWriter.getChannel(0))
         pr.streamConnect(self,dataWriter.getChannel(0))
         
         # Batcher Port#1 = TimeToolPrescaler
         self.prescaler = self.eventBatcher.application(0x1)
-        pr.streamConnect(self.prescaler,dataWriter.getChannel(1))
+        pr.streamConnect(self.prescaler,self.dataWriter.getChannel(1))
         pr.streamConnect(self,dataWriter.getChannel(1))        
         
         # Debug slave
