@@ -38,15 +38,17 @@ end AxiStreamCameraOutput;
 architecture rtl of AxiStreamCameraOutput is
 
    type RegType is record
-      byteCount  : natural;
-      frameCount : natural;
-      master     : AxiStreamMasterType;
+      byteCount    : natural;
+      frameCount   : natural;
+      sleepCount : natural;
+      master       : AxiStreamMasterType;
    end record RegType;
 
    constant REG_INIT_C : RegType := (
-      byteCount  => 0,
-      frameCount => 0,
-      master     => AXI_STREAM_MASTER_INIT_C);
+      byteCount    => 0,
+      frameCount   => 0,
+      sleepCount   => 0,
+      master       => AXI_STREAM_MASTER_INIT_C);
 
    signal r   : RegType := REG_INIT_C;
    signal rin : RegType;
@@ -58,30 +60,39 @@ begin
    begin
       v := r;
 
-      v.master := AXI_STREAM_MASTER_INIT_C;
-      v.master.tKeep  := (others=>'0');
-      v.master.tValid := '1';
+      if v.sleepCount=0 then
 
-      v.master.tData((BYTE_SIZE_C-1)*8+7 downto (BYTE_SIZE_C-1)*8) := toSlv(v.byteCount,8);
-      v.master.tKeep(BYTE_SIZE_C-1 downto 0) := (others=>'1');
-      v.byteCount := v.byteCount + 1;
+            v.master := AXI_STREAM_MASTER_INIT_C;
+            v.master.tKeep  := (others=>'0');
+            v.master.tValid := '1';
+
+            v.master.tData((BYTE_SIZE_C-1)*8+7 downto (BYTE_SIZE_C-1)*8) := toSlv(v.byteCount,8);
+            v.master.tKeep(BYTE_SIZE_C-1 downto 0) := (others=>'1');
+            v.byteCount := v.byteCount + 1;
 
 
-      --for i in 0 to BYTE_SIZE_C-1 loop
-      --   v.master.tData(i*8+7 downto i*8) := toSlv(v.byteCount,8);
-      --   v.master.tKeep(i) := '1';
-      --   v.byteCount := v.byteCount + 1;
-      --end loop;
+            --for i in 0 to BYTE_SIZE_C-1 loop
+            --   v.master.tData(i*8+7 downto i*8) := toSlv(v.byteCount,8);
+            --   v.master.tKeep(i) := '1';
+            --   v.byteCount := v.byteCount + 1;
+            --end loop;
 
-      if v.byteCount = (FRAMES_PER_BYTE+1)*BYTE_SIZE_C then
-         v.master.tLast := '1';
-         v.byteCount    := 0;
-         v.frameCount   := v.frameCount + 1;
-      end if;
+            if v.byteCount = (FRAMES_PER_BYTE+1)*BYTE_SIZE_C then
+               v.master.tLast := '1';
+               v.sleepCount   := 400;
+               v.byteCount    := 0;
+               v.frameCount   := v.frameCount + 1;
+            end if;
 
-      -- Reset
-      if (axiRst = '1') then
-         v := REG_INIT_C;
+            -- Reset
+            if (axiRst = '1') then
+               v := REG_INIT_C;
+            end if;
+      else
+            v.master.tValid     := '0';
+            v.master.tLast      := '0';
+            v.sleepCount        := v.sleepCount-1;
+
       end if;
 
       rin <= v;

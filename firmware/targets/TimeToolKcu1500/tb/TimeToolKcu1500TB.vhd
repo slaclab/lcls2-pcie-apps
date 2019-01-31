@@ -90,7 +90,7 @@ architecture testbed of TimeToolKcu1500TB is
 
 begin
 
-   appOutSlave.tReady <= '1';      -- this is crashing simulation
+   appOutSlave.tReady <= '1';      -- this is NOT crashing simulation
 
    --------------------
    -- Clocks and Resets
@@ -176,5 +176,22 @@ begin
          -- PGP TX OP-codes (pgpTxClk domains)
          pgpTxClk        => pgpTxClk(0),
          pgpTxIn         => pgpTxIn(0));
+
+  ---------------------------------
+   -- AXI-Lite Register Transactions
+   ---------------------------------
+   test : process is
+      variable debugData : slv(31 downto 0) := (others => '0');
+   begin
+      debugData := x"1111_1111";
+      ------------------------------------------
+      -- Wait for the AXI-Lite reset to complete
+      ------------------------------------------
+      wait until axiRst = '1';
+      wait until axiRst = '0';
+
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00d0_0000", x"3", true);
+
+   end process test;
 
 end testbed;

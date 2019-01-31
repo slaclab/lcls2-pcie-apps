@@ -31,6 +31,14 @@ cl.ClinkTest.ClinkTop.ChannelA.FrameMode.set(1)		#linemode
 cl.ClinkTest.ClinkTop.ChannelA.TapCount.set(4)
 #time.sleep(0.2)
 
+
+#these commands are sent over serial to the camera unit
+#clm: Camera Mink Mode. 0 = base, 1 = medium, 2 = full, 3 = deca
+#svm: test pattern mode
+#sem: Set Exposure Mode
+#set: Set Exposure Time
+#stm: External Trigger Mode
+
 my_commands_to_pirana_camera = ['clm 0','svm 0', 'sem 0', 'set 5000', 'stm 1', 'spf 0']
 
 for i in my_commands_to_pirana_camera:
@@ -57,8 +65,8 @@ cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(False)#this stops the data collection
 
 #validating prescalling
 
-cl.ClinkTest.ClinkTop.ChannelA.SendString('svm 0')
-cl.ClinkTest.ClinkTop.ChannelA.SendString('stm 1')
+cl.ClinkTest.ClinkTop.ChannelA.SendString('svm 0')    #test pattern. 1 is Ramp, 0 is sensor video
+cl.ClinkTest.ClinkTop.ChannelA.SendString('stm 1')    #1 is internal trigger, 2 is External pulse width. Manual description is off by one
 
 def frame_rate(sec):
     start_time  = time.time()
