@@ -178,7 +178,7 @@ begin
                 v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
             end if;
       else  --this 'else' sends the null frame
-            v.master.tValid  := inMaster.tLast;
+            v.master.tValid  := inMaster.tValid;
             v.master.tLast   := inMaster.tLast;
       
             v.master.tKeep(DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) := toSlv(1, DMA_AXIS_CONFIG_G.TDATA_BYTES_C);
