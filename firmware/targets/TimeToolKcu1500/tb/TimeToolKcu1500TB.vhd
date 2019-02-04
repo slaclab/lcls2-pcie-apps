@@ -205,7 +205,7 @@ architecture testbed of TimeToolKcu1500TB is
    ---------------------------------
    -- save_file
    ---------------------------------
-   save_to_file : process (appOutMaster) is
+   save_to_file : process is
       variable to_file              : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       variable v_OLINE              : line; 
       constant c_WIDTH              : natural := 8;
@@ -216,8 +216,16 @@ architecture testbed of TimeToolKcu1500TB is
       to_file := appOutMaster;
 
       file_open(file_RESULTS, "output_results.txt", write_mode);
-      write(v_OLINE, test_data_to_file, right, c_WIDTH);
-      writeline(file_RESULTS, v_OLINE);
+
+      while true loop
+
+            write(v_OLINE, test_data_to_file, right, c_WIDTH);
+            writeline(file_RESULTS, v_OLINE);
+
+            wait for 600 ns;
+
+      end loop;
+      
       file_close(file_RESULTS);
 
    end process save_to_file;
