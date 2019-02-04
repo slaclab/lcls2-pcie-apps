@@ -219,7 +219,7 @@ architecture testbed of TimeToolKcu1500TB is
 
       while true loop
 
-            write(v_OLINE, test_data_to_file, right, c_WIDTH);
+            write(v_OLINE, appOutMaster.tData, right, c_WIDTH);
             writeline(file_RESULTS, v_OLINE);
 
             wait for 600 ns;
