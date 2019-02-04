@@ -27,6 +27,9 @@ use work.TimingPkg.all;
 use work.Pgp2bPkg.all;
 use work.SsiPkg.all;
 
+use STD.textio.all;
+use ieee.std_logic_textio.all;
+
 entity TimeToolKcu1500TB is end TimeToolKcu1500TB;
 
 architecture testbed of TimeToolKcu1500TB is
@@ -88,96 +91,99 @@ architecture testbed of TimeToolKcu1500TB is
 
    signal testInMaster    : AxiStreamMasterType;
 
-begin
+   file file_RESULTS : text;
 
-   appOutSlave.tReady <= '1';      -- this is NOT crashing simulation
+   begin
 
-   --------------------
-   -- Clocks and Resets
-   --------------------
-   U_axilClk_2 : entity work.ClkRst
-      generic map (
-         CLK_PERIOD_G      => CLK_PERIOD_G,
-         RST_START_DELAY_G => 0 ns,
-         RST_HOLD_TIME_G   => 1000 ns)
-      port map (
-         clkP => dmaClk,
-         rst  => dmaRst);
+         appOutSlave.tReady <= '1';      -- this is NOT crashing simulation
+
+         --------------------
+         -- Clocks and Resets
+         --------------------
+         U_axilClk_2 : entity work.ClkRst
+            generic map (
+               CLK_PERIOD_G      => CLK_PERIOD_G,
+               RST_START_DELAY_G => 0 ns,
+               RST_HOLD_TIME_G   => 1000 ns)
+            port map (
+               clkP => dmaClk,
+               rst  => dmaRst);
 
 
-   --------------------
-   -- Clocks and Resets
-   --------------------
-   U_axilClk : entity work.ClkRst
-      generic map (
-         CLK_PERIOD_G      => CLK_PERIOD_G,
-         RST_START_DELAY_G => 0 ns,
-         RST_HOLD_TIME_G   => 1000 ns)
-      port map (
-         clkP => axiClk,
-         rst  => axiRst);
+         --------------------
+         -- Clocks and Resets
+         --------------------
+         U_axilClk : entity work.ClkRst
+            generic map (
+               CLK_PERIOD_G      => CLK_PERIOD_G,
+               RST_START_DELAY_G => 0 ns,
+               RST_HOLD_TIME_G   => 1000 ns)
+            port map (
+               clkP => axiClk,
+               rst  => axiRst);
 
-   --------------------
-   -- Test data
-   --------------------  
+         --------------------
+         -- Test data
+         --------------------  
 
-      U_PackTx : entity work.AxiStreamCameraOutput
-         generic map (
-            TPD_G         => TPD_G,
-            BYTE_SIZE_C   => 2+1,
-            AXIS_CONFIG_G => SRC_CONFIG_C)
-         port map (
-            axiClk      => axiClk,
-            axiRst      => axiRst,
-            mAxisMaster => appInMaster);
+            U_PackTx : entity work.AxiStreamCameraOutput
+               generic map (
+                  TPD_G         => TPD_G,
+                  BYTE_SIZE_C   => 2+1,
+                  AXIS_CONFIG_G => SRC_CONFIG_C)
+               port map (
+                  axiClk      => axiClk,
+                  axiRst      => axiRst,
+                  mAxisMaster => appInMaster);
 
-   --------------------
-   -- Modules to be tested
-   --------------------  
+         --------------------
+         -- Modules to be tested
+         --------------------  
 
-   U_XBAR : entity work.AxiLiteCrossbar
-      generic map (
-         TPD_G              => TPD_G,
-         NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
-         MASTERS_CONFIG_G   => AXI_CONFIG_C)
-      port map (
-         axiClk              => dmaClk,
-         axiClkRst           => dmaRst,
-         sAxiWriteMasters(0) => axilWriteMaster,
-         sAxiWriteSlaves(0)  => axilWriteSlave,
-         sAxiReadMasters(0)  => axilReadMaster,
-         sAxiReadSlaves(0)   => axilReadSlave,
-         mAxiWriteMasters    => intWriteMasters,
-         mAxiWriteSlaves     => intWriteSlaves,
-         mAxiReadMasters     => intReadMasters,
-         mAxiReadSlaves      => intReadSlaves);
+         U_XBAR : entity work.AxiLiteCrossbar
+            generic map (
+               TPD_G              => TPD_G,
+               NUM_SLAVE_SLOTS_G  => 1,
+               NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
+               MASTERS_CONFIG_G   => AXI_CONFIG_C)
+            port map (
+               axiClk              => dmaClk,
+               axiClkRst           => dmaRst,
+               sAxiWriteMasters(0) => axilWriteMaster,
+               sAxiWriteSlaves(0)  => axilWriteSlave,
+               sAxiReadMasters(0)  => axilReadMaster,
+               sAxiReadSlaves(0)   => axilReadSlave,
+               mAxiWriteMasters    => intWriteMasters,
+               mAxiWriteSlaves     => intWriteSlaves,
+               mAxiReadMasters     => intReadMasters,
+               mAxiReadSlaves      => intReadSlaves);
 
-   U_TimeToolCore : entity work.TimeToolCore
-      generic map (
-         TPD_G           => TPD_G,
-         AXI_BASE_ADDR_G => AXI_CONFIG_C(1).baseAddr)
-      port map (
-         -- System Clock and Reset
-         sysClk          => dmaClk,
-         sysRst          => dmaRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster    => appInMaster,
-         dataInSlave     => appInSlave,
-         dataOutMaster   => appOutMaster,
-         dataOutSlave    => appOutSlave,
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => intReadMasters(1),
-         axilReadSlave   => intReadSlaves(1),
-         axilWriteMaster => intWriteMasters(1),
-         axilWriteSlave  => intWriteSlaves(1),
-         -- Timing information (sysClk domain)
-         timingBus       => timingBus,
-         -- PGP TX OP-codes (pgpTxClk domains)
-         pgpTxClk        => pgpTxClk(0),
-         pgpTxIn         => pgpTxIn(0));
+         U_TimeToolCore : entity work.TimeToolCore
+            generic map (
+               TPD_G           => TPD_G,
+               AXI_BASE_ADDR_G => AXI_CONFIG_C(1).baseAddr)
+            port map (
+               -- System Clock and Reset
+               sysClk          => dmaClk,
+               sysRst          => dmaRst,
+               -- DMA Interface (sysClk domain)
+               dataInMaster    => appInMaster,
+               dataInSlave     => appInSlave,
+               dataOutMaster   => appOutMaster,
+               dataOutSlave    => appOutSlave,
+               -- AXI-Lite Interface (sysClk domain)
+               axilReadMaster  => intReadMasters(1),
+               axilReadSlave   => intReadSlaves(1),
+               axilWriteMaster => intWriteMasters(1),
+               axilWriteSlave  => intWriteSlaves(1),
+               -- Timing information (sysClk domain)
+               timingBus       => timingBus,
+               -- PGP TX OP-codes (pgpTxClk domains)
+               pgpTxClk        => pgpTxClk(0),
+               pgpTxIn         => pgpTxIn(0));
 
-  ---------------------------------
+
+   ---------------------------------
    -- AXI-Lite Register Transactions
    ---------------------------------
    test : process is
@@ -191,7 +197,30 @@ begin
       wait until axiRst = '0';
 
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00d0_0000", x"3", true);
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00c0_0000", x"f", true);
 
    end process test;
+
+
+   ---------------------------------
+   -- save_file
+   ---------------------------------
+   save_to_file : process (appOutMaster) is
+      variable to_file              : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
+      variable v_OLINE              : line; 
+      constant c_WIDTH              : natural := 8;
+      constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
+
+   begin
+
+      to_file := appOutMaster;
+
+      file_open(file_RESULTS, "output_results.txt", write_mode);
+      write(v_OLINE, test_data_to_file, right, c_WIDTH);
+      writeline(file_RESULTS, v_OLINE);
+      file_close(file_RESULTS);
+
+   end process save_to_file;
+
 
 end testbed;
