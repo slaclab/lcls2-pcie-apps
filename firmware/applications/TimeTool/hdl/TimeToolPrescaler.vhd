@@ -153,6 +153,11 @@ begin
       -- Latch the current value
       v := r;
 
+      -- don't send null frame.  Change if need be later on.
+      v.master.tValid  := '0';
+      v.master.tLast   := '0';
+      ssiSetUserEofe(DMA_AXIS_CONFIG_G, v.master, '0');
+
       ------------------------      
       -- AXI-Lite Transactions
       ------------------------      
@@ -178,18 +183,20 @@ begin
                 v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
             end if;
       else  --this 'else' sends the null frame
-            v.master.tValid  := inMaster.tValid;
-            v.master.tLast   := inMaster.tLast;
-      
-            v.master.tKeep(DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) := toSlv(1, DMA_AXIS_CONFIG_G.TDATA_BYTES_C);
-            ssiSetUserEofe(DMA_AXIS_CONFIG_G, v.master, '1');
+            if v.slave.tReady = '1' and inMaster.tValid = '1' and rin.master.tValid = '0' and inMaster.tLast = '1' then
+                  v.master.tValid  := inMaster.tValid;
+                  v.master.tLast   := inMaster.tLast;
+             
+                  v.master.tKeep(DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) := toSlv(1, DMA_AXIS_CONFIG_G.TDATA_BYTES_C);
+                  ssiSetUserEofe(DMA_AXIS_CONFIG_G, v.master, '1');
+            end if;
 
       end if;
 
       -----------------------------
       --increment prescaling counter. needs to be after the data mover in order for the last packet to be sent
       -----------------------------
-      if inMaster.tLast = '1' then 
+      if inMaster.tLast = '1' and inMaster.tValid = '1' then 
             if v.counter = v.prescalingRate then
                   v.counter := (others=>'0');
             else
