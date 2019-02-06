@@ -197,7 +197,7 @@ architecture testbed of TimeToolKcu1500TB is
       wait until axiRst = '0';
 
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00d0_0000", x"3", true);
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00c0_0000", x"f", true);
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00c0_0000", x"aa", true);
 
    end process test;
 

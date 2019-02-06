@@ -66,7 +66,8 @@ begin
             v.master.tKeep  := (others=>'0');
             v.master.tValid := '1';
 
-            v.master.tData((BYTE_SIZE_C-1)*8+7 downto (BYTE_SIZE_C-1)*8) := toSlv(v.byteCount,8);
+            --v.master.tData((BYTE_SIZE_C-1)*8+7 downto (BYTE_SIZE_C-1)*8) := toSlv(v.frameCount,8);
+            v.master.tData(7 downto 0) := toSlv(v.frameCount,8);
             v.master.tKeep(BYTE_SIZE_C-1 downto 0) := (others=>'1');
             v.byteCount := v.byteCount + 1;
 

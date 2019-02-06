@@ -151,8 +151,10 @@ begin
 
          for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
             --v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
-            v.master.tData(i*8+7 downto i*8) := r.addValue;
+            v.master.tData(i*8+7 downto i*8) := b"0000_0000";    --for simulation testing
          end loop;
+
+         v.master.tData(7 downto 0) := r.addValue;    --for simulation testing
 
       else
          v.master.tValid := '0';
