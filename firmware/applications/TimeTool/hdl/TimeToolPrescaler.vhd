@@ -245,7 +245,7 @@ begin
       --increment prescaling counter. needs to be after the data mover in order for the last packet to be sent
       -----------------------------
       if inMaster.tLast = '1' and  inMaster.tValid = '1' and v.slave.tReady = '1' then 
-            if v.counter = v.prescalingRate then
+            if v.counter >= v.prescalingRate then
                   v.counter := (others=>'0');
             else
                   v.counter := v.counter + 1;
