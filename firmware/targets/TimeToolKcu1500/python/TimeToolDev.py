@@ -35,9 +35,10 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         print(len(p))
         my_mask = np.arange(36)
         if(len(p)>100):
-              my_mask = np.append(my_mask,np.arange(1024,1024+36))
-              my_mask = np.append(my_mask,np.arange(2096-36,2096))
-        to_print = np.array(p)[-1:]
+              my_mask = np.append(my_mask,np.arange(int(len(p)/2),int(len(p)/2)+36))
+              my_mask = np.append(my_mask,np.arange(len(p)-36,len(p)))
+
+        to_print = np.array(p)[-1:] 
         #print(np.array(p)[:96],to_print) #comment out for long term test
         print(np.array(p)[my_mask])
         print("____________________________________________________")
