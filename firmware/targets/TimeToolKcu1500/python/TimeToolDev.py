@@ -114,25 +114,17 @@ class TimeToolDev(pr.Root):
 
         # PGP Card registers
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=self.dataMap))
-        
-        # Connect the batcher to the TDEST=0x1
-        self.eventBatcher = rogue.protocols.BatcherV1()
-        pr.streamConnectBiDir( self.eventBatcher.transport(), self._pgpVc1 )
-        
-        # Batcher Port#0 = TimeToolFEX_placeholder
-        self.placeholder = self.eventBatcher.application(0x0)
-        pr.streamConnect(self.placeholder,self.dataWriter.getChannel(0))
-        pr.streamConnect(self,dataWriter.getChannel(0))
-        
-        # Batcher Port#1 = TimeToolPrescaler
-        self.prescaler = self.eventBatcher.application(0x1)
-        pr.streamConnect(self.prescaler,self.dataWriter.getChannel(1))
-        pr.streamConnect(self,dataWriter.getChannel(1))        
-        
+
+# File writer
+        dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
+        self.add(dataWriter)
+        pr.streamConnect(self._pgpVc1,dataWriter.getChannel(0))
+        pr.streamConnect(self,dataWriter.getChannel(1))
+
         # Debug slave
         if dataDebug:
             self._dbg = TimeToolRx()
-            pr.streamTap(self.prescaler,self._dbg)
+            pr.streamTap(self._pgpVc1,self._dbg)
             self.add(self._dbg)
 
         # Start the system
