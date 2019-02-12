@@ -34,8 +34,9 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         frame.read(p,0)
         print(len(p))
         my_mask = np.arange(36)
-        my_mask = np.append(my_mask,np.arange(1024,1024+36))
-        my_mask = np.append(my_mask,np.arange(2096-36,2096))
+        if(len(p)>100):
+              my_mask = np.append(my_mask,np.arange(1024,1024+36))
+              my_mask = np.append(my_mask,np.arange(2096-36,2096))
         to_print = np.array(p)[-1:]
         #print(np.array(p)[:96],to_print) #comment out for long term test
         print(np.array(p)[my_mask])
@@ -94,10 +95,7 @@ class TimeToolDev(pr.Root):
 
         pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev')
 
-        # File writer
-        self.dataWriter = pr.utilities.fileio.StreamWriter(configEn=True)
-        self.add(self.dataWriter)        
-        
+               
         # Create the stream interface
         self._pgpVc0 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',0,True) # TDEST = 0x0 = Registers
         self._pgpVc1 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',1,True) # TDEST = 0x1 = Data
@@ -115,7 +113,7 @@ class TimeToolDev(pr.Root):
         # PGP Card registers
         self.add(XilinxKcu1500Pgp2b(name='HW',memBase=self.dataMap))
 
-# File writer
+        # File writer
         dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
         self.add(dataWriter)
         pr.streamConnect(self._pgpVc1,dataWriter.getChannel(0))
