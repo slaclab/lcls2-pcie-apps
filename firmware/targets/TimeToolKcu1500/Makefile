@@ -4,6 +4,9 @@ export PRJ_VERSION = 0x00000011
 # Define target part
 export PRJ_PART = xcku115-flvb2104-2-e
 
+#simulation package export
+export TIMING_EXT_PKG = 1
+
 # Define target output
 target: prom
 

@@ -13,3 +13,6 @@
 [submodule "firmware/submodules/lcls2-pgp-fw-lib"]
 	path = firmware/submodules/lcls2-pgp-fw-lib
 	url = git@github.com:slaclab/lcls2-pgp-fw-lib
+[submodule "firmware/submodules/l2si-core"]
+	path = firmware/submodules/l2si-core
+	url = git@github.com:slaclab/l2si-core.git
