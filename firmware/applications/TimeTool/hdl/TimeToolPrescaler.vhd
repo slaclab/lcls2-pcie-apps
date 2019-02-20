@@ -102,7 +102,7 @@ architecture mapping of TimeToolPrescaler is
    signal inSlave  : AxiStreamSlaveType;
    signal outCtrl  : AxiStreamCtrlType;
 
-   component ila_0
+   component ila_1
      port ( clk    : sl;
            probe0 : slv(127 downto 0) );
    end component;
@@ -136,7 +136,7 @@ begin
    -- Xilinx debug integrated logic analyzer.
    ---------------------------------
    GEN_DEBUG : if DEBUG_G generate
-     U_ILA : ila_0
+     U_ILA : ila_1
        port map ( clk                                    => sysClk,
                 probe0(31  downto 0)                     => r.prescalingRate,
                 probe0(63  downto 32)                    => r.axi_test,

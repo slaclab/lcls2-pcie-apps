@@ -118,7 +118,7 @@ architecture mapping of TimeStamper is
    signal locTxIn_buf         : Pgp2bTxInArray(5 downto 0) := (others=>PGP2B_TX_IN_INIT_C);
    signal empty_placeholder   : slv(31 downto 0);
 
-   component ila_0
+   component ila_1
      port ( clk    : sl;
             probe0 : slv(255 downto 0) );
    end component;
@@ -178,7 +178,7 @@ begin
    ---------------------------------
 
    GEN_DEBUG : if DEBUG_G generate
-     U_ILA : ila_0
+     U_ILA : ila_1
        port map ( clk   => sysClk,
                   probe0(0)                   => timingBus.strobe,
                   probe0(1)                   => timingBus.valid,
