@@ -30,7 +30,6 @@ use work.SsiPkg.all;
 --XPMSIM packages?
 use work.TPGPkg.all;
 --use work.QuadAdcPkg.all;
-use work.TimingExtnPkg.all;
 
 
 entity XpmSimTB is end XpmSimTB;
