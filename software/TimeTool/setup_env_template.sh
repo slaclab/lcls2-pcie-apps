@@ -1,5 +1,5 @@
 # Setup environment
-source /afs/slac/g/reseng/rogue/pre-release/setup_rogue.sh
+#source /afs/slac/g/reseng/rogue/pre-release/setup_rogue.sh
 
 # Package directories
 export SURF_DIR=${PWD}/../../firmware/submodules/surf/python
