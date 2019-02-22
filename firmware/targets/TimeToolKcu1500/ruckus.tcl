@@ -4,6 +4,7 @@ source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 # Load common and sub-module ruckus.tcl files
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/surf
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/lcls-timing-core
+loadRuckusTcl $::env(PROJ_DIR)/../../submodules/lcls-timing-core/LCLS-II
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/l2si-core/xpm
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/l2si-core/base
 loadRuckusTcl $::env(PROJ_DIR)/../../submodules/axi-pcie-core/hardware/XilinxKcu1500
