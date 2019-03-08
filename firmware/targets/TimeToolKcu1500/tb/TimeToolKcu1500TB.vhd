@@ -126,7 +126,7 @@ architecture testbed of TimeToolKcu1500TB is
          -- Test data
          --------------------  
 
-            U_PackTx : entity work.AxiStreamCameraOutput
+            U_PackTx : entity work.AxiStreamCameraRealSim
                generic map (
                   TPD_G         => TPD_G,
                   BYTE_SIZE_C   => 2+1,
