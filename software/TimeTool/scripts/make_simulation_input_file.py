@@ -3,7 +3,7 @@ import matplotlib as plt
 
 my_file = "/u1/sioan/build/TimeToolKcu1500/TimeToolKcu1500_project.sim/sim_1/behav/xsim/sim_input_data.txt"
 
-n_frames        = 3
+n_frames        = 27
 pixel_bit_width = 8
 n_pixels        = 1024
 
@@ -17,7 +17,7 @@ to_file = []
 for i in range(n_frames):
 
 
-      edge_position = n_pixels*(jitter*np.random.rand()-0.5)
+      edge_position = n_pixels/2+(jitter*np.random.rand()-0.5)
       for j in range(n_pixels):
 
 
@@ -28,11 +28,21 @@ for i in range(n_frames):
 
             to_file = '{0:08b}'.format(int(my_calculation))
 
-            if(j==n_pixels-1):
-                  to_file = to_file+" 1 \n"
+            if(i%12==1):
+                  to_file = to_file+" 1"
 
             else:
-                  to_file = to_file+" 0 \n"
+                  to_file = to_file+" 0"
+
+
+
+            if(j==n_pixels-1):
+                  to_file = to_file+"1\n"
+
+            else:
+                  to_file = to_file+"0\n"
+
+            
 
             #print(int(my_calculation))
             #print(to_file)
