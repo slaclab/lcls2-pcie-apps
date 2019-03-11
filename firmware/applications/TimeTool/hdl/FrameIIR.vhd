@@ -19,6 +19,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 --use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
+use ieee.std_logic_signed.all;
 use ieee.numeric_std.ALL;
 
 use work.StdRtlPkg.all;
@@ -65,12 +66,12 @@ architecture mapping of FrameIIR is
    constant CAMERA_RESOLUTION_BITS        : positive            := 8;
    constant CAMERA_PIXEL_NUMBER           : positive            := 2048;
 
-   type CameraFrame is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
+   --type CameraFrame is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
+   type CameraFrame is array (natural range<>) of signed((CAMERA_RESOLUTION_BITS-1) downto 0);
 
    type StateType is (
       IDLE_S,
-      MOVE_S,
-      UPDATE_S);
+      UPDATE_AND_MOVE_S);
 
    type RegType is record
       master          : AxiStreamMasterType;
@@ -81,6 +82,7 @@ architecture mapping of FrameIIR is
       prescalingRate  : slv(31 downto 0);
       axi_test        : slv(31 downto 0);
       state           : StateType;
+      rollingImage    : CameraFrame;
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -91,7 +93,9 @@ architecture mapping of FrameIIR is
       counter         => 0,
       prescalingRate  => (others=>'0'),
       axi_test        => (others=>'0'),
-      state           => IDLE_S);
+      state           => IDLE_S,
+      --rollingImage    => (others => (others => '0') ) );
+      rollingImage    => (others => (others => '0') ) );
 
 ---------------------------------------
 -------record intitial value-----------
@@ -100,8 +104,6 @@ architecture mapping of FrameIIR is
 
    signal r             : RegType     := REG_INIT_C;
    signal rin           : RegType;
-
-   signal rollingImage  : CameraFrame := (others => (others => '0'));
 
    signal inMaster      : AxiStreamMasterType;
    signal inSlave       : AxiStreamSlaveType;
@@ -166,44 +168,34 @@ begin
             -- check which state
             ------------------------------
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
-                        v.state     := MOVE_S;
+                        v.state     := UPDATE_AND_MOVE_S;
                
 
             else
                   v.state           := IDLE_S;
             end if;
- 
-            --when MOVE_S =>
-                  ------------------------------
-                  -- send regular frame
-                  ------------------------------
-            --      if v.slave.tReady = '1' and inMaster.tValid = '1' then
-            --          v.master := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
-
-            --      else
-            --          v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
-            --          v.slave.tReady  := '0';   --message to upstream that we're not ready
-            --          v.master.tLast  := '0';
-            --          v.state         := IDLE_S;
-            --      end if;
 
            
-            when UPDATE_S  => 
-                   ------------------------------
-                   -- update slv logic array
-                   ------------------------------
+            when UPDATE_AND_MOVE_S  => 
+            ------------------------------
+            -- update slv logic array
+            ------------------------------
 
                if v.slave.tReady = '1' and inMaster.tValid = '1' then
                   v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
-                  rollingImage(v.counter)    := (rollingImage[v.counter]/32)*31 + inMaster.tdata/32;
-                  v.master.tData             := rollingImage(v.counter);
+                  v.rollingImage(v.counter)  := (v.rollingImage(v.counter)/32)*31 + signed(inMaster.tdata)/32;
+                  v.master.tData             := std_logic_vector(v.rollingImage(v.counter));
                   v.counter                  := v.counter+1;
-                      
-                  if v.slave.tLast := '1';
+                  v.state                    := UPDATE_AND_MOVE_S;                  
+
+                  if v.slave.tLast = '1' then
                         v.counter            := 0;
                   end if
                else
-                  v.state                    := IDLE_S;
+                  v.master.tValid  := '0';   --message to downstream data processing that there's no valid data ready
+                  v.slave.tReady   := '0';   --message to upstream that we're not ready
+                  v.master.tLast   := '0';
+                  v.state          := IDLE_S;
                end if     
 
       end case;
