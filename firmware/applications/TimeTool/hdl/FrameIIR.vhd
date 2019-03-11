@@ -66,8 +66,8 @@ architecture mapping of FrameIIR is
    constant CAMERA_RESOLUTION_BITS        : positive            := 8;
    constant CAMERA_PIXEL_NUMBER           : positive            := 2048;
 
-   --type CameraFrame is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
-   type CameraFrame is array (natural range<>) of signed((CAMERA_RESOLUTION_BITS-1) downto 0);
+   --type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
+   type CameraFrameBuffer is array (natural range<>) of signed((CAMERA_RESOLUTION_BITS-1) downto 0);
 
    type StateType is (
       IDLE_S,
@@ -82,7 +82,7 @@ architecture mapping of FrameIIR is
       prescalingRate  : slv(31 downto 0);
       axi_test        : slv(31 downto 0);
       state           : StateType;
-      rollingImage    : CameraFrame((CAMERA_PIXEL_NUMBER-1) downto 0);
+      rollingImage    : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -94,7 +94,6 @@ architecture mapping of FrameIIR is
       prescalingRate  => (others=>'0'),
       axi_test        => (others=>'0'),
       state           => IDLE_S,
-      --rollingImage    => (others => (others => '0') ) );
       rollingImage    => (others => (others => '0') ) );
 
 ---------------------------------------
@@ -157,7 +156,6 @@ begin
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
-      v.slave.tReady    := not outCtrl.pause;
       v.master.tLast    := '0';
       v.master.tValid   := '0';
 
@@ -183,9 +181,20 @@ begin
 
                if v.slave.tReady = '1' and inMaster.tValid = '1' then
                   v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
-                  v.rollingImage(v.counter)  := (v.rollingImage(v.counter)/32)*31 + signed(inMaster.tdata)/32;
-                  v.master.tData             := std_logic_vector(v.rollingImage(v.counter));
-                  v.counter                  := v.counter+1;
+
+                  for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
+                        --v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
+                        --v.rollingImage(v.counter)  := (v.rollingImage(v.counter)/32)*31 + signed(inMaster.tdata)/32;
+                        --v.master.tData             := std_logic_vector(v.rollingImage(v.counter));
+
+                        --v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 )  := ((v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ))/32)*31; --+ signed(inMaster.tdata(i*8+7 downto i*8))/32;
+                        v.rollingImage(v.counter + i*8 )   := signed(inMaster.tdata(i*8+7 downto i*8));
+                        --v.master.tData(i*8+7 downto i*8)                           := std_logic_vector(v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ));
+
+                  end loop;
+
+                 
+                  v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;
                   v.state                    := UPDATE_AND_MOVE_S;                  
 
                   if v.master.tLast = '1' then
