@@ -64,6 +64,8 @@ architecture rtl of FileToAxiStreamSim is
    constant c1_WIDTH : natural := 8;
    constant c2_WIDTH : natural := 2;
 
+   constant CLK_PERIOD_G : time      := 10 ns;
+
    signal r   : RegType := REG_INIT_C;
    signal rin : RegType;
    
