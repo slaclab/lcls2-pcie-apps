@@ -82,7 +82,7 @@ architecture mapping of FrameIIR is
       prescalingRate  : slv(31 downto 0);
       axi_test        : slv(31 downto 0);
       state           : StateType;
-      rollingImage    : CameraFrame;
+      rollingImage    : CameraFrame((CAMERA_PIXEL_NUMBER-1) downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -188,15 +188,15 @@ begin
                   v.counter                  := v.counter+1;
                   v.state                    := UPDATE_AND_MOVE_S;                  
 
-                  if v.slave.tLast = '1' then
+                  if v.master.tLast = '1' then
                         v.counter            := 0;
-                  end if
+                  end if;
                else
                   v.master.tValid  := '0';   --message to downstream data processing that there's no valid data ready
                   v.slave.tReady   := '0';   --message to upstream that we're not ready
                   v.master.tLast   := '0';
                   v.state          := IDLE_S;
-               end if     
+               end if;     
 
       end case;
 
