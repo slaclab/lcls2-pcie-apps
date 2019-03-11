@@ -5,7 +5,7 @@ my_file = "/u1/sioan/build/TimeToolKcu1500/TimeToolKcu1500_project.sim/sim_1/beh
 
 n_frames        = 27
 pixel_bit_width = 8
-n_pixels        = 1024
+n_pixels        = 2048
 
 sigma           = 800.0
 jitter          = 100.0
