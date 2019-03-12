@@ -102,7 +102,7 @@ architecture mapping of FrameIIR is
 
 
    signal r             : RegType     := REG_INIT_C;
-   signal rin           : RegType;
+   signal rin           : RegType     := REG_INIT_C;
 
    signal inMaster      : AxiStreamMasterType   :=    AXI_STREAM_MASTER_INIT_C;
    signal inSlave       : AxiStreamSlaveType    :=    AXI_STREAM_SLAVE_INIT_C;  
@@ -137,12 +137,12 @@ begin
    -- Application
    ---------------------------------
    comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster, outCtrl) is
-      variable v      : RegType;
+      variable v      : RegType := REG_INIT_C ;
       variable axilEp : AxiLiteEndpointType;
    begin
 
       -- Latch the current value
-      v := r      := REG_INIT_C ;
+      v := r     ; 
 
       ------------------------      
       -- AXI-Lite Transactions
