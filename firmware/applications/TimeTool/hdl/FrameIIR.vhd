@@ -104,9 +104,9 @@ architecture mapping of FrameIIR is
    signal r             : RegType     := REG_INIT_C;
    signal rin           : RegType;
 
-   signal inMaster      : AxiStreamMasterType;
-   signal inSlave       : AxiStreamSlaveType;
-   signal outCtrl       : AxiStreamCtrlType;
+   signal inMaster      : AxiStreamMasterType   :=    AXI_STREAM_MASTER_INIT_C;
+   signal inSlave       : AxiStreamSlaveType    :=    AXI_STREAM_SLAVE_INIT_C;  
+   signal outCtrl       : AxiStreamCtrlType     :=    AXI_STREAM_CTRL_INIT_C;
 
 begin
 
@@ -142,7 +142,7 @@ begin
    begin
 
       -- Latch the current value
-      v := r;
+      v := r      := REG_INIT_C ;
 
       ------------------------      
       -- AXI-Lite Transactions
@@ -156,6 +156,7 @@ begin
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
+      v.slave.tReady    := not outCtrl.pause;
       v.master.tLast    := '0';
       v.master.tValid   := '0';
 
@@ -170,6 +171,7 @@ begin
                
 
             else
+                  v.slave.tReady    :='0';
                   v.state           := IDLE_S;
             end if;
 
@@ -200,6 +202,9 @@ begin
                   if v.master.tLast = '1' then
                         v.counter            := 0;
                   end if;
+                  
+                  v.state     := UPDATE_AND_MOVE_S;
+
                else
                   v.master.tValid  := '0';   --message to downstream data processing that there's no valid data ready
                   v.slave.tReady   := '0';   --message to upstream that we're not ready

@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-my_output_file = "/u1/sioan/build/TimeToolKcu1500/TimeToolKcu1500_project.sim/sim_1/behav/xsim/output_results.txt"
-my_input_file = "/u1/sioan/build/TimeToolKcu1500/TimeToolKcu1500_project.sim/sim_1/behav/xsim/sim_input_data.txt"
+my_output_file = "/u1/sioan/lcls2-pcie-apps/output_results.txt"
+my_input_file = "/u1/sioan/lcls2-pcie-apps/sim_input_data.txt"
 
 
 for i in range(10000): 

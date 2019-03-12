@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib as plt
 
-my_file = "/u1/sioan/build/TimeToolKcu1500/TimeToolKcu1500_project.sim/sim_1/behav/xsim/sim_input_data.txt"
+my_file = "/u1/sioan/lcls2-pcie-apps/sim_input_data.txt"
 
 n_frames        = 27
 pixel_bit_width = 8

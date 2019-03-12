@@ -58,40 +58,40 @@ architecture testbed of TBIIR_filter is
       TUSER_BITS_C  => 2,
       TUSER_MODE_C  => TUSER_FIRST_LAST_C);
 
-   signal userClk156   : sl;
-   signal dmaClk       : sl;
-   signal dmaRst       : sl;
-   signal dmaObMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0);
-   signal dmaObSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
-   signal dmaIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0);
-   signal dmaIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
-   signal hwIbMasters  : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0);
-   signal hwIbSlaves   : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
+   signal userClk156           : sl;
+   signal dmaClk               : sl;
+   signal dmaRst               : sl;
+   signal dmaObMasters         : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0);
+   signal dmaObSlaves          : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
+   signal dmaIbMasters         : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0);
+   signal dmaIbSlaves          : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
+   signal hwIbMasters          : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0);
+   signal hwIbSlaves           : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
 
-   signal axilReadMaster  : AxiLiteReadMasterType;
-   signal axilReadSlave   : AxiLiteReadSlaveType;
-   signal axilWriteMaster : AxiLiteWriteMasterType;
-   signal axilWriteSlave  : AxiLiteWriteSlaveType;
+   signal axilReadMaster       : AxiLiteReadMasterType;
+   signal axilReadSlave        : AxiLiteReadSlaveType;
+   signal axilWriteMaster      : AxiLiteWriteMasterType;
+   signal axilWriteSlave       : AxiLiteWriteSlaveType;
 
-   signal intReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal intReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal intWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal intWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intReadMasters       : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intReadSlaves        : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intWriteMasters      : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal intWriteSlaves       : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
 
-   signal appInMaster  : AxiStreamMasterType;
-   signal appInSlave   : AxiStreamSlaveType;
-   signal appOutMaster : AxiStreamMasterType;
-   signal appOutSlave  : AxiStreamSlaveType;
+   signal FifoToIIRMaster      : AxiStreamMasterType;
+   signal FifoToIIRSlave       : AxiStreamSlaveType;
 
-   signal timingBus : TimingBusType;
+
+   signal appInMaster          : AxiStreamMasterType;
+   signal appInSlave           : AxiStreamSlaveType;
+   signal appOutMaster         : AxiStreamMasterType;
+   signal appOutSlave          : AxiStreamSlaveType;
 
    signal pgpTxClk : slv(DMA_SIZE_C-1 downto 0);
    signal pgpTxIn  : Pgp2bTxInArray(DMA_SIZE_C-1 downto 0);
 
    signal axiClk   : sl;
    signal axiRst   : sl;
-
-   signal testInMaster    : AxiStreamMasterType;
 
    file file_RESULTS : text;
 
@@ -154,13 +154,37 @@ architecture testbed of TBIIR_filter is
                --sAxisCtrl   => outCtrl,
                mAxisClk    => dmaClk,
                mAxisRst    => dmaRst,
-               mAxisMaster => appOutMaster,
-               mAxisSlave  => appOutSlave);
+               mAxisMaster => FifoToIIRMaster,
+               mAxisSlave  => FifoToIIRSlave);
+
 
          --------------------
          -- Modules to be tested
-         --------------------  
+         -------------------- 
 
+         u_FrameIIR : entity work.FrameIIR
+            generic map (
+               TPD_G             => TPD_G,
+               DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+            port map (
+               -- System Clock and Reset
+               sysClk          => dmaClk,
+               sysRst          => dmaRst,
+               -- DMA Interface (sysClk domain)
+               dataInMaster    => FifoToIIRMaster,
+               dataInSlave     => FifoToIIRSlave,
+               dataOutMaster   => appOutMaster,
+               dataOutSlave    => appOutSlave,
+               -- AXI-Lite Interface (sysClk domain)
+               axilReadMaster  => axilReadMaster,
+               axilReadSlave   => axilReadSlave,
+               axilWriteMaster => axilWriteMaster,
+               axilWriteSlave  => axilWriteSlave);
+        
+
+         ---------------------------------
+         -- AXI-Lite Register Transactions
+         ---------------------------------
          U_XBAR : entity work.AxiLiteCrossbar
             generic map (
                TPD_G              => TPD_G,
@@ -181,9 +205,6 @@ architecture testbed of TBIIR_filter is
 
    
 
-   ---------------------------------
-   -- AXI-Lite Register Transactions
-   ---------------------------------
    test : process is
       variable debugData : slv(31 downto 0) := (others => '0');
    begin
@@ -213,7 +234,7 @@ architecture testbed of TBIIR_filter is
 
       to_file := appOutMaster;
 
-      file_open(file_RESULTS, "output_results.txt", write_mode);
+      file_open(file_RESULTS, "/u1/sioan/lcls2-pcie-apps/output_results.txt", write_mode);
 
       while true loop
 
