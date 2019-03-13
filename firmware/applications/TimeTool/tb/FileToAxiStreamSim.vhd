@@ -31,10 +31,10 @@ use ieee.std_logic_textio.all;
 
 entity FileToAxiStreamSim is
    generic (
-      TPD_G           : time                := 1 ns;
-      BYTE_SIZE_C     : positive            := 1;
-      FRAMES_PER_BYTE : positive            := 6;
-      AXIS_CONFIG_G   : AxiStreamConfigType := AXI_STREAM_CONFIG_INIT_C);
+      TPD_G              : time                := 1 ns;
+      BYTE_SIZE_C        : positive            := 1;
+      BITS_PER_TRANSFER  : natural             := 128;
+      AXIS_CONFIG_G      : AxiStreamConfigType := AXI_STREAM_CONFIG_INIT_C);
    port (
       -- System clock and reset
       axiClk       : in  sl;
@@ -49,6 +49,7 @@ architecture rtl of FileToAxiStreamSim is
       byteCount    : natural;
       frameCount   : natural;
       sleepCount   : natural;
+      counter      : natural;
       master       : AxiStreamMasterType;
    end record RegType;
 
@@ -56,7 +57,8 @@ architecture rtl of FileToAxiStreamSim is
       byteCount    => 0,
       frameCount   => 0,
       sleepCount   => 0,
-      master       => AXI_STREAM_MASTER_INIT_C);
+      master       => AXI_STREAM_MASTER_INIT_C,
+      counter      => 100);
 
    file file_VECTORS : text;
    file file_RESULTS : text;
@@ -69,18 +71,20 @@ architecture rtl of FileToAxiStreamSim is
    signal r   : RegType := REG_INIT_C;
    signal rin : RegType;
    
-   signal r_ADD_TERM1 : std_logic_vector(c1_WIDTH-1 downto 0) := (others => '0');
-   signal r_ADD_TERM2 : std_logic_vector(c2_WIDTH-1 downto 0) := (others => '0');
+   signal r_ADD_TERM1 : std_logic_vector(BITS_PER_TRANSFER-1 downto 0) := (others => '0');
+   signal r_ADD_TERM2 : sl := '0';
    --signal w_SUM       : std_logic_vector(c_WIDTH downto 0);
+
+
 
 begin
 
    process
-      variable v : RegType;
+      variable v           : RegType := REG_INIT_C;
       variable v_ILINE     : line;
       variable v_OLINE     : line;
-      variable v_ADD_TERM1 : std_logic_vector(c1_WIDTH-1 downto 0);
-      variable v_ADD_TERM2 : std_logic_vector(c2_WIDTH-1 downto 0);
+      variable v_ADD_TERM1 : std_logic_vector(BITS_PER_TRANSFER-1 downto 0);
+      variable v_ADD_TERM2 : sl := '0';
       variable v_SPACE     : character;
 
    begin
@@ -89,24 +93,40 @@ begin
       --w_SUM <= (others=>'1');
 
       --file_open(file_RESULTS, "output_results.txt", write_mode);
-      file_open(file_VECTORS, "sim_input_data.txt",  read_mode);
+      file_open(file_VECTORS, "/u1/sioan/lcls2-pcie-apps/sim_input_data.dat",  read_mode);
       
 
     while not endfile(file_VECTORS) loop
-      readline(file_VECTORS, v_ILINE);
-      read(v_ILINE, v_ADD_TERM1);
-      read(v_ILINE, v_SPACE);           -- read in the space character
-      read(v_ILINE, v_ADD_TERM2);
- 
-      -- Pass the variable to a signal to allow the ripple-carry to use it
-      r_ADD_TERM1 <= v_ADD_TERM1;
-      r_ADD_TERM2 <= v_ADD_TERM2;
- 
-      wait for 60 ns;
 
-      v.master.tData(7 downto 0)   := v_ADD_TERM1;
-      v.master.tValid              := '1';
-      v.master.tLast               := v_ADD_TERM2(0);
+    wait for 10 ns;
+        if v.counter < 1 then
+
+            readline(file_VECTORS, v_ILINE);
+            read(v_ILINE, v_ADD_TERM1);
+            read(v_ILINE, v_SPACE);           -- read in the space character
+            read(v_ILINE, v_ADD_TERM2);
+       
+            -- Pass the variable to a signal to allow the ripple-carry to use it
+            r_ADD_TERM1 <= v_ADD_TERM1;
+            r_ADD_TERM2 <= v_ADD_TERM2;
+       
+
+            --need to modify the python code to write 128 bits to a single line so below can be used instead
+            --for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
+            --   v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
+            --end loop;
+            
+            v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v_ADD_TERM1;
+            v.master.tValid                                     := '1';
+            v.master.tLast                                      := v_ADD_TERM2;
+            v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
+            v.counter                                           := 15;
+       else
+            v.master.tValid     := '0';
+            v.master.tLast      := '0';
+            v.counter           := v.counter-1;
+
+       end if;
 
       --v.master.tLast := '0';
       --if (v_ADD_TERM2(1)='1') then
