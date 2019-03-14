@@ -37,7 +37,7 @@ use unisim.vcomponents.all;
 -- This file performs the the prescaling, or the amount of raw data which is stored
 -------------------------------------------------------------------------------
 
-entity FrameIIR is
+entity TimeToolPrescaler is
    generic (
       TPD_G             : time                := 1 ns;
       DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
@@ -56,9 +56,9 @@ entity FrameIIR is
       axilReadSlave   : out   AxiLiteReadSlaveType;
       axilWriteMaster : in    AxiLiteWriteMasterType;
       axilWriteSlave  : out   AxiLiteWriteSlaveType);
-end FrameIIR;
+end TimeToolPrescaler;
 
-architecture mapping of FrameIIR is
+architecture mapping of TimeToolPrescaler is
 
    constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
    constant PGP2BTXIN_LEN  : integer := 19;
