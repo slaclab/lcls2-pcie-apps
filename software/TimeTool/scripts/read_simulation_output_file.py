@@ -9,11 +9,12 @@ my_input_file = "/u1/sioan/lcls2-pcie-apps/sim_input_data.dat"
 for i in range(10000): 
       try: 
             loaded_output_data = np.loadtxt(my_output_file,skiprows=i)
+            my_output_data = np.array([int(i[:-2],2) for i in loaded_output_data.astype(str)])
+
             break 
       except: 
             pass 
 
-my_output_data = np.array([int(i[:-2],2) for i in loaded_output_data.astype(str)])
 
 my_input_data = []
 loaded_input_data = open(my_input_file)
@@ -31,7 +32,7 @@ my_input_data = np.array(my_input_data).flatten()
 plt.figure(0)
 plt.plot(my_input_data)
 
-plt.figure(1)
-plt.plot(my_output_data)
+#plt.figure(1)
+#plt.plot(my_output_data)
 
 plt.show()

@@ -37,7 +37,7 @@ use unisim.vcomponents.all;
 -- This file performs the the prescaling, or the amount of raw data which is stored
 -------------------------------------------------------------------------------
 
-entity TimeToolPrescaler is
+entity FrameIIR is
    generic (
       TPD_G             : time                := 1 ns;
       DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
@@ -56,9 +56,9 @@ entity TimeToolPrescaler is
       axilReadSlave   : out   AxiLiteReadSlaveType;
       axilWriteMaster : in    AxiLiteWriteMasterType;
       axilWriteSlave  : out   AxiLiteWriteSlaveType);
-end TimeToolPrescaler;
+end FrameIIR;
 
-architecture mapping of TimeToolPrescaler is
+architecture mapping of FrameIIR is
 
    constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
    constant PGP2BTXIN_LEN  : integer := 19;
@@ -78,6 +78,7 @@ architecture mapping of TimeToolPrescaler is
       prescalingRate  : slv(31 downto 0);
       axi_test        : slv(31 downto 0);
       state           : StateType;
+      validate_state  : slv(2 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -88,7 +89,8 @@ architecture mapping of TimeToolPrescaler is
       counter         => (others=>'0'),
       prescalingRate  => (others=>'0'),
       axi_test        => (others=>'0'),
-      state           => IDLE_S);
+      state           => IDLE_S,
+      validate_state  => (others=>'0'));
 
 ---------------------------------------
 -------record intitial value-----------
@@ -182,6 +184,7 @@ begin
             ------------------------------
             -- check which state
             ------------------------------
+            v.validate_state := (others=>'0');    --debugging signal
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
                   if v.counter = v.prescalingRate then
                         v.state     := MOVE_S;
@@ -197,14 +200,18 @@ begin
                   ------------------------------
                   -- send regular frame
                   ------------------------------
-                  if v.slave.tReady = '1' and inMaster.tValid = '1' then
+                  v.validate_state(0) := '1';     --debugging signal
+                  if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter = v.prescalingRate then
                       v.master := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
+                      v.validate_state(1) := '1';   --debugging signal               
 
                   else
                       v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
                       v.slave.tReady  := '0';   --message to upstream that we're not ready
                       v.master.tLast  := '0';
                       v.state         := IDLE_S;
+                      v.validate_state(2) := '1';   --debugging signal
+
                   end if;
 
             when SEND_NULL =>

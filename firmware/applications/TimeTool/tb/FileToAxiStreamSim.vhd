@@ -40,10 +40,14 @@ entity FileToAxiStreamSim is
       axiClk       : in  sl;
       axiRst       : in  sl;
       -- Outbound frame
-      mAxisMaster  : out AxiStreamMasterType);
+      mAxisMaster  : out AxiStreamMasterType;
+      mAxisSlave   : in  AxiStreamSlaveType);
+
 end FileToAxiStreamSim;
 
 architecture rtl of FileToAxiStreamSim is
+
+   type StateType is (IDLE_S,MOVE_S);
 
    type RegType is record
       byteCount    : natural;
@@ -51,6 +55,8 @@ architecture rtl of FileToAxiStreamSim is
       sleepCount   : natural;
       counter      : natural;
       master       : AxiStreamMasterType;
+      slave        : AxiStreamSlaveType;
+      state        : StateType;
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -58,7 +64,9 @@ architecture rtl of FileToAxiStreamSim is
       frameCount   => 0,
       sleepCount   => 0,
       master       => AXI_STREAM_MASTER_INIT_C,
-      counter      => 100);
+      slave        => AXI_STREAM_SLAVE_INIT_C,
+      counter      => 100,
+      state        => IDLE_S);
 
    file file_VECTORS : text;
    file file_RESULTS : text;
@@ -70,6 +78,8 @@ architecture rtl of FileToAxiStreamSim is
 
    signal r   : RegType := REG_INIT_C;
    signal rin : RegType;
+
+   signal outCtrl  : AxiStreamCtrlType;
    
    signal r_ADD_TERM1 : std_logic_vector(BITS_PER_TRANSFER-1 downto 0) := (others => '0');
    signal r_ADD_TERM2 : sl := '0';
@@ -98,17 +108,73 @@ begin
 
     while not endfile(file_VECTORS) loop
 
-    wait for 10 ns;
-        if v.counter < 1 then
+    wait for CLK_PERIOD_G;
 
-            readline(file_VECTORS, v_ILINE);
-            read(v_ILINE, v_ADD_TERM1);
-            read(v_ILINE, v_SPACE);           -- read in the space character
-            read(v_ILINE, v_ADD_TERM2);
+    v.slave.tReady    := mAxisSlave.tReady;
+    v.master          := AXI_STREAM_MASTER_INIT_C;
+
+    case r.state is
+
+            when IDLE_S =>
+            ------------------------------
+            -- check which state
+            ------------------------------
+                  if v.slave.tReady = '1' then  
+
+                        v.state     := MOVE_S;
+                      
+                  else
+
+                        v.state     := IDLE_S;
+
+                  end if;
+ 
+            when MOVE_S =>
+            ------------------------------
+            -- move data
+            ------------------------------
+                  if v.slave.tReady = '1' then
+                            readline(file_VECTORS, v_ILINE);
+                            read(v_ILINE, v_ADD_TERM1);
+                            read(v_ILINE, v_SPACE);           -- read in the space character
+                            read(v_ILINE, v_ADD_TERM2);
+             
+                           -- Pass the variable to a signal to allow the ripple-carry to use it
+                            r_ADD_TERM1 <= v_ADD_TERM1;
+                            r_ADD_TERM2 <= v_ADD_TERM2;
+
+                            v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v_ADD_TERM1;
+                            v.master.tValid                                     := '1';
+                            v.master.tLast                                      := v_ADD_TERM2;
+                            v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
+            
+                            --v.state         := IDLE_S;
+             
+                        
+                    else
+                            v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
+                            v.slave.tReady  := '0';   --message to upstream that we're not ready
+                            v.master.tLast  := '0';
+                            v.state         := IDLE_S;
+
+
+
+                   end if;
+
+        end case;
+
+        --if v.counter < 1 then
+        --    v.master := AXI_STREAM_MASTER_INIT_C;
+        --    v.master.tKeep  := (others=>'0');            
+
+        --    readline(file_VECTORS, v_ILINE);
+        --    read(v_ILINE, v_ADD_TERM1);
+        --   read(v_ILINE, v_SPACE);           -- read in the space character
+        --    read(v_ILINE, v_ADD_TERM2);
        
             -- Pass the variable to a signal to allow the ripple-carry to use it
-            r_ADD_TERM1 <= v_ADD_TERM1;
-            r_ADD_TERM2 <= v_ADD_TERM2;
+        --    r_ADD_TERM1 <= v_ADD_TERM1;
+        --    r_ADD_TERM2 <= v_ADD_TERM2;
        
 
             --need to modify the python code to write 128 bits to a single line so below can be used instead
@@ -116,17 +182,19 @@ begin
             --   v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
             --end loop;
             
-            v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v_ADD_TERM1;
-            v.master.tValid                                     := '1';
-            v.master.tLast                                      := v_ADD_TERM2;
-            v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
-            v.counter                                           := 15;
-       else
-            v.master.tValid     := '0';
-            v.master.tLast      := '0';
-            v.counter           := v.counter-1;
+        --    v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v_ADD_TERM1;
+        --    v.master.tValid                                     := '1';
+        --    v.master.tLast                                      := v_ADD_TERM2;
+        --    v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
+        --    v.counter                                           := 15;
+       --else
+        --    v.master.tKeep      := (others=>'0');
+        --    v.master.tKeep(0)   := '1';
+        --    v.master.tValid     := '0';
+        --    v.master.tLast      := '0';
+        --    v.counter           := v.counter-1;
 
-       end if;
+       --end if;
 
       --v.master.tLast := '0';
       --if (v_ADD_TERM2(1)='1') then
