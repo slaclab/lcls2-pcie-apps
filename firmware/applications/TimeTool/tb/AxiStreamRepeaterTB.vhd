@@ -68,8 +68,9 @@ architecture testbed of AxiStreamRepeaterTB is
 
 begin
 
-   slaveRepeaterToFEXorPrescaler(0).tReady<= '1';
-   slaveRepeaterToFEXorPrescaler(1).tReady<= '1';
+   slaveRepeaterToFEXorPrescaler(0).tReady      <= '1';
+   slaveRepeaterToFEXorPrescaler(1).tReady      <= '1';
+   appInSlave.tReady                            <= '1';     --this pin can only be driven once.  vivado simulation will compile but not run
 
    --------------------
    -- Clocks and Resets
@@ -100,7 +101,8 @@ begin
    -- Test data
    --------------------  
 
-      U_PackTx : entity work.AxiStreamBytePackerTbTx
+      --U_CamOutput : entity work.AxiStreamCameraOutput
+      U_CamOutput : entity work.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,
             BYTE_SIZE_C   => 2+1,
@@ -108,7 +110,8 @@ begin
          port map (
             axiClk      => axiClk,
             axiRst      => axiRst,
-            mAxisMaster => appInMaster);
+            mAxisMaster => appInMaster,
+            mAxisSlave  => appInSlave);            
 
    --------------------
    -- Modules to be tested
@@ -131,7 +134,7 @@ begin
          axisRst      => dmaRst,
          -- Slave
          sAxisMaster  => appInMaster,
-         sAxisSlave   => appInSlave,
+         --sAxisSlave   => appInSlave,    --this pin can only be driven once.  vivado simulation will compile but not run
          -- Masters
          mAxisMasters => masterRepeaterToFEXorPrescaler,
          mAxisSlaves  => slaveRepeaterToFEXorPrescaler);
