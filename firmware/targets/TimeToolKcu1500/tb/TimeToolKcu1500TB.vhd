@@ -96,6 +96,7 @@ architecture testbed of TimeToolKcu1500TB is
    begin
 
          appOutSlave.tReady <= '1';      -- this is NOT crashing simulation
+         appInSlave.tReady   <= '1';      -- can only be driven once
 
          --------------------
          -- Clocks and Resets
@@ -126,7 +127,9 @@ architecture testbed of TimeToolKcu1500TB is
          -- Test data
          --------------------  
 
-            U_PackTx : entity work.AxiStreamCameraRealSim
+ 
+            --U_CamOutput : entity work.AxiStreamCameraOutput
+            U_CamOutput : entity work.FileToAxiStreamSim
                generic map (
                   TPD_G         => TPD_G,
                   BYTE_SIZE_C   => 2+1,
@@ -134,7 +137,8 @@ architecture testbed of TimeToolKcu1500TB is
                port map (
                   axiClk      => axiClk,
                   axiRst      => axiRst,
-                  mAxisMaster => appInMaster);
+                  mAxisMaster => appInMaster,
+                  mAxisSlave  => appInSlave);   
 
          --------------------
          -- Modules to be tested
@@ -168,7 +172,7 @@ architecture testbed of TimeToolKcu1500TB is
                sysRst          => dmaRst,
                -- DMA Interface (sysClk domain)
                dataInMaster    => appInMaster,
-               dataInSlave     => appInSlave,
+               --dataInSlave     => appInSlave, --can only drive one. indicates upstream back pressureable.  upstream could be ignoring this
                dataOutMaster   => appOutMaster,
                dataOutSlave    => appOutSlave,
                -- AXI-Lite Interface (sysClk domain)
