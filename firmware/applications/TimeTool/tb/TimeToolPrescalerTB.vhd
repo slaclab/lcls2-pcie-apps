@@ -103,7 +103,8 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.AxiStreamCameraOutput
+      --U_CamOutput : entity work.AxiStreamCameraOutput
+      U_CamOutput : entity work.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,
             BYTE_SIZE_C   => 2+1,
@@ -111,7 +112,8 @@ begin
          port map (
             axiClk      => axiClk,
             axiRst      => axiRst,
-            mAxisMaster => appInMaster);
+            mAxisMaster => appInMaster,
+            mAxisSlave  => appInSlave);
 
    --------------------
    -- Modules to be tested
