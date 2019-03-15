@@ -190,7 +190,8 @@ begin
                         --v.master.tData             := std_logic_vector(v.rollingImage(v.counter));
 
                         --v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 )  := ((v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ))/32)*31; --+ signed(inMaster.tdata(i*8+7 downto i*8))/32;
-                        v.rollingImage(v.counter + i*8 )   := signed(inMaster.tdata(i*8+7 downto i*8));
+                        v.rollingImage(v.counter + i)   := signed(inMaster.tdata(i*8+7 downto i*8)); --
+                        --v.rollingImage(v.counter + i )     := to_signed(v.counter,8);
                         --v.master.tData(i*8+7 downto i*8)                           := std_logic_vector(v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ));
 
                   end loop;
