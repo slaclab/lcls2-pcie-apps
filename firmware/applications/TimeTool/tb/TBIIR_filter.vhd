@@ -167,7 +167,7 @@ begin
    save_to_file : process is
       variable to_file              : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       variable v_OLINE              : line; 
-      constant c_WIDTH              : natural := 8;
+      constant c_WIDTH              : natural := 128;
       constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
 
    begin
@@ -178,8 +178,8 @@ begin
 
       while true loop
 
-            write(v_OLINE, appInMaster.tData(127 downto 0), right, c_WIDTH);   -- only seven bits to reduce file writing size
-            --write(v_OLINE, appOutMaster.tData(7 downto 0), right, c_WIDTH);   -- only seven bits to reduce file writing size
+            --write(v_OLINE, appInMaster.tData(c_WIDTH -1 downto 0), right, c_WIDTH);
+            write(v_OLINE, appOutMaster.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
             writeline(file_RESULTS, v_OLINE);
 
             wait for CLK_PERIOD_G;
