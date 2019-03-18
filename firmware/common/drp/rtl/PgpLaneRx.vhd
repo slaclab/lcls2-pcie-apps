@@ -2,7 +2,7 @@
 -- File       : PgpLaneRx.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-06-27
+-- Last update: 2019-02-05
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -29,7 +29,8 @@ entity PgpLaneRx is
    generic (
       TPD_G    : time     := 1 ns;
       LANE_G   : natural  := 0;
-      NUM_VC_G : positive := 16);
+      NUM_VC_G : positive := 16;
+      USE_FLOW_G : boolean := false );
    port (
       -- DMA Interface (dmaClk domain)
       dmaClk       : in  sl;
@@ -183,20 +184,29 @@ begin
 
    GEN_NOMUX : if NUM_VC_G < 2 generate
 
-     PGP_FLOW : entity work.AxiStreamFlow
+     GEN_FLOW : if USE_FLOW_G generate
+       PGP_FLOW : entity work.AxiStreamFlow
 --       generic map ( DEBUG_G => LANE_G=0 )
-       generic map ( DEBUG_G => false )
-       port map (
-         clk         => pgpClk,
-         rst         => pgpRst,
-         sAxisMaster => pgpRxMasters   (0),
-         sAxisCtrl   => pgpRxCtrl      (0),
-         mAxisMaster => intPgpRxMasters(0),
-         mAxisCtrl   => intPgpRxCtrl   (0),
-         ibFull      => dmaIbFull,
-         drop        => drop           (0),
-         trunc       => trunc          (0) );
+         generic map ( DEBUG_G => false )
+         port map (
+           clk         => pgpClk,
+           rst         => pgpRst,
+           sAxisMaster => pgpRxMasters   (0),
+           sAxisCtrl   => pgpRxCtrl      (0),
+           mAxisMaster => intPgpRxMasters(0),
+           mAxisCtrl   => intPgpRxCtrl   (0),
+           ibFull      => dmaIbFull,
+           drop        => drop           (0),
+           trunc       => trunc          (0) );
+     end generate;
 
+     NO_GEN_FLOW : if not USE_FLOW_G generate
+       pgpRxCtrl       <= intPgpRxCtrl;
+       intPgpRxMasters <= pgpRxMasters;
+       drop            <= (others=>'0');
+       trunc           <= (others=>'0');
+     end generate;
+     
      ASYNC_FIFO : entity work.AxiStreamFifoV2
        generic map (
          -- General Configurations

@@ -2,7 +2,7 @@
 -- File       : MigIlvToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2018-11-11
+-- Last update: 2019-02-11
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -39,6 +39,7 @@ entity MigIlvToPcieDma is
              axiClk           : in  sl; -- 200MHz
              axiRst           : in  sl; -- need a user reset to clear the pipeline
              usrRst           : out sl;
+             seqError         : out sl;
              -- AXI4 Interfaces to MIG
              axiReadMaster    : out AxiReadMasterType;
              axiReadSlave     : in  AxiReadSlaveType;
@@ -50,6 +51,8 @@ entity MigIlvToPcieDma is
              -- AXIStream Interface to PCIe
              axisMasters      : out AxiStreamMasterType;
              axisSlaves       : in  AxiStreamSlaveType;
+             axisOflow        : in  sl;
+--             hwIbOflow        : in  slv(31 downto 0);
              -- AXI Lite Interface
              axilClk          : in  sl;
              axilRst          : in  sl;
@@ -71,6 +74,9 @@ architecture mapping of MigIlvToPcieDma is
   signal sAxilWriteMaster : AxiLiteWriteMasterType;
   signal sAxilWriteSlave  : AxiLiteWriteSlaveType;
   signal taxisMasters     : AxiStreamMasterType;
+
+  signal axisCtrl         : AxiStreamCtrlType;
+  signal cntOflow         : SlVectorArray(1 downto 0,7 downto 0);
   
   type RegType is record
     axilWriteSlave : AxiLiteWriteSlaveType;
@@ -144,10 +150,17 @@ begin
                 axiCache        => x"3",
                 axisMaster      => taxisMasters,
                 axisSlave       => axisSlaves ,
-                axisCtrl        => AXI_STREAM_CTRL_UNUSED_C,
+                axisCtrl        => axisCtrl   ,
                 axiReadMaster   => axiReadMaster,
                 axiReadSlave    => axiReadSlave  );
 
+  U_SeqTest : entity work.AppSeqTest
+    port map ( axisClk    => axiClk,
+               axisRst    => axiRst,
+               axisMaster => taxisMasters,
+               axisSlave  => axisSlaves,
+               seqError   => seqError );
+  
   GEN_MONCLK : for i in 0 to MONCLKS_G-1 generate
     U_MONCLK : entity work.SyncClockFreq
      generic map (
@@ -165,8 +178,20 @@ begin
         locClk      => axiClk,
         refClk      => axiClk );
   end generate;
-     
-  comb : process ( axiRst, r, sAxilReadMaster, sAxilWriteMaster, migStatus,
+
+  U_OFLOW : entity work.SynchronizerOneShotCntVector
+    generic map ( COMMON_CLK_G => true,
+                  CNT_WIDTH_G  => 8,
+                  WIDTH_G      => 2 )
+    port map ( dataIn(0)  => axisOflow,          -- ib fifo
+               dataIn(1)  => axisCtrl.overflow,  -- dma
+               rollOverEn => (others=>'0'),
+               cntOut     => cntOflow,
+               wrClk      => axiClk,
+               rdClk      => axiClk );
+
+  comb : process ( axiRst, r, sAxilReadMaster, sAxilWriteMaster,
+                   migStatus, cntOflow,
                    monClkRate, monClkLock, monClkFast, monClkSlow ) is
     variable v       : RegType;
     variable regCon  : AxiLiteEndPointType;
@@ -181,7 +206,7 @@ begin
     regAddr := toSlv(0,12);
     axiSlaveRegister(regCon, regAddr, 0, v.monEnable );
 
-    regAddr := toSlv(128,12);
+    regAddr := toSlv(128,12); 
 
     axiSlaveRegister(regCon, regAddr, 0, v.migConfig.blockSize);
     regAddr := regAddr + 4;
@@ -198,6 +223,8 @@ begin
     regAddr := regAddr + 4;
     axiSlaveRegisterR(regCon, regAddr, 0, migStatus.rdIndex);
     regAddr := regAddr + 4;
+    axiSlaveRegisterR(regCon, regAddr, 0, muxSlVectorArray(cntOflow,0));
+    axiSlaveRegisterR(regCon, regAddr, 8, muxSlVectorArray(cntOflow,1));
     regAddr := regAddr + 4;
 
     regAddr := toSlv(256,12);

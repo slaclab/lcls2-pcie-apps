@@ -2,7 +2,7 @@
 -- File       : HardwareSemi.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-11-11
+-- Last update: 2019-02-04
 -------------------------------------------------------------------------------
 -- Description: HardwareSemi File
 -------------------------------------------------------------------------------
@@ -73,21 +73,6 @@ end HardwareSemi;
 architecture mapping of HardwareSemi is
 
    constant NUM_LANES_C       : natural := 4;
-   constant NUM_AXI_MASTERS_C : natural := 2;
-
-   constant PGP_INDEX_C     : natural := 0;
-   constant SIM_INDEX_C     : natural := 1;
-
-   constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_G, 22, 20);
-
-   signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
-
-   signal intObMasters     : AxiStreamMasterArray(NUM_LANES_C-1 downto 0);
-   signal intObSlaves      : AxiStreamSlaveArray (NUM_LANES_C-1 downto 0);
-   signal dmaObAlmostFull  : slv                 (NUM_LANES_C-1 downto 0) := (others=>'0');
 
    signal txOpCodeEn       : slv                 (NUM_LANES_C-1 downto 0);
    signal txOpCode         : Slv8Array           (NUM_LANES_C-1 downto 0);
@@ -135,28 +120,6 @@ begin
                  probe0(255 downto 16) => (others=>'0') );
   end generate;
    
-   ---------------------
-   -- AXI-Lite Crossbar
-   ---------------------
-   U_XBAR : entity work.AxiLiteCrossbar
-      generic map (
-         TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
-         NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
-         MASTERS_CONFIG_G   => AXI_CONFIG_C)
-      port map (
-         axiClk              => axilClk,
-         axiClkRst           => axilRst,
-         sAxiWriteMasters(0) => axilWriteMaster,
-         sAxiWriteSlaves(0)  => axilWriteSlave,
-         sAxiReadMasters(0)  => axilReadMaster,
-         sAxiReadSlaves(0)   => axilReadSlave,
-         mAxiWriteMasters    => axilWriteMasters,
-         mAxiWriteSlaves     => axilWriteSlaves,
-         mAxiReadMasters     => axilReadMasters,
-         mAxiReadSlaves      => axilReadSlaves);
-
    --------------
    -- PGP Modules
    --------------
@@ -178,8 +141,8 @@ begin
          -- DMA Interfaces (dmaClk domain)
          dmaClks         => idmaClks    ,
          dmaRsts         => idmaRsts    ,
-         dmaObMasters    => intObMasters,
-         dmaObSlaves     => intObSlaves ,
+         dmaObMasters    => dmaObMasters,
+         dmaObSlaves     => dmaObSlaves ,
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves ,
          dmaIbFull       => dmaIbFull   ,
@@ -191,39 +154,19 @@ begin
          -- AXI-Lite Interface (axilClk domain)
          axilClk         => axilClk,
          axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters (PGP_INDEX_C),
-         axilReadSlave   => axilReadSlaves  (PGP_INDEX_C),
-         axilWriteMaster => axilWriteMasters(PGP_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves (PGP_INDEX_C) );
+         axilReadMaster  => axilReadMaster ,
+         axilReadSlave   => axilReadSlave  ,
+         axilWriteMaster => axilWriteMaster,
+         axilWriteSlave  => axilWriteSlave );
 
    GEN_LANE : for i in 0 to NUM_LANES_C-1 generate
      U_TxOpCode : entity work.AppTxOpCode
        port map ( clk          => idmaClks       (i),
                   rst          => idmaRsts       (i),
---                  rxFull       => dmaIbAlmostFull(i),
-                  rxFull       => sAxisCtrl(i).pause,
-                  txFull       => dmaObAlmostFull(i),
+                  rxFull       => dmaIbAlmostFull(i),
+                  txFull       => '0',
                   txOpCodeEn   => txOpCodeEn     (i),
                   txOpCode     => txOpCode       (i) );
    end generate;
    
-   U_TxSim : entity work.AppTxSim
-     generic map ( DMA_AXIS_CONFIG_C => PGP3_AXIS_CONFIG_C )
-     port map ( axilClk         => axilClk,
-                axilRst         => axilRst,
-                axilReadMaster  => axilReadMasters (SIM_INDEX_C),
-                axilReadSlave   => axilReadSlaves  (SIM_INDEX_C),
-                axilWriteMaster => axilWriteMasters(SIM_INDEX_C),
-                axilWriteSlave  => axilWriteSlaves (SIM_INDEX_C),
-                --
-                clk             => idmaClks,
-                rst             => idmaRsts,
-                saxisMasters    => dmaObMasters,
-                saxisSlaves     => dmaObSlaves,
-                maxisMasters    => intObMasters,
-                maxisSlaves     => intObSlaves,
-                rxOpCodeEn      => rxOpCodeEn,
-                rxOpCode        => rxOpCode,
-                txFull          => dmaObAlmostFull );
-
 end mapping;

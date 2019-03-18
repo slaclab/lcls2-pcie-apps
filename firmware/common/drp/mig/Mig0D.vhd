@@ -2,7 +2,7 @@
 -- File       : Mig0D.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-08-03
--- Last update: 2018-11-11
+-- Last update: 2019-02-11
 -------------------------------------------------------------------------------
 -- Description: Wrapper for the MIG core
 -------------------------------------------------------------------------------
@@ -40,6 +40,7 @@ entity Mig0D is
       axiWriteSlave   : out   AxiWriteSlaveType;
       axiReadMaster   : in    AxiReadMasterType;
       axiReadSlave    : out   AxiReadSlaveType;
+      axiTrigger      : in    sl := '0';
       -- DDR Ports
       ddrClkP         : in    sl;
       ddrClkN         : in    sl;
@@ -154,7 +155,7 @@ architecture mapping of Mig0D is
    signal sysRstL    : sl;
 
    constant AXI_CONFIG_C : AxiConfigType := axiConfig( 32, 64, 4, 8 );
-   
+
 begin
 
    sysRstL <= not(axiRst);
@@ -292,11 +293,13 @@ begin
 
    U_Resize : entity work.AxiResize
      generic map ( SLAVE_AXI_CONFIG_G  => AXI_CONFIG_G,
-                   MASTER_AXI_CONFIG_G => AXI_CONFIG_C )
+                   MASTER_AXI_CONFIG_G => AXI_CONFIG_C,
+                   DEBUG_G             => true )
      port map (
        -- Clock and reset
        axiClk          => axiClk,
        axiRst          => axiRst,
+       axiTrigger      => axiTrigger,
        -- Slave Port
        sAxiReadMaster  => axiReadMaster,
        sAxiReadSlave   => axiReadSlave,

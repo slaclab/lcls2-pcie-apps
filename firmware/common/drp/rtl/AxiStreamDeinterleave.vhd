@@ -5,7 +5,7 @@
 -- Author     : Matt Weaver <weaver@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-07-10
--- Last update: 2018-11-11
+-- Last update: 2019-02-08
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -41,6 +41,8 @@ end AxiStreamDeinterleave;
 
 architecture top_level_app of AxiStreamDeinterleave is
 
+  constant SEQ_C : slv(15 downto 8) := x"55";
+  
   constant MAXIS_CONFIG_C : AxiStreamConfigType := (
     TSTRB_EN_C    => false,
     TDATA_BYTES_C => LANES_G*AXIS_CONFIG_G.TDATA_BYTES_C,
@@ -49,39 +51,83 @@ architecture top_level_app of AxiStreamDeinterleave is
     TKEEP_MODE_C  => AXIS_CONFIG_G.TKEEP_MODE_C,
     TUSER_BITS_C  => AXIS_CONFIG_G.TUSER_BITS_C,
     TUSER_MODE_C  => AXIS_CONFIG_G.TUSER_MODE_C );
-    
+
+  type FrameState is ( SOF_S, EOF_S, ERR_S );
+  
   type RegType is record
     master  : AxiStreamMasterType;
-    tDest   : slv                 (LANES_G*AXIS_CONFIG_G.TDEST_BITS_C-1 downto 0);
+    state   : FrameState;
+    sof     : sl;
+    first   : slv                 (LANES_G-1 downto 0);
     discard : slv                 (LANES_G-1 downto 0);
     slaves  : AxiStreamSlaveArray (LANES_G-1 downto 0);
   end record;
 
   constant REG_INIT_C : RegType := (
     master  => axiStreamMasterInit(MAXIS_CONFIG_C),
-    tDest   => (others=>'0'),
+    state   => SOF_S,
+    sof     => '0',
+    first   => (others=>'1'),
     discard => (others=>'0'),
     slaves  => (others=>AXI_STREAM_SLAVE_INIT_C));
   
   signal r   : RegType := REG_INIT_C;
   signal rin : RegType;
 
+  component ila_0
+    port ( clk    : in sl;
+           probe0 : in slv(255 downto 0) );
+  end component;
+
+  signal state_s : slv(1 downto 0);
 begin
+
+  state_s <= "00" when r.state = ERR_S else
+             "01" when r.state = SOF_S else
+             "10" when r.state = EOF_S else
+             "11";
+  
+  U_ILA : ila_0
+    port map ( clk     => axisClk,
+               probe0( 15 downto   0) => sAxisMaster(0).tData(15 downto 0),
+               probe0( 31 downto  16) => sAxisMaster(1).tData(15 downto 0),
+               probe0( 47 downto  32) => sAxisMaster(2).tData(15 downto 0),
+               probe0( 63 downto  48) => sAxisMaster(3).tData(15 downto 0),
+               probe0(            64) => sAxisMaster(0).tValid,
+               probe0(            65) => sAxisMaster(1).tValid,
+               probe0(            66) => sAxisMaster(2).tValid,
+               probe0(            67) => sAxisMaster(3).tValid,
+               probe0(            68) => sAxisMaster(0).tLast,
+               probe0(            69) => sAxisMaster(1).tLast,
+               probe0(            70) => sAxisMaster(2).tLast,
+               probe0(            71) => sAxisMaster(3).tLast,
+               probe0( 75 downto  72) => r.discard,
+               probe0( 77 downto  76) => state_s,
+               probe0(            78) => r.sof,
+               probe0(            79) => mAxisSlave.tReady,
+               probe0(            80) => r.master.tValid,
+               probe0(            81) => r.master.tLast,
+               probe0( 85 downto  82) => r.first,
+               probe0(255 downto  86) => (others=>'0') );
 
   comb : process ( r, axisRst, sAxisMaster, mAxisSlave ) is
     variable v : RegType;
-    variable tdb, ready : sl;
     variable m,n : integer;
-    variable sof, tDestv : slv(LANES_G-1 downto 0);
+    variable hdrErr : sl;
+    variable seqOff : Slv8Array(LANES_G-1 downto 1);
+    variable notSeq : slv(LANES_G-1 downto 0);
+    variable ready  : sl;
+    variable tready : slv(LANES_G-1 downto 0);
+    variable tlast  : slv(LANES_G-1 downto 0);
   begin
     v := r;
 
+    v.sof := '0';
+    
+    tready := (others=>'0');
+
     for i in 0 to LANES_G-1 loop
-      -- clear strobe signals
-      v.slaves(i).tReady := '0';
-      -- collect lane signals
-      sof     (i) := axiStreamGetUserBit(AXIS_CONFIG_G, sAxisMaster(i), SSI_SOF_C, 0);
-      tDestv  (i) := sAxisMaster(i).tDest(0);
+      tlast(i) := sAxisMaster(i).tLast;
     end loop;
 
     -- process acknowledge
@@ -89,107 +135,112 @@ begin
       v.master.tValid := '0';
     end if;
 
-    --  sink any streams that have excess data
-    if r.discard /= 0 then
-      for i in 0 to LANES_G-1 loop
-        if sAxisMaster(i).tValid = '1' and r.discard(i)='1' then
-          v.slaves(i).tReady := '1';
-          if sAxisMaster(i).tLast = '1' then
-            v.discard(i) := '0';
+    -- wait for all streams to contribute
+    ready := '1';
+    for i in 0 to LANES_G-1 loop
+      if sAxisMaster(i).tValid='0' then
+        ready := '0';
+      end if;
+    end loop;
+
+    case r.state is
+      when SOF_S =>
+        if ready = '1' then
+          if allBits(r.first,'1') then  -- wait for all lanes to start
+            --  test sequence numbers
+            notSeq := (others=>'0');
+            for i in 0 to LANES_G-1 loop
+              if sAxisMaster(i).tData(SEQ_C'range)/=SEQ_C then
+                notSeq(i) := '1';
+              end if;
+            end loop;
+            if notSeq/=0 then
+              v.discard := notSeq;
+              v.state   := ERR_S;
+            else
+              hdrErr := '0';
+              for i in 1 to LANES_G-1 loop
+                seqOff(i) := sAxisMaster(i).tData(7 downto 0) - sAxisMaster(0).tData(7 downto 0);
+                if sAxisMaster(0).tData(7 downto 0)/=sAxisMaster(i).tData(7 downto 0) then
+                  hdrErr := '1';
+                end if;
+              end loop;
+              if hdrErr = '1' then    -- sequence mismatch - discard late lanes
+                v.discard := (others=>'0');
+                for i in 1 to LANES_G-1 loop
+                  if seqOff(i)(7) = '1' then
+                    v.discard(i) := '1';
+                  elsif seqOff(i)/=0 then
+                    v.discard(0) := '1';
+                  end if;
+                end loop;
+                v.state := ERR_S;
+              else
+                tready    := (others=>'1');
+                v.discard := (others=>'0');
+                v.sof     := '1';
+                v.state   := EOF_S;
+              end if;
+            end if;
+          else
+            v.discard := not r.first;
+            v.state   := ERR_S;
           end if;
         end if;
-      end loop;
-    --  handle aligned streams
-    else
-      -- wait for all streams to contribute
-      ready := '1';
-      for i in 0 to LANES_G-1 loop
-        if sAxisMaster(i).tValid='0' then
-          ready := '0';
+      when EOF_S =>
+        if ready = '1' and v.master.tValid = '0' then
+          tready   := (others=>'1');
+          v.master := sAxisMaster(0);
+          -- assemble the data
+          for i in 0 to LANES_G-1 loop
+            for j in 0 to AXIS_CONFIG_G.TDATA_BYTES_C-1 loop
+              m := 8*j;
+              n := 8*(LANES_G*j+i);
+              v.master.tData(n+7 downto n) := sAxisMaster(i).tData(m+7 downto m);
+              v.master.tKeep(LANES_G*j+i)  := sAxisMaster(i).tKeep(j);
+            end loop;
+          end loop;
+          -- user bits
+          axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_SOF_C , r.sof, 0);
+          -- cleanup
+          if    allBits(tlast,'0') then
+            v.discard      := (others=>'0');
+            v.master.tLast := '0';
+            axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_EOFE_C, '0');
+          elsif allBits(tlast,'1') then
+            v.discard      := (others=>'0');
+            v.master.tLast := '1';
+            axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_EOFE_C, '0');
+            v.state        := SOF_S;
+          else
+            v.discard      := not tlast;
+            v.master.tLast := '1';
+            axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_EOFE_C, '0');
+            v.state        := ERR_S;
+          end if;
         end if;
-      end loop;
-
-      if ready = '1' and v.master.tValid = '0' then
-        v.master := sAxisMaster(0);
-
+      when ERR_S =>
         for i in 0 to LANES_G-1 loop
-          for j in 0 to AXIS_CONFIG_G.TDATA_BYTES_C-1 loop
-            m := 8*j;
-            n := 8*(LANES_G*j+i);
-            v.master.tData(n+7 downto n) := sAxisMaster(i).tData(m+7 downto m);
-            v.master.tKeep(LANES_G*j+i)  := sAxisMaster(i).tKeep(j);
-          end loop;
+          if r.discard(i) = '1' then
+            tready   (i) := '1';  -- sink
+            v.discard(i) := not sAxisMaster(i).tLast;
+          end if;
+          if v.discard=0 then
+            v.state := SOF_S;
+          end if;
         end loop;
+    end case;
 
-        -- Verify all streams are closing or not
-        v.master.tLast := sAxisMaster(0).tLast;
-        for i in 0 to LANES_G-1 loop
-          v.discard(i) := not sAxisMaster(i).tLast;
-        end loop;
-
-        axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_EOFE_C, '0');
-        if allBits(v.discard,'0') then
-          v.master.tLast := '1';
-        elsif allBits(v.discard,'1') then
-          v.master.tLast := '0';
-          v.discard      := (others=>'0');
-        else
-          v.master.tLast := '1';
-          axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_EOFE_C, '1');
-        end if;
-
-        -- get SOF from all lanes -- validate tDest
-        -- if mismatch, sink data until they match
-        axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_SOF_C, sof(0), 0);
-        -- if only one lane wrong, assume it dropped and sink all others to
-        -- line up; let higher level logic resync when too many eofes.
-        if sof(0)='1' then
-          for i in 0 to LANES_G-1 loop
-            v.tDest((i+1)*AXIS_CONFIG_G.TDEST_BITS_C-1 downto i*AXIS_CONFIG_G.TDEST_BITS_C) :=
-              sAxisMaster(i).tDest(AXIS_CONFIG_G.TDEST_BITS_C-1 downto 0);
-          end loop;
-        else
-          v.tDest := r.tDest(r.tDest'left-1 downto 0) & r.tDest(r.tDest'left);
-          tdb := r.tDest(0);
-          for i in 1 to LANES_G-1 loop
-            if r.tDest(i*AXIS_CONFIG_G.TDEST_BITS_C)/=tdb then
-              v.master.tLast := '1';
-              v.discard      := (others=>'1');
-              axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_EOFE_C, '1');
-            end if;
-          end loop;
-        end if;
-        
-        if (sof(0)='1' and not (allBits(tDestV,'0') or allBits(tDestV,'1'))) then
-          v.master.tLast  := '1';
-          v.discard       := (others=>'1');
-          axiStreamSetUserBit(AXIS_CONFIG_G, v.master, SSI_EOFE_C, '1');
-          for i in 0 to LANES_G-1 loop
-            if ((    tDestv = toSlv(2**i,LANES_G)) or
-                (not tDestV = toSlv(2**i,LANES_G))) then
-              v.discard(i) := '0';
-            end if;
-          end loop;
-        else
-          for i in 0 to LANES_G-1 loop
-            v.slaves(i).tReady := '1';
-          end loop;
-        end if;
+    --  start of packet is first tValid after tLast acknowledged
+    for i in 0 to LANES_G-1 loop
+      v.slaves(i).tReady := tready(i);
+      if sAxisMaster(i).tValid = '1' and v.slaves(i).tReady = '1' then
+        v.first (i) := sAxisMaster(i).tLast;
       end if;
-    end if;
-
+    end loop;
+    
     sAxisSlave  <= v.slaves;
     mAxisMaster <= r.master;
-    
-    --for i in 0 to LANES_G-1 loop
-    --  mAxisMaster(i)       <= r.master;
-      --mAxisMaster(i).tData(AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto 0) <=
-      --  r.tData((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto
-      --          (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C*8);
-      --mAxisMaster(i).tKeep(AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) <=
-      --  r.tKeep((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C-1 downto
-      --          (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C);
-    --end loop;
     
     if axisRst = '1' then
       v := REG_INIT_C;

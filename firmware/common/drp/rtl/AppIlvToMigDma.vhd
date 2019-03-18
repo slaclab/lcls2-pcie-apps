@@ -2,7 +2,7 @@
 -- File       : AppIlvToMigDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2018-12-03
+-- Last update: 2019-02-07
 -------------------------------------------------------------------------------
 -- Description: Wrapper for Xilinx Axi Data Mover
 -- Axi stream input (dscReadMasters.command) launches an AxiReadMaster to
@@ -40,13 +40,15 @@ entity AppIlvToMigDma is
     sAxisRst         : in  slv                 (LANES_G-1 downto 0);
     sAxisMaster      : in  AxiStreamMasterArray(LANES_G-1 downto 0);
     sAxisSlave       : out AxiStreamSlaveArray (LANES_G-1 downto 0);
-    sAlmostFull      : out sl;
-    sFull            : out sl;
+    sAlmostFull      : out slv                 (LANES_G-1 downto 0);
+    sFull            : out slv                 (LANES_G-1 downto 0);
+    sOverflow        : out Slv8Array           (LANES_G-1 downto 0);
     -- AXI4 Interface to MIG
     mAxiClk          : in  sl; -- 200MHz
     mAxiRst          : in  sl;
     mAxiWriteMaster  : out AxiWriteMasterType ;
     mAxiWriteSlave   : in  AxiWriteSlaveType  ;
+    sAxisOflow       : out Slv8Array           (LANES_G-1 downto 0);
     -- Command/Status to MigToPcieDma
     rdDescReq        : out AxiReadDmaDescReqType;
     rdDescReqAck     : in  sl;
@@ -67,6 +69,7 @@ architecture mapping of AppIlvToMigDma is
   signal mAxisSlave   : AxiStreamSlaveType;
 
   signal doutTransfer  : slv(22 downto 0);
+  signal doutUserBits  : slv(15 downto 0);
   
   signal mPause  : sl;
   signal mFull   : sl;
@@ -84,6 +87,7 @@ architecture mapping of AppIlvToMigDma is
     wrTransfer     : sl;
     wrTransferAddr : slv(BIS-1 downto 0);
     wrTransferDin  : slv(22 downto 0);
+    wrUserBits     : slv(15 downto 0);
     rdenb          : sl;
     wrDescAck      : AxiWriteDmaDescAckType;
     wrDescRetAck   : sl;
@@ -103,6 +107,7 @@ architecture mapping of AppIlvToMigDma is
     wrTransfer     => '0',
     wrTransferAddr => (others=>'0'),
     wrTransferDin  => (others=>'0'),
+    wrUserBits     => (others=>'0'),
     rdenb          => '0',
     wrDescAck      => AXI_WRITE_DMA_DESC_ACK_INIT_C,
     wrDescRetAck   => '0',
@@ -153,11 +158,13 @@ architecture mapping of AppIlvToMigDma is
   signal wrDescAck    : AxiWriteDmaDescAckType;
   signal wrDescRet    : AxiWriteDmaDescRetType;
   signal wrDescRetAck : sl;
+
+  signal sAxisCtrl    : AxiStreamCtrlArray  (LANES_G-1 downto 0);
   
 begin
 
-  sAlmostFull <= '1' when (r.blocksFree < config.blocksPause) else '0';
-  sFull       <= '1' when ((r.blocksFree < 4) or (config.inhibit='1')) else '0';
+  sAlmostFull <= (others=>'1') when (r.blocksFree < config.blocksPause         ) else (others=>'0');
+  sFull       <= (others=>'1') when ((r.blocksFree < 4) or (config.inhibit='1')) else (others=>'0');
 
   U_Ready : entity work.Synchronizer
     port map ( clk     => mAxiClk,
@@ -177,12 +184,20 @@ begin
                  sAxisRst    => sAxisRst    (i),
                  sAxisMaster => sAxisMaster (i),
                  sAxisSlave  => sAxisSlave  (i),
-                 sAxisCtrl   => open,
+                 sAxisCtrl   => sAxisCtrl   (i),
                  mAxisClk    => mAxiClk,
                  mAxisRst    => mAxiRst,
                  mAxisMaster => imAxisMaster(i),
                  mAxisSlave  => imAxisSlave (i));
 
+    U_Oflow : entity work.SynchronizerOneShotCnt
+      generic map ( CNT_WIDTH_G  => sOverflow(0)'length )
+      port map ( dataIn     => sAxisCtrl(i).overflow,
+                 rollOverEn => '0',
+                 cntOut     => sOverflow(i),
+                 wrClk      => sAxisClk (i),
+                 rdClk      => mAxiClk );
+    
     --tData((i+1)*AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto
     --      (i+0)*AXIS_CONFIG_G.TDATA_BYTES_C*8) <=
     --  mAxisMaster(i).tData(AXIS_CONFIG_G.TDATA_BYTES_C*8-1 downto 0);
@@ -200,6 +215,12 @@ begin
                sAxisSlave  => imAxisSlave ,
                mAxisMaster => mAxisMaster,
                mAxisSlave  => mAxisSlave );
+  
+  U_SeqTest : entity work.AppSeqTest
+    port map ( axisClk    => mAxiClk,
+               axisRst    => mAxiRst,
+               axisMaster => mAxisMaster,
+               axisSlave  => mAxisSlave );
   
   --
   --  Insert a fifo to cross clock domains
@@ -247,6 +268,19 @@ begin
                addrb      => rdTransferAddr,
                doutb      => doutTransfer );
 
+  U_UserBitFifo : entity work.SimpleDualPortRam
+    generic map ( DATA_WIDTH_G => 16,
+                  ADDR_WIDTH_G => BIS )
+    port map ( clka       => mAxiClk,
+               wea        => r.wrTransfer,
+               addra      => r.wrTransferAddr,
+               dina       => r.wrUserBits,
+               clkb       => mAxiClk,
+               enb        => rdenb,
+               addrb      => rdTransferAddr,
+               doutb      => doutUserBits );
+
+  
   comb : process ( r, mAxiRst,
                    mAxisMaster, mAxisSlave,
                    wrDescReq,
@@ -254,6 +288,7 @@ begin
                    rdDescReqAck,
                    rdDescRet,
                    doutTransfer ,
+                   doutUserBits ,
                    config ) is
     variable v       : RegType;
     variable i       : integer;
@@ -310,6 +345,7 @@ begin
       v.wrTag(itag)      := COMPLETED_T;
       v.wrTransfer       := '1';
       v.wrTransferDin    := resize(wrDescRet.size,23);
+      v.wrUserBits       := wrDescRet.lastUser & wrDescRet.firstUser;
       if stag < r.wcIndex(3 downto 0) then
         v.wrTransferAddr := (r.wcIndex(BIS-1 downto 4)+1) & stag;
       else
@@ -334,8 +370,10 @@ begin
       rlen                       := doutTransfer;
       v.rdDescReq.valid          := '1';
       v.rdDescReq.address        := resize(raddr,64);
-      v.rdDescReq.size           := resize(rlen,32);
       v.rdDescReq.buffId         := resize(r.rdIndex,32);
+      v.rdDescReq.firstUser      := doutUserBits( 7 downto 0);
+      v.rdDescReq.lastUser       := doutUserBits(15 downto 8);
+      v.rdDescReq.size           := resize(rlen,32);
       v.rdIndex                  := r.rdIndex + 1;
     end if;
 

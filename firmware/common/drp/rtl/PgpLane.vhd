@@ -2,7 +2,7 @@
 -- File       : PgpLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-11-10
+-- Last update: 2019-02-01
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -70,26 +70,6 @@ end PgpLane;
 
 architecture mapping of PgpLane is
 
-   constant NUM_AXI_MASTERS_C : natural := 2;
-
-   constant MISC_INDEX_C   : natural := 0;
-   constant PGP_INDEX_C    : natural := 1;
-
-   constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := (
-      MISC_INDEX_C    => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0000_0000"),
-         addrBits     => 12,
-         connectivity => x"FFFF"),
-      PGP_INDEX_C     => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0000_8000"),
-         addrBits     => 15,
-         connectivity => x"FFFF"));
-
-   signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
-
    signal pgpClk : sl;
    signal pgpRst : sl;
 
@@ -121,28 +101,6 @@ begin
    rxOpCode    <= pgpRxOut.opCodeData( 7 downto 0);
    remLinkId   <= pgpRxOut.opCodeData(47 downto 16);
    
-   ---------------------
-   -- AXI-Lite Crossbar
-   ---------------------
-   U_XBAR : entity work.AxiLiteCrossbar
-      generic map (
-         TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
-         NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
-         MASTERS_CONFIG_G   => AXI_CONFIG_C)
-      port map (
-         axiClk              => axilClk,
-         axiClkRst           => axilRst,
-         sAxiWriteMasters(0) => axilWriteMaster,
-         sAxiWriteSlaves(0)  => axilWriteSlave,
-         sAxiReadMasters(0)  => axilReadMaster,
-         sAxiReadSlaves(0)   => axilReadSlave,
-         mAxiWriteMasters    => axilWriteMasters,
-         mAxiWriteSlaves     => axilWriteSlaves,
-         mAxiReadMasters     => axilReadMasters,
-         mAxiReadSlaves      => axilReadSlaves);
-
    -----------
    -- PGP Core
    -----------
@@ -152,7 +110,7 @@ begin
          NUM_VC_G          => NUM_VC_G,
          EN_PGP_MON_G      => true,
          AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
-         AXIL_BASE_ADDR_G  => AXI_CONFIG_C(PGP_INDEX_C).baseAddr )
+         AXIL_BASE_ADDR_G  => AXI_BASE_ADDR_G+x"0000_8000" ) 
 --         DEBUG_G           => (LANE_G=0) )
       port map (
          -- Stable Clock and Reset
@@ -186,10 +144,10 @@ begin
          -- AXI-Lite Register Interface (axilClk domain)
          axilClk         => axilClk,
          axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(PGP_INDEX_C),
-         axilReadSlave   => axilReadSlaves(PGP_INDEX_C),
-         axilWriteMaster => axilWriteMasters(PGP_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C));
+         axilReadMaster  => axilReadMaster,
+         axilReadSlave   => axilReadSlave,
+         axilWriteMaster => axilWriteMaster,
+         axilWriteSlave  => axilWriteSlave );
 
    --------------
    -- PGP TX Path
@@ -252,42 +210,6 @@ begin
          pgpRxMasters => rxMasters,
          pgpRxCtrl    => pgpRxCtrl);
 
-   -----------
-   -- PGP MISC
-   -----------
-   U_Misc : entity work.PgpLaneMisc
-      generic map (
-         TPD_G            => TPD_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
-      port map (
-         pgpClk          => pgpClk,
-         pgpRst          => pgpRst,
-         pgpRxVcBlowoff  => pgpRxVcBlowoff,
-         pgpRxLoopback   => pgpRxIn.loopback,
-         pgpRxReset      => pgpRxIn.resetRx,
-         pgpFrameDrop    => pgpRxIn_frameDrop,
-         pgpFrameTrunc   => pgpRxIn_frameTrunc,
-         pgpLaneId       => pgpLaneId,
-         remLinkDet      => pgpRxOut.opCodeEn,
-         remLinkId       => remLinkId,
-         -- AXI-Lite Register Interface (axilClk domain)
-         axilClk         => axilClk,
-         axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(MISC_INDEX_C),
-         axilReadSlave   => axilReadSlaves(MISC_INDEX_C),
-         axilWriteMaster => axilWriteMasters(MISC_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(MISC_INDEX_C));
-
-   --U_TxOpCode : entity work.SynchronizerFifo
-   --  generic map ( DATA_WIDTH_G => 8,
-   --                ADDR_WIDTH_G => 2 )
-   --  port map ( rst    => pgpRst,
-   --             wr_clk => pgpClk,
-   --             wr_en  => txOpCodeEn,
-   --             din    => txOpCode,
-   --             rd_clk => pgpClk,
-   --             valid  => pgpTxIn.opCodeEn,
-   --             dout   => pgpTxIn.opCodeData(7 downto 0) );
    pgpTxIn.opCodeNumber <= toSlv(6,3);
    pgpTxIn.opCodeEn     <= txOpCodeEn;
    pgpTxIn.opCodeData   <= pgpLaneId & x"00" & txOpCode;
