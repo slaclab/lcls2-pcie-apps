@@ -1,14 +1,9 @@
-#export GIT_BYPASS = 1
+export GIT_BYPASS = 1
 export OVERRIDE_SUBMODULE_LOCKS = 1
 
 # Define Firmware Version Number
-#  PRJ_VERSION = 0x00000000 - original with XVC
-#  PRJ_VERSION = 0x00000001 - no XVC
-#  PRJ_VERSION = 0x00000002 - upgrade to surf[master], axi-pcie-core[master]
-#  PRJ_VERSION = 0x00000003 - Upgrade l2si-core for XPM changes
-#  PRJ_VERSION = 0x00000004 - Rearrange event header
-#  PRJ_VERSION = 0x00000005 - Rebuild with EventHeaderCacheWrapper
-export PRJ_VERSION = 0x00000005
+#  PRJ_VERSION = 0x00000000 - original
+export PRJ_VERSION = 0x00000000
 
 # Define the Hardware Type in the axi-pcie-core
 export PCIE_HW_TYPE = XilinxKcu1500
