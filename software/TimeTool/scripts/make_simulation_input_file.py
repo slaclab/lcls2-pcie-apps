@@ -10,7 +10,7 @@ pixels_per_frame        = 2048      #frame and packet are being used interchange
 
 sigma                   = 800.0
 jitter                  = 100.0
-amplitude               = 64
+amplitude               = 96
 
 my_file = open(my_file,'w')
 
