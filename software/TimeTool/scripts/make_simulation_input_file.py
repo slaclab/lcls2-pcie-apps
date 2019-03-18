@@ -10,6 +10,7 @@ pixels_per_frame        = 2048      #frame and packet are being used interchange
 
 sigma                   = 800.0
 jitter                  = 100.0
+amplitude               = 64
 
 my_file = open(my_file,'w')
 
@@ -23,7 +24,7 @@ def gaussian(x,u,s):
 for i in range(n_frames):
 
       x = np.arange(pixels_per_frame)
-      my_frame_array = 128*gaussian(x,pixels_per_frame/2.0,sigma)
+      my_frame_array = amplitude*gaussian(x,pixels_per_frame/2.0,sigma)
       edge_position = int(pixels_per_frame/2+(jitter*np.random.rand()-0.5))
       my_frame_array[edge_position:] = my_frame_array[edge_position:] *0.2
 
