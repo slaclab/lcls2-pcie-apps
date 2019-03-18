@@ -1,4 +1,6 @@
+#raw data files
 *.h5
+*.dat
 
 # SVN files
 .svn*

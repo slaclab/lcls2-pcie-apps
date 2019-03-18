@@ -185,14 +185,15 @@ begin
                   v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
-                        --v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
+                        v.rollingImage(v.counter + i)             := signed(inMaster.tdata(i*8+7 downto i*8));                    --debug test for getting indices right
+                        v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
+
                         --v.rollingImage(v.counter)  := (v.rollingImage(v.counter)/32)*31 + signed(inMaster.tdata)/32;
                         --v.master.tData             := std_logic_vector(v.rollingImage(v.counter));
-
                         --v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 )  := ((v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ))/32)*31; --+ signed(inMaster.tdata(i*8+7 downto i*8))/32;
-                        v.rollingImage(v.counter + i)   := signed(inMaster.tdata(i*8+7 downto i*8)); --
                         --v.rollingImage(v.counter + i )     := to_signed(v.counter,8);
-                        --v.master.tData(i*8+7 downto i*8)                           := std_logic_vector(v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ));
+                        
+                        --v.master.tData(i*8+7 downto i*8)        := std_logic_vector(v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ));
 
                   end loop;
 

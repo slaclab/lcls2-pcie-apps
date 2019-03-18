@@ -174,7 +174,7 @@ begin
 
       to_file := appOutMaster;
 
-      file_open(file_RESULTS, "/u1/sioan/lcls2-pcie-apps/output_results.txt", write_mode);
+      file_open(file_RESULTS, "/u1/sioan/lcls2-pcie-apps/output_results.dat", write_mode);
 
       while true loop
 
