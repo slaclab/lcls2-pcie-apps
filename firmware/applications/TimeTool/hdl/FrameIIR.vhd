@@ -188,7 +188,7 @@ begin
                         --v.rollingImage(v.counter + i)             := signed(inMaster.tdata(i*8+7 downto i*8));                    --debug test for getting indices right
 
 
-                        v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*31/32)+signed(inMaster.tdata(i*8+7 downto i*8))/32,8);
+                        v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*7+signed(inMaster.tdata(i*8+7 downto i*8)))/8,8);
                         v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
 
                         --v.rollingImage(v.counter)  := (v.rollingImage(v.counter)/32)*31 + signed(inMaster.tdata)/32;
