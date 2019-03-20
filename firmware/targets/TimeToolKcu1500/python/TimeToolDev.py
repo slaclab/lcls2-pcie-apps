@@ -153,8 +153,8 @@ class TimeToolDev(pr.Root):
                 memBase     = self._srp[lane], 
                 serialA     = self._dma[lane][2],
                 serialB     = self._dma[lane][3],
-                camTypeA    = 'Opal000', # Assuming OPA 1000 camera
-                camTypeB    = 'Opal000', # Assuming OPA 1000 camera
+                camTypeA    = None,
+                camTypeB    = None,
                 version3    = version3,
                 enableDeps  = [self.Hardware.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
                 expand      = False,
