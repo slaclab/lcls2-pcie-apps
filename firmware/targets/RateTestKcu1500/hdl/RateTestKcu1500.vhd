@@ -254,7 +254,7 @@ begin
             PRBS_SEED_SIZE_G           => 256,
             GEN_SYNC_FIFO_G            => true,
             MASTER_AXI_PIPE_STAGES_G   => 1,
-            MASTER_AXI_STREAM_CONFIG_G => ssiAxiStreamConfig(32, TKEEP_COMP_C))
+            MASTER_AXI_STREAM_CONFIG_G => DMA_AXIS_CONFIG_C)
          port map (
             mAxisClk        => dmaClk,
             mAxisRst        => dmaRst,

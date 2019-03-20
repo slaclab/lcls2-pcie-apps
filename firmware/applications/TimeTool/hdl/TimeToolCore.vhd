@@ -1,10 +1,8 @@
 -------------------------------------------------------------------------------
 -- File       : TimeToolCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-12-04
--- Last update: 2018-11-08
 -------------------------------------------------------------------------------
--- Description:
+-- Description: TimeTool Core Module
 -------------------------------------------------------------------------------
 -- This file is part of 'axi-pcie-core'.
 -- It is subject to the license terms in the LICENSE.txt file found in the 
@@ -17,22 +15,14 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
---use ieee.std_logic_arith.all;
+use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.all;
 
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
-use work.AxiPkg.all;
 use work.SsiPkg.all;
 use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
-
-library unisim;
-use unisim.vcomponents.all;
-
 
 entity TimeToolCore is
    generic (
@@ -40,7 +30,7 @@ entity TimeToolCore is
       DEBUG_G           : boolean             := true;
       NUM_MASTERS_G     : positive            := 2;
       DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
-      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"0000_0000");      
+      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"0000_0000");
    port (
       -- System Interface
       sysClk          : in  sl;
@@ -54,12 +44,7 @@ entity TimeToolCore is
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType;
-      -- Timing information (sysClk domain)
-      timingBus       : in  TimingBusType;
-      -- PGP TX OP-codes (pgpTxClk domains)
-      pgpTxClk        : in  sl;
-      pgpTxIn         : out Pgp2bTxInType);
+      axilWriteSlave  : out AxiLiteWriteSlaveType);
 end TimeToolCore;
 
 architecture mapping of TimeToolCore is
@@ -67,7 +52,7 @@ architecture mapping of TimeToolCore is
    constant NUM_AXI_MASTERS_C : natural := 2;
 
    constant DMA_SIZE_C : positive := 1;
-   
+
    constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_G, 21, 20);
 
    signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
@@ -82,9 +67,11 @@ architecture mapping of TimeToolCore is
    signal masterFEXorPrescalerToCombiner : AxiStreamMasterArray(NUM_MASTERS_G-1 downto 0);
    signal slaveFEXorPrescalerToCombiner  : AxiStreamSlaveArray(NUM_MASTERS_G-1 downto 0);
 
-   signal masterCombinerToBatcher              : AxiStreamMasterType;
-   signal slaveCombinerToBatcher               : AxiStreamSlaveType;
+   signal masterCombinerToBatcher : AxiStreamMasterType;
+   signal slaveCombinerToBatcher  : AxiStreamSlaveType;
 
+   signal eventMaster : AxiStreamMasterType;
+   signal eventSlave  : AxiStreamSlaveType;
 
 begin
 
@@ -109,13 +96,10 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-
    --------------------------------------------
    --breaking out the data from detector
    --------------------------------------------
-
    --all modules that can't keep up with reater will need input fifo
-
    U_AxiStreamRepeater : entity work.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
@@ -131,13 +115,9 @@ begin
          mAxisMasters => masterRepeaterToFEXorPrescaler,
          mAxisSlaves  => slaveRepeaterToFEXorPrescaler);
 
-
-
    --------------------------------------------
    --sending one of the repeated signals from module above to FEX or prescaling
    --------------------------------------------
-
-
    U_TimeToolFEX : entity work.TimeToolFEX_placeholder
       generic map (
          TPD_G             => TPD_G,
@@ -160,8 +140,6 @@ begin
    --------------------------------------------
    --sending one of the repeated signals from module above to FEX or prescaling
    --------------------------------------------
-
-
    U_TimeToolPrescaler : entity work.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
@@ -185,7 +163,6 @@ begin
    --------------------------------------------
    --AxiStreamBatcherEventBuilder Combines them back together
    --------------------------------------------
-
    U_AxiStreamBatcherEventBuilder : entity work.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G         => TPD_G,
@@ -198,7 +175,38 @@ begin
          -- AXIS Interfaces
          sAxisMasters => masterFEXorPrescalerToCombiner,
          sAxisSlaves  => slaveFEXorPrescalerToCombiner,
-         mAxisMaster  => dataOutMaster,
-         mAxisSlave   => dataOutSlave);
+         mAxisMaster  => eventMaster,
+         mAxisSlave   => eventSlave);
+
+   -------------------------------------
+   -- Burst Fifo before interleaving MUX
+   -------------------------------------
+   U_FIFO : entity work.AxiStreamFifoV2
+      generic map (
+         -- General Configurations
+         TPD_G               => TPD_G,
+         INT_PIPE_STAGES_G   => 1,
+         PIPE_STAGES_G       => 1,
+         SLAVE_READY_EN_G    => true,
+         VALID_THOLD_G       => 128,  -- Hold until enough to burst into the interleaving MUX
+         VALID_BURST_MODE_G  => true,
+         -- FIFO configurations
+         BRAM_EN_G           => true,
+         GEN_SYNC_FIFO_G     => true,
+         FIFO_ADDR_WIDTH_G   => 9,
+         -- AXI Stream Port Configurations
+         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
+         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- Slave Port
+         sAxisClk    => sysClk,
+         sAxisRst    => sysRst,
+         sAxisMaster => eventMaster,
+         sAxisSlave  => eventSlave,
+         -- Master Port
+         mAxisClk    => sysClk,
+         mAxisRst    => sysRst,
+         mAxisMaster => dataOutMaster,
+         mAxisSlave  => dataOutSlave);
 
 end mapping;

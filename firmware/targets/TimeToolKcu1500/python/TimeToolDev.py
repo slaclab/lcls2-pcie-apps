@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 import pyrogue as pr
+
+import rogue.hardware.axi
 import rogue.protocols
-import surf.axi
-import surf.protocols.clink
-import time
-import TimeTool
+import pyrogue.interfaces.simulation
 import pyrogue.utilities.fileio
-from XilinxKcu1500Pgp2b import *
+
+import XilinxKcu1500Pgp as kcu1500
+import ClinkFeb         as feb
+import TimeTool         as app
+
 import numpy as np
 import h5py
 
@@ -77,55 +80,106 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.my_h5_file.close()
         print(self.to_save_to_h5)
 
-class ClinkTest(pr.Device):
-
-    def __init__(self, regStream, serialStreamA, serialStreamB=None, name="ClinkTest", **kwargs):
-        super().__init__(name=name,**kwargs)
-
-        # SRP
-        self._srp = rogue.protocols.srp.SrpV3()
-        pr.streamConnectBiDir(regStream,self._srp)
-
-        # Version registers
-        self.add(surf.axi.AxiVersion(memBase=self._srp,offset=0))
-        self.add(surf.protocols.clink.ClinkTop(memBase=self._srp,offset=0x10000,serialA=serialStreamA,serialB=serialStreamB))
-
 class TimeToolDev(pr.Root):
 
-    def __init__(self, dataDebug=False):
+    def __init__(self,
+            name        = 'TimeToolDev',
+            description = 'Container for TimeTool Dev',
+            dataDebug   = False,
+            dev         = '/dev/datadev_0',# path to PCIe device
+            version3    = False,           # true = PGPv3, false = PGP2b
+            pollEn      = True,            # Enable automatic polling registers
+            initRead    = True,            # Read all registers at start of the system
+            **kwargs):
+        super().__init__(name=name, description=description, **kwargs)
 
-        pr.Root.__init__(self,name='TimeToolDev',description='CameraLink Dev')
+        self._numLane = 1
+        
+        # Create PCIE memory mapped interface
+        if (dev != 'sim'):
+            # BAR0 access
+            self.memMap = rogue.hardware.axi.AxiMemMap(dev)     
+            # Set the timeout
+            self._timeout = 1.0 # 1.0 default
+        else:
+            # FW/SW co-simulation
+            self.memMap = rogue.interfaces.memory.TcpClient('localhost',8000)            
+            # Set the timeout
+            self._timeout = 100.0 # firmware simulation slow and timeout base on real time (not simulation time)        
+                    
+        # PGP Hardware on PCIe 
+        self.add(kcu1500.Hardware(            
+            memBase  = self.memMap,
+            numLane  = self._numLane,
+            version3 = version3,
+            expand   = False,
+        ))           
 
-               
+        # # File writer
+        # self.dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
+        # self.add(self.dataWriter)        
+        
+        # Create arrays to be filled
+        self._dma = [[None for vc in range(4)] for lane in range(self._numLane)] # self._dma[lane][vc]
+        self._srp =  [None for lane in range(self._numLane)]        
+        self._dbg =  [None for lane in range(self._numLane)]        
+        
         # Create the stream interface
-        self._pgpVc0 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',0,True) # TDEST = 0x0 = Registers
-        self._pgpVc1 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',1,True) # TDEST = 0x1 = Data
-        self._pgpVc2 = rogue.hardware.axi.AxiStreamDma('/dev/datadev_0',2,True) # TDEST = 0x2 = Serial
+        for lane in range(self._numLane):
+        
+            # Map the virtual channels 
+            if (dev != 'sim'):
+                # PCIe DMA interface
+                self._dma[lane][0] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+0,True) # VC0 = Registers
+                self._dma[lane][1] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+1,True) # VC1 = Data
+                self._dma[lane][2] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+2,True) # VC2 = Serial
+                self._dma[lane][3] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+3,True) # VC3 = Serial
+                # Disabling zero copy on the data stream (due to unknown max size)
+                self._dma[lane][1].setZeroCopyEn(False)    
+            else:
+                # FW/SW co-simulation
+                self._dma[lane][0] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*0) # VC0 = Registers
+                self._dma[lane][1] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*1) # VC1 = Data
+                self._dma[lane][2] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*2) # VC2 = Serial
+                self._dma[lane][3] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*3) # VC3 = Serial
+                
+            # SRP
+            self._srp[lane] = rogue.protocols.srp.SrpV3()
+            pr.streamConnectBiDir(self._dma[lane][0],self._srp[lane])
+                     
+            # CameraLink Feb Board
+            self.add(feb.ClinkFeb(      
+                name        = (f'ClinkFeb[{lane}]'), 
+                memBase     = self._srp[lane], 
+                serialA     = self._dma[lane][2],
+                serialB     = self._dma[lane][3],
+                camTypeA    = 'Opal000', # Assuming OPA 1000 camera
+                camTypeB    = 'Opal000', # Assuming OPA 1000 camera
+                version3    = version3,
+                enableDeps  = [self.Hardware.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
+                expand      = False,
+            ))
+            
+            # # Connect the file writer
+            # pr.streamConnect(self.self._dma[lane][1],self.dataWriter.getChannel(2*lane+0))
+            # pr.streamConnect(self,self.dataWriter.getChannel(2*lane+1))
 
-        # Local map
-        self.dataMap = rogue.hardware.axi.AxiMemMap('/dev/datadev_0')
-
-        # Cameralink's stream interface at TDEST = 0x2
-        self.add(ClinkTest(regStream=self._pgpVc0,serialStreamA=self._pgpVc2))
-
+            # Debug slave
+            if dataDebug:
+                self._dbg[lane] = TimeToolRx()
+                pr.streamTap(self._dma[lane][1],self._dbg[lane])
+                self.add(self._dbg)
+                
         # Time tool application
-        self.add(TimeTool.TimeToolCore(memBase=self.dataMap,offset=0x00C00000))
-
-        # PGP Card registers
-        self.add(XilinxKcu1500Pgp2b(name='HW',memBase=self.dataMap))
-
-        # File writer
-        dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
-        self.add(dataWriter)
-        pr.streamConnect(self._pgpVc1,dataWriter.getChannel(0))
-        pr.streamConnect(self,dataWriter.getChannel(1))
-
-        # Debug slave
-        if dataDebug:
-            self._dbg = TimeToolRx()
-            pr.streamTap(self._pgpVc1,self._dbg)
-            self.add(self._dbg)
+        self.add(app.TimeToolCore(
+            memBase = self.memMap,
+            offset  = 0x00C00000,
+        ))
 
         # Start the system
-        self.start(pollEn=True)
+        self.start(
+            pollEn   = pollEn,
+            initRead = initRead,
+            timeout  = self._timeout,
+        )
 

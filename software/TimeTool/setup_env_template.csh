@@ -8,7 +8,7 @@ setenv LCLT_DIR ${PWD}/../../firmware/submodules/lcls-timing-core/python
 setenv COM_DIR  ${PWD}/../../firmware/submodules/lcls2-pgp-fw-lib/python
 setenv TTA_DIR  ${PWD}/../../firmware/applications/TimeTool/python
 setenv TTOOL_DIR  ${PWD}/../../firmware/targets/TimeToolKcu1500/python
-setenv FEB_DIR  ${PWD}/../../firmware/targets/clink-gateway-fw-lib/python
+setenv FEB_DIR  ${PWD}/../../firmware/submodules/clink-gateway-fw-lib/python
 
 # Setup python path
 setenv PYTHONPATH ${SURF_DIR}:${AXID_DIR}:${LCLT_DIR}:${COM_DIR}:${TTA_DIR}:${TTOOL_DIR}:${FEB_DIR}:${PYTHONPATH}

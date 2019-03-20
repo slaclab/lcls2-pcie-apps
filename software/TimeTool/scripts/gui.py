@@ -2,8 +2,61 @@
 import pyrogue.gui
 import TimeToolDev
 import sys
+import argparse
 
-cl = TimeToolDev.TimeToolDev(True)
+#################################################################
+
+# Set the argument parser
+parser = argparse.ArgumentParser()
+
+# Convert str to bool
+argBool = lambda s: s.lower() in ['true', 't', 'yes', '1']
+
+# Add arguments
+parser.add_argument(
+    "--dev", 
+    type     = str,
+    required = False,
+    default  = '/dev/datadev_0',
+    help     = "path to device",
+)  
+
+parser.add_argument(
+    "--version3", 
+    type     = argBool,
+    required = False,
+    default  = False,
+    help     = "true = PGPv3, false = PGP2b",
+) 
+
+parser.add_argument(
+    "--pollEn", 
+    type     = argBool,
+    required = False,
+    default  = True,
+    help     = "Enable auto-polling",
+) 
+
+parser.add_argument(
+    "--initRead", 
+    type     = argBool,
+    required = False,
+    default  = True,
+    help     = "Enable read all variables at start",
+)  
+
+# Get the arguments
+args = parser.parse_args()
+
+#################################################################
+
+cl = TimeToolDev.TimeToolDev(
+    dev       = args.dev,
+    dataDebug = True,
+    version3  = args.version3,
+    pollEn    = args.pollEn,
+    initRead  = args.initRead,
+)
 
 # Create GUI
 appTop = pyrogue.gui.application(sys.argv)
