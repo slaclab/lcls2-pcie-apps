@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import pyrogue as pr
 
-import rogue.hardware.axi
 import rogue.protocols
-import pyrogue.interfaces.simulation
-import pyrogue.utilities.fileio
 
 import XilinxKcu1500Pgp as kcu1500
 import ClinkFeb         as feb
@@ -12,6 +9,53 @@ import TimeTool         as app
 
 import numpy as np
 import h5py
+
+import rogue.interfaces.stream
+
+class MyCustomMaster(rogue.interfaces.stream.Master):
+
+    # Init method must call the parent class init
+    def __init__(self):
+        super().__init__()
+
+    # Method for generating a frame
+    def myFrameGen(self):
+
+        # First request an empty from from the primary slave
+        # The first arg is the size, the second arg is a boolean
+        # indicating if we can allow zero copy buffers, usually set to true
+
+        # Here we request a frame capable of holding 100 bytes
+        frame = self._reqFrame(100, True)
+
+        # Create a 10 byte array with an incrementing value
+        ba = bytearray([i for i in range(10)])
+
+        # Write the data to the frame at offset 0
+        # The payload size of the frame is automatically updated
+        # to the highest index which as written to.
+        # A lock is not required because we are the only instance
+        # which knows about this frame at this point
+
+        # The frame will now have a payload size of 10
+        frame.write(ba,0)
+
+        # The user may also write to an arbitrary offset, the valid payload
+        # size of the frame is set to the highest index written.
+        # Locations not explicity written, but below the highest written
+        # index, will be considered valid, but may contain random data
+        ba = bytearray([i*2 for i in range(10)])
+        frame.write(ba,50)
+
+        # At this point locations 0 - 9 and 50 - 59 contain known values
+        # The new payload size is now 60, but locations 10 - 49 may
+        # contain random data
+
+        # Send the frame to the currently attached slaves
+        # The method returns once all the slaves have received the
+        # frame and their acceptFrame methods have returned
+        self._sendFrame(frame)
+
 
 #One of the goals this code satisfies is to to facilitate communication between registers in Xilinx's kcu1500 FPGA and a host linux machine.
 #See comment in TimeTool.py for how to make rogue aware of a FPGA register to communicate with.
@@ -80,7 +124,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.my_h5_file.close()
         print(self.to_save_to_h5)
 
-class TimeToolDev(pr.Root):
+class TimeToolDev(kcu1500.Core):
 
     def __init__(self,
             name        = 'TimeToolDev',
@@ -90,80 +134,68 @@ class TimeToolDev(pr.Root):
             version3    = False,           # true = PGPv3, false = PGP2b
             pollEn      = True,            # Enable automatic polling registers
             initRead    = True,            # Read all registers at start of the system
-            **kwargs):
-        super().__init__(name=name, description=description, **kwargs)
-
-        self._numLane = 1
-        
-        # Create PCIE memory mapped interface
-        if (dev != 'sim'):
-            # BAR0 access
-            self.memMap = rogue.hardware.axi.AxiMemMap(dev)     
-            # Set the timeout
-            self._timeout = 1.0 # 1.0 default
-        else:
-            # FW/SW co-simulation
-            self.memMap = rogue.interfaces.memory.TcpClient('localhost',8000)            
-            # Set the timeout
-            self._timeout = 100.0 # firmware simulation slow and timeout base on real time (not simulation time)        
+            numLane     = 1,               # Number of PGP lanes
+            **kwargs
+        ):
+        super().__init__(
+            name        = name, 
+            description = description, 
+            dev         = dev, 
+            version3    = version3, 
+            numLane     = numLane, 
+            **kwargs
+        )
+            
+        # Check if not doing simulation
+        if (dev != 'sim'):            
+            
+            # Create arrays to be filled
+            self._srp = [None for lane in range(numLane)]
+            
+            # Create the stream interface
+            for lane in range(numLane):
                     
-        # PGP Hardware on PCIe 
-        self.add(kcu1500.Hardware(            
-            memBase  = self.memMap,
-            numLane  = self._numLane,
-            version3 = version3,
-            expand   = False,
-        ))           
+                # SRP
+                self._srp[lane] = rogue.protocols.srp.SrpV3()
+                pr.streamConnectBiDir(self._dma[lane][0],self._srp[lane])
+                         
+                # CameraLink Feb Board
+                self.add(feb.ClinkFeb(      
+                    name        = (f'ClinkFeb[{lane}]'), 
+                    memBase     = self._srp[lane], 
+                    serialA     = self._dma[lane][2],
+                    serialB     = self._dma[lane][3],
+                    version3    = version3,
+                    enableDeps  = [self.Hardware.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
+                    expand      = False,
+                ))
 
-        # # File writer
-        # self.dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter',configEn=True)
-        # self.add(self.dataWriter)        
+        # Else doing Rogue VCS simulation
+        else:
         
+            # Create arrays to be filled
+            self._frameGen = [None for lane in range(numLane)]
+            
+            # Create the stream interface
+            for lane in range(numLane):  
+            
+                # Create the frame generator
+                self._frameGen[lane] = MyCustomMaster()
+                
+                # Connect the frame generator
+                pr.streamConnect(self._frameGen[lane],self._pgp[lane][1]) 
+                    
+                # Create a command to execute the frame generator
+                self.add(pr.BaseCommand(   
+                    name         = f'GenFrame[{lane}]',
+                    function     = lambda cmd: self._frameGen[lane].myFrameGen(),
+                ))                
+                
         # Create arrays to be filled
-        self._dma = [[None for vc in range(4)] for lane in range(self._numLane)] # self._dma[lane][vc]
-        self._srp =  [None for lane in range(self._numLane)]        
-        self._dbg =  [None for lane in range(self._numLane)]        
+        self._dbg = [None for lane in range(numLane)]        
         
         # Create the stream interface
-        for lane in range(self._numLane):
-        
-            # Map the virtual channels 
-            if (dev != 'sim'):
-                # PCIe DMA interface
-                self._dma[lane][0] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+0,True) # VC0 = Registers
-                self._dma[lane][1] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+1,True) # VC1 = Data
-                self._dma[lane][2] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+2,True) # VC2 = Serial
-                self._dma[lane][3] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+3,True) # VC3 = Serial
-                # Disabling zero copy on the data stream (due to unknown max size)
-                self._dma[lane][1].setZeroCopyEn(False)    
-            else:
-                # FW/SW co-simulation
-                self._dma[lane][0] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*0) # VC0 = Registers
-                self._dma[lane][1] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*1) # VC1 = Data
-                self._dma[lane][2] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*2) # VC2 = Serial
-                self._dma[lane][3] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*3) # VC3 = Serial
-                
-            # SRP
-            self._srp[lane] = rogue.protocols.srp.SrpV3()
-            pr.streamConnectBiDir(self._dma[lane][0],self._srp[lane])
-                     
-            # CameraLink Feb Board
-            self.add(feb.ClinkFeb(      
-                name        = (f'ClinkFeb[{lane}]'), 
-                memBase     = self._srp[lane], 
-                serialA     = self._dma[lane][2],
-                serialB     = self._dma[lane][3],
-                camTypeA    = None,
-                camTypeB    = None,
-                version3    = version3,
-                enableDeps  = [self.Hardware.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
-                expand      = False,
-            ))
-            
-            # # Connect the file writer
-            # pr.streamConnect(self.self._dma[lane][1],self.dataWriter.getChannel(2*lane+0))
-            # pr.streamConnect(self,self.dataWriter.getChannel(2*lane+1))
-
+        for lane in range(numLane):        
             # Debug slave
             if dataDebug:
                 self._dbg[lane] = TimeToolRx()
@@ -172,7 +204,7 @@ class TimeToolDev(pr.Root):
                 
         # Time tool application
         self.add(app.TimeToolCore(
-            memBase = self.memMap,
+            memBase = self._memMap,
             offset  = 0x00C00000,
         ))
 
@@ -182,4 +214,3 @@ class TimeToolDev(pr.Root):
             initRead = initRead,
             timeout  = self._timeout,
         )
-

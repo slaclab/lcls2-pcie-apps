@@ -41,13 +41,11 @@ begin
          clkP => userClkP,
          clkN => userClkN);
 
-   U_Fpga : entity work.ClinkKcu1500Pgp2b
+   U_Fpga : entity work.TimeToolKcu1500
       generic map (
-         TPD_G                => TPD_G,
-         PGP_TYPE_G           => true,  -- True: PGPv3@10.3125Gb/s (which has integrated Rogue TCP stream socket)
-         ROGUE_SIM_EN_G       => true,
-         ROGUE_SIM_PORT_NUM_G => 8000,
-         BUILD_INFO_G         => BUILD_INFO_C)
+         TPD_G          => TPD_G,
+         ROGUE_SIM_EN_G => true,
+         BUILD_INFO_G   => BUILD_INFO_C)
       port map (
          ---------------------
          --  Application Ports
