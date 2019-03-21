@@ -79,7 +79,7 @@ $ ./simv -gui &
 3) When the VCS GUI pops up, start the simulation run
 
 4) In the 2nd terminal, launch the PyQT GUI in simulation mode
-
+```
 $ cd cameralink-gateway/software
 $ source setup_env_template.sh
 $ python scripts/gui.py --dev sim --pollEn 0 --initRead 0
