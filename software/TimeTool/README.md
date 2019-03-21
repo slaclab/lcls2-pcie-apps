@@ -34,7 +34,7 @@ $ cd cameralink-gateway/software
 $ source setup_env_template.sh
 ```
 
-2) Run the FEB firmware update script:
+2) Run the PCIe firmware update script:
 ```
 $ python scripts/updateKcu1500.py --path ../../firmware/targets/TimeToolKcu1500/images/
 ```
