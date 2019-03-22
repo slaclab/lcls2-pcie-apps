@@ -16,19 +16,19 @@ cl = TimeToolDev.TimeToolDev(True)
 #that were collected by the camera. Last printed 4 elements are the time stamp.
 #time.sleep(0.2)
 
-cl.ClinkTest.ClinkTop.ChannelA.SendEscape()
+cl.ClinkFeb[0].UartPiranha4[0]._tx.SendEscape()
 #time.sleep(0.2)
-cl.ClinkTest.ClinkTop.ChannelA.SendString("gcp")
+cl.ClinkFeb[0].UartPiranha4[0]._tx.SendString("gcp")
 #time.sleep(0.2)
-cl.ClinkTest.ClinkTop.ChannelA.BaudRate.set(9600)
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.BaudRate.set(9600)
 #time.sleep(5.0)
-cl.ClinkTest.ClinkTop.ChannelA.LinkMode.set(1)		#base mode
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.LinkMode.set(1)		#base mode
 #time.sleep(0.2)
-cl.ClinkTest.ClinkTop.ChannelA.DataMode.set(1)		#8 bit
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.DataMode.set(1)		#8 bit
 #time.sleep(0.2)
-cl.ClinkTest.ClinkTop.ChannelA.FrameMode.set(1)		#linemode
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.FrameMode.set(1)		#linemode
 #time.sleep(0.2)
-cl.ClinkTest.ClinkTop.ChannelA.TapCount.set(4)
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.TapCount.set(4)
 #time.sleep(0.2)
 
 
@@ -43,7 +43,7 @@ my_commands_to_pirana_camera = ['clm 0','svm 0', 'sem 0', 'set 5000', 'stm 1', '
 
 for i in my_commands_to_pirana_camera:
 	print("sent command: "+i)
-	cl.ClinkTest.ClinkTop.ChannelA.SendString(i)
+	cl.ClinkFeb[0].UartPiranha4[0]._tx.SendString(i)
 	time.sleep(0.1)			 			#commands sent too quickly we see serial data 
                                                                 #corruption. e.g. "svm" turns into "jvm".  
                                                                 #Could be done more by setting a semaphore in
@@ -54,28 +54,28 @@ for i in my_commands_to_pirana_camera:
 
 
 time.sleep(3)
-#cl.ClinkTest.ClinkTop.ChannelA.SendString("gcp")
+#cl.ClinkFeb[0].UartPiranha4[0]._tx.SendString("gcp")
 
  
-cl.ClinkTest.ClinkTop.ChannelA.DataEn.get()
-cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(True)	#this start the data collection
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.DataEn.get()
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.DataEn.set(True)	#this start the data collection
 time.sleep(1)
-cl.ClinkTest.ClinkTop.ChannelA.DataEn.set(False)#this stops the data collection
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.DataEn.set(False)#this stops the data collection
 
 
 #validating prescalling
 
-cl.ClinkTest.ClinkTop.ChannelA.SendString('svm 0')    #test pattern. 1 is Ramp, 0 is sensor video
-cl.ClinkTest.ClinkTop.ChannelA.SendString('stm 1')    #1 is internal trigger, 2 is External pulse width. Manual description is off by one
+cl.ClinkFeb[0].UartPiranha4[0]._tx.SendString('svm 0')    #test pattern. 1 is Ramp, 0 is sensor video
+cl.ClinkFeb[0].UartPiranha4[0]._tx.SendString('stm 1')    #1 is internal trigger, 2 is External pulse width. Manual description is off by one
 
 def frame_rate(sec):
     start_time  = time.time()
-    start_count = cl.ClinkTest.ClinkTop.ChannelA.FrameCount.get()
+    start_count = cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.FrameCount.get()
 
     time.sleep(sec)
 
     stop_time  = time.time()
-    stop_count = cl.ClinkTest.ClinkTop.ChannelA.FrameCount.get()
+    stop_count = cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.FrameCount.get()
 
     return (stop_count-start_count)*1.0/(stop_time-start_time)
 
@@ -85,13 +85,13 @@ def frame_rate(sec):
 
 
 
-cl.ClinkTest.ClinkTop.ChannelA.SendString('ssf 7000')
-cl.ClinkTest.ClinkTop.ChannelA.SendString('ssf 6000')
-cl.ClinkTest.ClinkTop.ChannelA.DropCount.get()
+cl.ClinkFeb[0].UartPiranha4[0]._tx.SendString('ssf 7000')
+cl.ClinkFeb[0].UartPiranha4[0]._tx.SendString('ssf 6000')
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.DropCount.get()
 cl.TimeTool.dialInPreScaling.set(254)
 cl.TimeTool.dialInPreScaling.set(124)
 cl.TimeTool.DialInOpCode.set(40)
 cl.TimeTool.dialInPreScaling.set(125)
-cl.ClinkTest.ClinkTop.ChannelA.DropCount.get()
+cl.ClinkFeb[0].ClinkTop.ChannelA.BaudRate.DropCount.get()
 frame_rate(2)
 

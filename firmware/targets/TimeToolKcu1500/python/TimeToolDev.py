@@ -185,6 +185,7 @@ class TimeToolDev(kcu1500.Core):
                     serialA     = self._dma[lane][2],
                     serialB     = self._dma[lane][3],
                     version3    = version3,
+                    camTypeA    = 'Piranha4', 
                     enableDeps  = [self.Hardware.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
                     expand      = False,
                 ))
@@ -233,3 +234,10 @@ class TimeToolDev(kcu1500.Core):
             initRead = initRead,
             timeout  = self._timeout,
         )
+        
+        # Some initialization after starting root
+        if (dev != 'sim'): 
+            for lane in range(numLane):
+                self.ClinkFeb[lane].UartPiranha4[0]._tx.SendEscape()
+                self.ClinkFeb[lane].ClinkTop.ChannelA.BaudRate.set(9600)
+                self.ClinkFeb[lane].ClinkTop.ChannelA.SerThrottle.set(10000)
