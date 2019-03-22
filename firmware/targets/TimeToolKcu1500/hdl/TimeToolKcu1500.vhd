@@ -22,6 +22,7 @@ use work.AxiStreamPkg.all;
 use work.SsiPkg.all;
 use work.AxiPciePkg.all;
 use work.TimingPkg.all;
+use work.AppPkg.all;
 
 entity TimeToolKcu1500 is
    generic (
@@ -82,8 +83,6 @@ end TimeToolKcu1500;
 
 architecture top_level of TimeToolKcu1500 is
 
-   constant AXIL_CLK_FREQ_C : real := 156.25E+6;  -- Units of Hz
-
    constant DMA_SIZE_C : positive := 1;
 
    constant NUM_AXIL_MASTERS_C : positive := 2;
@@ -92,8 +91,6 @@ architecture top_level of TimeToolKcu1500 is
    constant APP_INDEX_C : natural := 1;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, x"0080_0000", 23, 22);
-
-   constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 16 byte (128-bit) AXIS interface
 
    signal userClk156 : sl;
    signal userClk25  : sl;
@@ -124,11 +121,6 @@ architecture top_level of TimeToolKcu1500 is
 
    signal trigMasters : AxiStreamMasterArray(3 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal trigSlaves  : AxiStreamSlaveArray(3 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
-
-   signal txMaster    : AxiStreamMasterType;
-   signal txSlave     : AxiStreamSlaveType;
-   signal appObMaster : AxiStreamMasterType;
-   signal appObSlave  : AxiStreamSlaveType;
 
 begin
 
@@ -244,33 +236,36 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-   -----------------------
-   -- DMA to HW ASYNC FIFO
-   -----------------------
-   U_DMA_to_HW : entity work.AxiStreamFifoV2
+   ---------------------
+   -- Application Module
+   ---------------------
+   U_App : entity work.Application
       generic map (
-         -- General Configurations
-         TPD_G               => TPD_G,
-         SLAVE_READY_EN_G    => true,
-         VALID_THOLD_G       => 1,
-         -- FIFO configurations
-         BRAM_EN_G           => true,
-         GEN_SYNC_FIFO_G     => false,
-         FIFO_ADDR_WIDTH_G   => 9,
-         -- AXI Stream Port Configurations
-         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+         TPD_G           => TPD_G,
+         AXI_BASE_ADDR_G => AXIL_CONFIG_C(APP_INDEX_C).baseAddr)
       port map (
-         -- Slave Port
-         sAxisClk    => dmaClk,
-         sAxisRst    => dmaRst,
-         sAxisMaster => dmaObMasters(0),
-         sAxisSlave  => dmaObSlaves(0),
-         -- Master Port
-         mAxisClk    => axilClk,
-         mAxisRst    => axilRst,
-         mAxisMaster => pgpIbMasters(0),
-         mAxisSlave  => pgpIbSlaves(0));
+         -- AXI-Lite Interface (axilClk domain)
+         axilClk         => axilClk,
+         axilRst         => axilRst,
+         axilReadMaster  => axilReadMasters(APP_INDEX_C),
+         axilReadSlave   => axilReadSlaves(APP_INDEX_C),
+         axilWriteMaster => axilWriteMasters(APP_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(APP_INDEX_C),
+         -- PGP Streams (axilClk domain)
+         pgpIbMasters    => pgpIbMasters,
+         pgpIbSlaves     => pgpIbSlaves,
+         pgpObMasters    => pgpObMasters,
+         pgpObSlaves     => pgpObSlaves,
+         -- Trigger Event streams (axilClk domain)
+         trigMasters     => trigMasters,
+         trigSlaves      => trigSlaves,
+         -- DMA Interface (dmaClk domain)
+         dmaClk          => dmaClk,
+         dmaRst          => dmaRst,
+         dmaObMasters    => dmaObMasters,
+         dmaObSlaves     => dmaObSlaves,
+         dmaIbMasters    => dmaIbMasters,
+         dmaIbSlaves     => dmaIbSlaves);
 
    ------------------
    -- Hardware Module
@@ -322,84 +317,5 @@ begin
          qsfp1RxN        => qsfp1RxN,
          qsfp1TxP        => qsfp1TxP,
          qsfp1TxN        => qsfp1TxN);
-
-   -----------------
-   -- Time Tool Core
-   -----------------
-   U_TimeToolCore : entity work.TimeToolCore
-      generic map (
-         TPD_G           => TPD_G,
-         AXI_BASE_ADDR_G => AXIL_CONFIG_C(APP_INDEX_C).baseAddr)
-      port map (
-         -- System Clock and Reset
-         sysClk          => axilClk,
-         sysRst          => axilRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster    => pgpObMasters(0)(1),
-         dataInSlave     => pgpObSlaves(0)(1),
-         dataOutMaster   => txMaster,
-         dataOutSlave    => txSlave,
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(APP_INDEX_C),
-         axilReadSlave   => axilReadSlaves(APP_INDEX_C),
-         axilWriteMaster => axilWriteMasters(APP_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(APP_INDEX_C));
-
-   -----------------
-   -- AXI Stream MUX
-   -----------------
-   U_Mux : entity work.AxiStreamMux
-      generic map (
-         TPD_G                => TPD_G,
-         NUM_SLAVES_G         => 4,
-         ILEAVE_EN_G          => true,
-         ILEAVE_ON_NOTVALID_G => false,
-         ILEAVE_REARB_G       => 128,
-         PIPE_STAGES_G        => 1)
-      port map (
-         -- Clock and reset
-         axisClk         => axilClk,
-         axisRst         => axilRst,
-         -- Inbound Master Ports
-         sAxisMasters(0) => pgpObMasters(0)(0),
-         sAxisMasters(1) => txMaster,
-         sAxisMasters(2) => pgpObMasters(0)(2),
-         sAxisMasters(3) => pgpObMasters(0)(3),
-         -- Inbound Slave Ports
-         sAxisSlaves(0)  => pgpObSlaves(0)(0),
-         sAxisSlaves(1)  => txSlave,
-         sAxisSlaves(2)  => pgpObSlaves(0)(2),
-         sAxisSlaves(3)  => pgpObSlaves(0)(3),
-         -- Outbound Port
-         mAxisMaster     => appObMaster,
-         mAxisSlave      => appObSlave);
-
-   -----------------------
-   -- App to DMA ASYNC FIFO
-   -----------------------
-   U_APP_to_DMA : entity work.AxiStreamFifoV2
-      generic map (
-         -- General Configurations
-         TPD_G               => TPD_G,
-         SLAVE_READY_EN_G    => true,
-         VALID_THOLD_G       => 1,
-         -- FIFO configurations
-         BRAM_EN_G           => true,
-         GEN_SYNC_FIFO_G     => false,
-         FIFO_ADDR_WIDTH_G   => 9,
-         -- AXI Stream Port Configurations
-         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
-      port map (
-         -- Slave Port
-         sAxisClk    => axilClk,
-         sAxisRst    => axilRst,
-         sAxisMaster => appObMaster,
-         sAxisSlave  => appObSlave,
-         -- Master Port
-         mAxisClk    => dmaClk,
-         mAxisRst    => dmaRst,
-         mAxisMaster => dmaIbMasters(0),
-         mAxisSlave  => dmaIbSlaves(0));
 
 end top_level;

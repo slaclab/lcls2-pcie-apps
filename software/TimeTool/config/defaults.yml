@@ -1,9 +1,16 @@
 TimeToolDev:
   #########################################################################################################
-  TimeTool:
-    AddValue: 0x0
-    DialInOpCode: 0x2c
-    DialInTriggerDelay: 0x0
+  Application:
+    AppLane[:]:
+      ###################
+      Fex:
+        AddValue: 0x0        
+      ###################
+      Prescale:
+        DialInPreScaling: 0x7c
+      ###################
+      EventBuilder:
+        Bypass:  0x1 # Ignoring trigger stream for now
   #########################################################################################################
   ClinkFeb[:]:
     ###################
@@ -23,12 +30,12 @@ TimeToolDev:
         SwControlEn: 0x0     
     ###################
     UartPiranha4[:]: # Piranha4 UART interface
-      CLM: '0'     # CLM: Camera Mink Mode. 0 = base, 1 = medium, 2 = full, 3 = deca
+      SPF: '0'     # SFP: 0 = 8-bit mode
+      CLM: '2'     # CLM: 2 = full
       SVM: '0'     # SVM: test pattern mode
       SEM: '0'     # SEM: Set Exposure Mode
       SET: '5000'  # SET: Set Exposure Time
       STM: '1'     # STM: External Trigger Mode    
-      SPF: '0'    
       SSF: '7000'
     ###################
     TrigCtrl[0]:
@@ -58,38 +65,39 @@ TimeToolDev:
       ###################
       Triggering: # https://confluence.slac.stanford.edu/download/attachments/216713616/ConfigEvrV2CoreTriggersYaml.pdf
         ###################
-        Ch[:]: # [:] is a wildcard for all devices
+        Ch[:]:
           EnableReg: True
-          RateSel: 0x1028
+          # RateSel: 0x1028 # LCLS-I @ 120 Hz
+          RateSel: 0x0 # No triggering
           DestSel: 0x20000
         ###################
-        LocalTrig[:]: # [:] is a wildcard for all devices
+        LocalTrig[:]:
           EnableTrig: True
           Polarity: Rising
           Delay: 625000 # (156.25 MHz) x 4 ms = 625000
           Width: 0x1 # 0x1 = one cycle pulse
         LocalTrig[0]:
           Source: 0x0 # CH0
-        LocalTrig[1]:
-          Source: 0x1 # CH1
-        LocalTrig[2]:
-          Source: 0x2 # CH2
-        LocalTrig[3]:
-          Source: 0x3 # CH3  
+        # LocalTrig[1]:
+          # Source: 0x1 # CH1
+        # LocalTrig[2]:
+          # Source: 0x2 # CH2
+        # LocalTrig[3]:
+          # Source: 0x3 # CH3  
         ###################
-        RemoteTrig[:]: # [:] is a wildcard for all devices
+        RemoteTrig[:]:
           EnableTrig: True
           Polarity: Rising
           Delay: 0x0 # zero for low latency fiber trigger
           Width: 0x1 # 0x1 = one cycle pulse
         RemoteTrig[0]:
           Source: 0x0 # CH0
-        RemoteTrig[1]:
-          Source: 0x1 # CH1
-        RemoteTrig[2]:
-          Source: 0x2 # CH2
-        RemoteTrig[3]:
-          Source: 0x3 # CH3            
+        # RemoteTrig[1]:
+          # Source: 0x1 # CH1
+        # RemoteTrig[2]:
+          # Source: 0x2 # CH2
+        # RemoteTrig[3]:
+          # Source: 0x3 # CH3            
       ###################
       TimingFrameRx:
         ClkSel: 0x0 # 0x0 = LCLS-I timing

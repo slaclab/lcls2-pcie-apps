@@ -82,7 +82,7 @@ $ ./simv -gui &
 ```
 $ cd cameralink-gateway/software
 $ source setup_env_template.sh
-$ python scripts/gui.py --dev sim --pollEn 0 --initRead 0
+$ python scripts/gui.py --dev sim
 ```
 
 <!--- ######################################################## -->

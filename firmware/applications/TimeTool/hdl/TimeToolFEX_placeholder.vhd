@@ -33,22 +33,22 @@ use unisim.vcomponents.all;
 
 entity TimeToolFEX_placeholder is
    generic (
-      TPD_G             : time                 := 1 ns;
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType  := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2));
+      TPD_G             : time                := 1 ns;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2));
    port (
       -- System Interface
-      sysClk          : in    sl;
-      sysRst          : in    sl;
+      sysClk          : in  sl;
+      sysRst          : in  sl;
       -- DMA Interfaces  (sysClk domain)
-      dataInMaster    : in    AxiStreamMasterType;
-      dataInSlave     : out   AxiStreamSlaveType;
-      dataOutMaster   : out   AxiStreamMasterType;
-      dataOutSlave    : in    AxiStreamSlaveType;
+      dataInMaster    : in  AxiStreamMasterType;
+      dataInSlave     : out AxiStreamSlaveType;
+      dataOutMaster   : out AxiStreamMasterType;
+      dataOutSlave    : in  AxiStreamSlaveType;
       -- AXI-Lite Interface
-      axilReadMaster  : in    AxiLiteReadMasterType;
-      axilReadSlave   : out   AxiLiteReadSlaveType;
-      axilWriteMaster : in    AxiLiteWriteMasterType;
-      axilWriteSlave  : out   AxiLiteWriteSlaveType);
+      axilReadMaster  : in  AxiLiteReadMasterType;
+      axilReadSlave   : out AxiLiteReadSlaveType;
+      axilWriteMaster : in  AxiLiteWriteMasterType;
+      axilWriteSlave  : out AxiLiteWriteSlaveType);
 end TimeToolFEX_placeholder;
 
 
@@ -58,34 +58,36 @@ end TimeToolFEX_placeholder;
 
 architecture mapping of TimeToolFEX_placeholder is
 
-   constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
+   constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
 
----------------------------------------
-----record for two process method------
----------------------------------------
+   ---------------------------------------
+   ----record for two process method------
+   ---------------------------------------
 
    type RegType is record
-      master          : AxiStreamMasterType;
-      slave           : AxiStreamSlaveType;
-      addvalue        : slv(7 downto 0);
-      axilReadSlave   : AxiLiteReadSlaveType;
-      axilWriteSlave  : AxiLiteWriteSlaveType;
+      master         : AxiStreamMasterType;
+      slave          : AxiStreamSlaveType;
+      addvalue       : slv(7 downto 0);
+      scratchPad     : slv(31 downto 0);
+      axilReadSlave  : AxiLiteReadSlaveType;
+      axilWriteSlave : AxiLiteWriteSlaveType;
    end record RegType;
 
----------------------------------------
--------record intitial value-----------
----------------------------------------
+   ---------------------------------------
+   -------record intitial value-----------
+   ---------------------------------------
 
    constant REG_INIT_C : RegType := (
-      master          => AXI_STREAM_MASTER_INIT_C,
-      slave           => AXI_STREAM_SLAVE_INIT_C,
-      addValue        => (others=>'0'),
-      axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
-      axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C);
+      master         => AXI_STREAM_MASTER_INIT_C,
+      slave          => AXI_STREAM_SLAVE_INIT_C,
+      addValue       => (others => '0'),
+      scratchPad     => (others => '0'),
+      axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
+      axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C);
 
----------------------------------------
--------record intitial value-----------
----------------------------------------
+   ---------------------------------------
+   -------record intitial value-----------
+   ---------------------------------------
 
 
    signal r   : RegType := REG_INIT_C;
@@ -100,7 +102,7 @@ begin
    ---------------------------------
    -- Input FIFO
    ---------------------------------
-   U_InFifo: entity work.AxiStreamFifoV2
+   U_InFifo : entity work.AxiStreamFifoV2
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => true,
@@ -122,7 +124,8 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster, outCtrl) is
+   comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, r,
+                   sysRst) is
       variable v      : RegType;
       variable axilEp : AxiLiteEndpointType;
    begin
@@ -137,7 +140,8 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"00000",  0, v.addValue);
+      axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"0004", 0, v.addValue);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
@@ -151,10 +155,10 @@ begin
 
          for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
             --v.master.tData(i*8+7 downto i*8) := inMaster.tData(i*8+7 downto i*8) + r.addValue;
-            v.master.tData(i*8+7 downto i*8) := b"0000_0000";    --for simulation testing
+            v.master.tData(i*8+7 downto i*8) := b"0000_0000";  --for simulation testing
          end loop;
 
-         v.master.tData(7 downto 0) := r.addValue;    --for simulation testing
+         v.master.tData(7 downto 0) := r.addValue;  --for simulation testing
 
       else
          v.master.tValid := '0';
@@ -187,7 +191,7 @@ begin
    ---------------------------------
    -- Output FIFO
    ---------------------------------
-   U_OutFifo: entity work.AxiStreamFifoV2
+   U_OutFifo : entity work.AxiStreamFifoV2
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,

@@ -5,7 +5,7 @@ import rogue.protocols
 
 import XilinxKcu1500Pgp as kcu1500
 import ClinkFeb         as feb
-import TimeTool         as app
+import TimeTool         as timeTool
 
 import numpy as np
 import h5py
@@ -161,6 +161,8 @@ class TimeToolDev(kcu1500.Core):
             description = description, 
             dev         = dev, 
             version3    = version3, 
+            pollEn      = pollEn, 
+            initRead    = initRead, 
             numLane     = numLane, 
             **kwargs
         )
@@ -187,7 +189,7 @@ class TimeToolDev(kcu1500.Core):
                     version3    = version3,
                     camTypeA    = 'Piranha4', 
                     enableDeps  = [self.Hardware.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
-                    expand      = False,
+                    # expand      = False,
                 ))
 
         # Else doing Rogue VCS simulation
@@ -218,26 +220,37 @@ class TimeToolDev(kcu1500.Core):
         for lane in range(numLane):        
             # Debug slave
             if dataDebug:
-                self._dbg[lane] = TimeToolRx()
+                self._dbg[lane] = TimeToolRx(expand=False)
                 pr.streamTap(self._dma[lane][1],self._dbg[lane])
                 self.add(self._dbg)
                 
         # Time tool application
-        self.add(app.TimeToolCore(
+        self.add(timeTool.Application(
             memBase = self._memMap,
             offset  = 0x00C00000,
+            numLane = numLane,
         ))
 
         # Start the system
         self.start(
-            pollEn   = pollEn,
-            initRead = initRead,
+            pollEn   = self._pollEn,
+            initRead = self._initRead,
             timeout  = self._timeout,
         )
         
-        # Some initialization after starting root
-        if (dev != 'sim'): 
-            for lane in range(numLane):
-                self.ClinkFeb[lane].UartPiranha4[0]._tx.SendEscape()
-                self.ClinkFeb[lane].ClinkTop.ChannelA.BaudRate.set(9600)
-                self.ClinkFeb[lane].ClinkTop.ChannelA.SerThrottle.set(10000)
+        # # Check if not simulation
+        # if (dev != 'sim'):           
+            # # Read all the variables
+            # self.ReadAll()
+            # # Some initialization after starting root
+            # for lane in range(numLane):
+                # for ch in range(1):
+                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].BaudRate.set(9600)
+                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].SerThrottle.set(10000)
+                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].LinkMode.setDisp('Full')
+                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].DataMode.setDisp('8Bit')
+                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].FrameMode.setDisp('Line')
+                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].TapCount.set(8)                    
+                    # self.ClinkFeb[lane].UartPiranha4[ch].SendEscape()
+                    # self.ClinkFeb[lane].UartPiranha4[ch].SPF.setDisp('0')
+                    # self.ClinkFeb[lane].UartPiranha4[ch].GCP()

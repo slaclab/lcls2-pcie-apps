@@ -45,6 +45,14 @@ parser.add_argument(
     help     = "Enable read all variables at start",
 )  
 
+parser.add_argument(
+    "--dataDebug", 
+    type     = argBool,
+    required = False,
+    default  = False,
+    help     = "Enable TimeToolRx module",
+)  
+
 # Get the arguments
 args = parser.parse_args()
 
@@ -52,16 +60,19 @@ args = parser.parse_args()
 
 cl = TimeToolDev.TimeToolDev(
     dev       = args.dev,
-    dataDebug = True,
+    dataDebug = args.dataDebug,
     version3  = args.version3,
     pollEn    = args.pollEn,
     initRead  = args.initRead,
 )
 
+#################################################################
+
 # Create GUI
 appTop = pyrogue.gui.application(sys.argv)
 guiTop = pyrogue.gui.GuiTop(group='TimeToolDev')
 guiTop.addTree(cl)
+guiTop.resize(800, 800)
 
 # Run gui
 appTop.exec_()
