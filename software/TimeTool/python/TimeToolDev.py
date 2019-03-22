@@ -238,19 +238,19 @@ class TimeToolDev(kcu1500.Core):
             timeout  = self._timeout,
         )
         
-        # # Check if not simulation
-        # if (dev != 'sim'):           
-            # # Read all the variables
-            # self.ReadAll()
-            # # Some initialization after starting root
-            # for lane in range(numLane):
-                # for ch in range(1):
-                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].BaudRate.set(9600)
-                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].SerThrottle.set(10000)
-                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].LinkMode.setDisp('Full')
-                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].DataMode.setDisp('8Bit')
-                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].FrameMode.setDisp('Line')
-                    # self.ClinkFeb[lane].ClinkTop.Channel[ch].TapCount.set(8)                    
-                    # self.ClinkFeb[lane].UartPiranha4[ch].SendEscape()
-                    # self.ClinkFeb[lane].UartPiranha4[ch].SPF.setDisp('0')
-                    # self.ClinkFeb[lane].UartPiranha4[ch].GCP()
+        # Check if not simulation
+        if (dev != 'sim'):           
+            # Read all the variables
+            self.ReadAll()
+            # Some initialization after starting root
+            for lane in range(numLane):
+                for ch in range(1):
+                    self.ClinkFeb[lane].ClinkTop.Channel[ch].BaudRate.set(9600)
+                    self.ClinkFeb[lane].ClinkTop.Channel[ch].SerThrottle.set(10000)
+                    self.ClinkFeb[lane].ClinkTop.Channel[ch].LinkMode.setDisp('Full')
+                    self.ClinkFeb[lane].ClinkTop.Channel[ch].DataMode.setDisp('8Bit')
+                    self.ClinkFeb[lane].ClinkTop.Channel[ch].FrameMode.setDisp('Line')
+                    self.ClinkFeb[lane].ClinkTop.Channel[ch].TapCount.set(8)                    
+                    self.ClinkFeb[lane].UartPiranha4[ch].SendEscape()
+                    self.ClinkFeb[lane].UartPiranha4[ch].SPF.setDisp('0')
+                    self.ClinkFeb[lane].UartPiranha4[ch].GCP()

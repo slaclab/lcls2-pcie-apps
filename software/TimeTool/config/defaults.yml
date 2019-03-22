@@ -10,7 +10,8 @@ TimeToolDev:
         DialInPreScaling: 0x7c
       ###################
       EventBuilder:
-        Bypass:  0x1 # Ignoring trigger stream for now
+        Bypass:  0x0 # Not ignoring any of the channels
+        # Bypass:  0x1 # Ignoring trigger stream for now
   #########################################################################################################
   ClinkFeb[:]:
     ###################
@@ -61,43 +62,28 @@ TimeToolDev:
       TimingDbgMon:
         Loopback: 0x0
         # UseMiniTpg: False
-        UseMiniTpg: True # True for standalone testing
+        UseMiniTpg: True # True for standalone testing!!!
       ###################
       Triggering: # https://confluence.slac.stanford.edu/download/attachments/216713616/ConfigEvrV2CoreTriggersYaml.pdf
         ###################
         Ch[:]:
           EnableReg: True
-          # RateSel: 0x1028 # LCLS-I @ 120 Hz
-          RateSel: 0x0 # No triggering
+          RateSel: 0x1028 # LCLS-I @ 120 Hz
+          # RateSel: 0x0 # No triggering
           DestSel: 0x20000
         ###################
         LocalTrig[:]:
           EnableTrig: True
           Polarity: Rising
-          Delay: 625000 # (156.25 MHz) x 4 ms = 625000
+          # Delay: 625000 # (156.25 MHz) x 4 ms = 625000
+          Delay: 0x0 # zero delay for low latency local trigger
           Width: 0x1 # 0x1 = one cycle pulse
-        LocalTrig[0]:
-          Source: 0x0 # CH0
-        # LocalTrig[1]:
-          # Source: 0x1 # CH1
-        # LocalTrig[2]:
-          # Source: 0x2 # CH2
-        # LocalTrig[3]:
-          # Source: 0x3 # CH3  
         ###################
         RemoteTrig[:]:
           EnableTrig: True
           Polarity: Rising
-          Delay: 0x0 # zero for low latency fiber trigger
-          Width: 0x1 # 0x1 = one cycle pulse
-        RemoteTrig[0]:
-          Source: 0x0 # CH0
-        # RemoteTrig[1]:
-          # Source: 0x1 # CH1
-        # RemoteTrig[2]:
-          # Source: 0x2 # CH2
-        # RemoteTrig[3]:
-          # Source: 0x3 # CH3            
+          Delay: 0x0 # zero delay for low latency fiber trigger
+          Width: 0x1 # 0x1 = one cycle pulse          
       ###################
       TimingFrameRx:
         ClkSel: 0x0 # 0x0 = LCLS-I timing
