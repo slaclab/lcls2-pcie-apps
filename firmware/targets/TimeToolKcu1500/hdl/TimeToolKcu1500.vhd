@@ -148,7 +148,7 @@ begin
          CLKIN_PERIOD_G    => 6.4,      -- 156.25 MHz
          CLKFBOUT_MULT_G   => 8,        -- 1.25GHz = 8 x 156.25 MHz
          CLKOUT0_DIVIDE_G  => 8,        -- 156.25MHz = 1.25GHz/8
-         CLKOUT1_DIVIDE_G  => 50)       -- -- 25MHz = 1.25GHz/50
+         CLKOUT1_DIVIDE_G  => 50)       -- 25MHz = 1.25GHz/50
 
       port map(
          -- Clock Input
@@ -233,8 +233,8 @@ begin
          NUM_MASTER_SLOTS_G => NUM_AXIL_MASTERS_C,
          MASTERS_CONFIG_G   => AXIL_CONFIG_C)
       port map (
-         axiClk              => dmaClk,
-         axiClkRst           => dmaRst,
+         axiClk              => axilClk,
+         axiClkRst           => axilRst,
          sAxiWriteMasters(0) => axilWriteMaster,
          sAxiWriteSlaves(0)  => axilWriteSlave,
          sAxiReadMasters(0)  => axilReadMaster,
