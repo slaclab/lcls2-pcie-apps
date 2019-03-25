@@ -12,7 +12,7 @@
 
 1) Setup the rogue environment
 ```
-$ cd cameralink-gateway/software
+$ cd lcls2-pcie-apps/software/TimeTool
 $ source setup_env_template.sh
 ```
 
@@ -30,7 +30,7 @@ and <PATH_TO_MCS> is the path to the firmware .MCS file
 
 1) Setup the rogue environment
 ```
-$ cd cameralink-gateway/software
+$ cd cd lcls2-pcie-apps/software/TimeTool
 $ source setup_env_template.sh
 ```
 
@@ -50,7 +50,7 @@ sudo reboot
 
 1) Setup the rogue environment
 ```
-$ cd cameralink-gateway/software
+$ cd cd lcls2-pcie-apps/software/TimeTool
 $ source setup_env_template.sh
 ```
 
