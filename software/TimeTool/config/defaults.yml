@@ -18,7 +18,7 @@ TimeToolDev:
     ClinkTop:
     ###################
       ###################
-      Channel[:]:
+      Ch[:]:
         LinkMode: Base 
         DataMode: 8Bit
         FrameMode: Line
@@ -29,15 +29,15 @@ TimeToolDev:
         SerThrottle: 10000 # (10ms x 1us throttle rate) = 10000
         SwControlValue: 0x0
         SwControlEn: 0x0     
-    ###################
-    UartPiranha4[:]: # Piranha4 UART interface
-      SPF: '0'     # SFP: 0 = 8-bit mode
-      CLM: '2'     # CLM: 2 = full
-      SVM: '0'     # SVM: test pattern mode
-      SEM: '0'     # SEM: Set Exposure Mode
-      SET: '5000'  # SET: Set Exposure Time
-      STM: '1'     # STM: External Trigger Mode    
-      SSF: '7000'
+        ###################
+        UartPiranha4: # Piranha4 UART interface
+          SPF: '0'     # SFP: 0 = 8-bit mode
+          CLM: '2'     # CLM: 2 = full
+          SVM: '0'     # SVM: test pattern mode
+          SEM: '0'     # SEM: Set Exposure Mode
+          SET: '5000'  # SET: Set Exposure Time
+          STM: '1'     # STM: External Trigger Mode    
+          SSF: '7000'
     ###################
     TrigCtrl[0]:
       EnableTrig: True

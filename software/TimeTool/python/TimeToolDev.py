@@ -184,10 +184,9 @@ class TimeToolDev(kcu1500.Core):
                 self.add(feb.ClinkFeb(      
                     name        = (f'ClinkFeb[{lane}]'), 
                     memBase     = self._srp[lane], 
-                    serialA     = self._dma[lane][2],
-                    serialB     = self._dma[lane][3],
+                    serial      = [self._dma[lane][2],None],
+                    camType     = ['Piranha4',        None],
                     version3    = version3,
-                    camTypeA    = 'Piranha4', 
                     enableDeps  = [self.Hardware.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
                     # expand      = False,
                 ))
@@ -244,13 +243,12 @@ class TimeToolDev(kcu1500.Core):
             self.ReadAll()
             # Some initialization after starting root
             for lane in range(numLane):
-                for ch in range(1):
-                    self.ClinkFeb[lane].ClinkTop.Channel[ch].BaudRate.set(9600)
-                    self.ClinkFeb[lane].ClinkTop.Channel[ch].SerThrottle.set(10000)
-                    self.ClinkFeb[lane].ClinkTop.Channel[ch].LinkMode.setDisp('Full')
-                    self.ClinkFeb[lane].ClinkTop.Channel[ch].DataMode.setDisp('8Bit')
-                    self.ClinkFeb[lane].ClinkTop.Channel[ch].FrameMode.setDisp('Line')
-                    self.ClinkFeb[lane].ClinkTop.Channel[ch].TapCount.set(8)                    
-                    self.ClinkFeb[lane].UartPiranha4[ch].SendEscape()
-                    self.ClinkFeb[lane].UartPiranha4[ch].SPF.setDisp('0')
-                    self.ClinkFeb[lane].UartPiranha4[ch].GCP()
+                self.ClinkFeb[lane].ClinkTop.Ch[0].BaudRate.set(9600)
+                self.ClinkFeb[lane].ClinkTop.Ch[0].SerThrottle.set(10000)
+                self.ClinkFeb[lane].ClinkTop.Ch[0].LinkMode.setDisp('Full')
+                self.ClinkFeb[lane].ClinkTop.Ch[0].DataMode.setDisp('8Bit')
+                self.ClinkFeb[lane].ClinkTop.Ch[0].FrameMode.setDisp('Line')
+                self.ClinkFeb[lane].ClinkTop.Ch[0].TapCount.set(8)                    
+                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SendEscape()
+                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SPF.setDisp('0')
+                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
