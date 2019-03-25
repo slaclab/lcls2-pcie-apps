@@ -36,7 +36,7 @@ $ source setup_env_template.sh
 
 2) Run the PCIe firmware update script:
 ```
-$ python scripts/updateKcu1500.py --path ../../firmware/targets/TimeToolKcu1500/images/
+$ python scripts/updatePcieFpga.py --path ../../firmware/targets/TimeToolKcu1500/images/
 ```
 
 3) Reboot the computer
