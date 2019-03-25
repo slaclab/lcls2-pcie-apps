@@ -80,7 +80,7 @@ $ ./simv -gui &
 
 4) In the 2nd terminal, launch the PyQT GUI in simulation mode
 ```
-$ cd cameralink-gateway/software
+$ cd cd lcls2-pcie-apps/software/TimeTool
 $ source setup_env_template.sh
 $ python scripts/gui.py --dev sim
 ```
