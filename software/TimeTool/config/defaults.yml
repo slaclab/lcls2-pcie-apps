@@ -19,7 +19,7 @@ TimeToolDev:
     ###################
       ###################
       Ch[:]:
-        LinkMode: Base 
+        LinkMode: Full 
         DataMode: 8Bit
         FrameMode: Line
         TapCount: 4
