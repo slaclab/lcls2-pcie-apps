@@ -52,12 +52,12 @@ end Application;
 
 architecture mapping of Application is
 
-   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(DMA_SIZE_C-1 downto 0) := genAxiLiteConfig(DMA_SIZE_C, AXI_BASE_ADDR_G, 22, 20);
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(3 downto 0) := genAxiLiteConfig(4, AXI_BASE_ADDR_G, 22, 20);
 
-   signal axilWriteMasters : AxiLiteWriteMasterArray(DMA_SIZE_C-1 downto 0);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(DMA_SIZE_C-1 downto 0);
-   signal axilReadMasters  : AxiLiteReadMasterArray(DMA_SIZE_C-1 downto 0);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(DMA_SIZE_C-1 downto 0);
+   signal axilWriteMasters : AxiLiteWriteMasterArray(3 downto 0);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(3 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_OK_C);
+   signal axilReadMasters  : AxiLiteReadMasterArray(3 downto 0);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(3 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_OK_C);
 
 begin
 
@@ -68,7 +68,7 @@ begin
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => DMA_SIZE_C,
+         NUM_MASTER_SLOTS_G => 4,
          MASTERS_CONFIG_G   => AXIL_CONFIG_C)
       port map (
          axiClk              => axilClk,
