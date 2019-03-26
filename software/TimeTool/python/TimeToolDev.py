@@ -6,6 +6,7 @@ import rogue.protocols
 import XilinxKcu1500Pgp as kcu1500
 import ClinkFeb         as feb
 import TimeTool         as timeTool
+import surf.axi         as axi
 
 import numpy as np
 import h5py
@@ -211,3 +212,12 @@ class TimeToolDev(kcu1500.Core):
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SendEscape()
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SPF.setDisp('0')
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
+        else:
+            # Disable the PGP PHY device (speed up the simulation)
+            self.Hardware.enable.set(False)
+            self.Hardware.hidden = True
+            # Bypass the time AXIS channel
+            eventDev = self.find(typ=axi.AxiStreamBatcherEventBuilder)
+            for dev in eventDev:
+                dev.Bypass.set(0x1)            
+                
