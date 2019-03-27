@@ -72,7 +72,7 @@ cl = TimeToolDev.TimeToolDev(
 appTop = pyrogue.gui.application(sys.argv)
 guiTop = pyrogue.gui.GuiTop(group='TimeToolDev')
 guiTop.addTree(cl)
-guiTop.resize(800, 800)
+guiTop.resize(800, 1000)
 
 # Run gui
 appTop.exec_()

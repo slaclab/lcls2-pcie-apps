@@ -3,10 +3,11 @@ import pyrogue as pr
 
 import rogue.protocols
 
-import XilinxKcu1500Pgp as kcu1500
-import ClinkFeb         as feb
-import TimeTool         as timeTool
-import surf.axi         as axi
+import XilinxKcu1500Pgp       as kcu1500
+import ClinkFeb               as feb
+import TimeTool               as timeTool
+import surf.axi               as axi
+import surf.protocols.batcher as batcher
 
 import numpy as np
 import h5py
@@ -128,7 +129,7 @@ class TimeToolDev(kcu1500.Core):
         )
             
         # Check if not doing simulation
-        if (dev != 'sim'):            
+        if (dev!='sim'):            
             
             # Create arrays to be filled
             self._srp = [None for lane in range(numLane)]
@@ -198,7 +199,7 @@ class TimeToolDev(kcu1500.Core):
         )
         
         # Check if not simulation
-        if (dev != 'sim'):           
+        if (dev!='sim'):           
             # Read all the variables
             self.ReadAll()
             # Some initialization after starting root
@@ -217,7 +218,7 @@ class TimeToolDev(kcu1500.Core):
             self.Hardware.enable.set(False)
             self.Hardware.hidden = True
             # Bypass the time AXIS channel
-            eventDev = self.find(typ=axi.AxiStreamBatcherEventBuilder)
+            eventDev = self.find(typ=batcher.AxiStreamBatcherEventBuilder)
             for dev in eventDev:
                 dev.Bypass.set(0x1)            
                 

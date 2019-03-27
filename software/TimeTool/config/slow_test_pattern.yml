@@ -232,8 +232,7 @@ TimeToolDev:
       EnableTrig: True
       InvCC: False
       TrigMap: ChA
-      TrigPulseWidth: 0xfff
-      TrigPulseWidthMicrosec: 32.768
+      TrigPulseWidth: 32.768
       TrigMask: 0x1
       CntRst: 0x0
     TrigCtrl[1]:
@@ -241,8 +240,7 @@ TimeToolDev:
       EnableTrig: True
       InvCC: False
       TrigMap: ChB
-      TrigPulseWidth: 0xfff
-      TrigPulseWidthMicrosec: 32.768
+      TrigPulseWidth: 32.768
       TrigMask: 0x1
       CntRst: 0x0
     PgpMon[0]:
