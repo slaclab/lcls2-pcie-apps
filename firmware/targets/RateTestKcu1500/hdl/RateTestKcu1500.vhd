@@ -83,7 +83,7 @@ end RateTestKcu1500;
 
 architecture top_level of RateTestKcu1500 is
 
-   constant DMA_SIZE_C : positive := 8;
+   constant DMA_LANES_C : positive := 8;
 
    constant NUM_AXIL_MASTERS_C : positive := 6;
 
@@ -109,10 +109,10 @@ architecture top_level of RateTestKcu1500 is
 
    signal dmaClk       : sl;
    signal dmaRst       : sl;
-   signal dmaObMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-   signal dmaObSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
-   signal dmaIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-   signal dmaIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal dmaObMasters : AxiStreamMasterArray(DMA_LANES_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal dmaObSlaves  : AxiStreamSlaveArray(DMA_LANES_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal dmaIbMasters : AxiStreamMasterArray(DMA_LANES_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal dmaIbSlaves  : AxiStreamSlaveArray(DMA_LANES_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
 
    signal pgpIbMasters : AxiStreamMasterArray(3 downto 0)     := (others => AXI_STREAM_MASTER_INIT_C);
    signal pgpIbSlaves  : AxiStreamSlaveArray(3 downto 0)      := (others => AXI_STREAM_SLAVE_FORCE_C);
@@ -163,7 +163,7 @@ begin
          ROGUE_SIM_CH_COUNT_G => 4,     -- 4 Virtual Channels per DMA lane
          BUILD_INFO_G         => BUILD_INFO_G,
          DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_C,
-         DMA_SIZE_G           => DMA_SIZE_C)
+         DMA_SIZE_G           => DMA_LANES_C)
       port map (
          ------------------------      
          --  Top Level Interfaces
@@ -262,10 +262,10 @@ begin
          -- DMA Interface (dmaClk domain)
          dmaClk          => dmaClk,
          dmaRst          => dmaRst,
-         dmaObMasters    => dmaObMasters,
-         dmaObSlaves     => dmaObSlaves,
-         dmaIbMasters    => dmaIbMasters,
-         dmaIbSlaves     => dmaIbSlaves);
+         dmaObMasters    => dmaObMasters(DMA_SIZE_C-1 downto 0),
+         dmaObSlaves     => dmaObSlaves(DMA_SIZE_C-1 downto 0),
+         dmaIbMasters    => dmaIbMasters(DMA_SIZE_C-1 downto 0),
+         dmaIbSlaves     => dmaIbSlaves(DMA_SIZE_C-1 downto 0));
 
    ------------------
    -- Hardware Module
