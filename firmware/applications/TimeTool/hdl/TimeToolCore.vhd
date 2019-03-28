@@ -1,10 +1,8 @@
 -------------------------------------------------------------------------------
 -- File       : TimeToolCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-12-04
--- Last update: 2018-11-08
 -------------------------------------------------------------------------------
--- Description:
+-- Description: TimeTool Core Module
 -------------------------------------------------------------------------------
 -- This file is part of 'axi-pcie-core'.
 -- It is subject to the license terms in the LICENSE.txt file found in the 
@@ -17,89 +15,85 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
---use ieee.std_logic_arith.all;
+use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.all;
 
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
-use work.AxiPkg.all;
 use work.SsiPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
-
-library unisim;
-use unisim.vcomponents.all;
-
+use work.AppPkg.all;
 
 entity TimeToolCore is
    generic (
-      TPD_G             : time                := 1 ns;
-      DEBUG_G           : boolean             := true;
-      NUM_MASTERS_G     : positive            := 2;
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
-      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"0000_0000");      
+      TPD_G           : time             := 1 ns;
+      AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000");
    port (
-      -- System Interface
-      sysClk          : in  sl;
-      sysRst          : in  sl;
-      -- DMA Interfaces (sysClk domain)
+      -- Clock and Reset
+      axilClk         : in  sl;
+      axilRst         : in  sl;
+      -- Trigger Event streams (axilClk domain)
+      trigMaster      : in  AxiStreamMasterType;
+      trigSlave       : out AxiStreamSlaveType;
+      -- DMA Interfaces (axilClk domain)
       dataInMaster    : in  AxiStreamMasterType;
       dataInSlave     : out AxiStreamSlaveType;
-      dataOutMaster   : out AxiStreamMasterType;
-      dataOutSlave    : in  AxiStreamSlaveType;
-      -- AXI-Lite Interface (sysClk domain)
+      eventMaster     : out AxiStreamMasterType;
+      eventSlave      : in  AxiStreamSlaveType;
+      -- AXI-Lite Interface (axilClk domain)
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType;
-      -- Timing information (sysClk domain)
-      timingBus       : in  TimingBusType;
-      -- PGP TX OP-codes (pgpTxClk domains)
-      pgpTxClk        : in  sl;
-      pgpTxIn         : out Pgp2bTxInType);
+      axilWriteSlave  : out AxiLiteWriteSlaveType);
 end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
-   constant NUM_AXI_MASTERS_C : natural := 2;
+   constant NUM_MASTERS_G : positive := 2;
 
-   constant DMA_SIZE_C : positive := 1;
-   
-   constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_G, 21, 20);
+   constant NUM_AXIL_MASTERS_C : natural := NUM_MASTERS_G+1;
 
-   signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   constant EVENT_INDEX_C    : natural := 0;
+   constant FEX_INDEX_C      : natural := 1;
+   constant PRESCALE_INDEX_C : natural := 2;
 
-   --FEX stands for feature extracted
-   signal masterRepeaterToFEXorPrescaler : AxiStreamMasterArray(NUM_MASTERS_G-1 downto 0);
-   signal slaveRepeaterToFEXorPrescaler  : AxiStreamSlaveArray(NUM_MASTERS_G-1 downto 0);
+   subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
 
-   signal masterFEXorPrescalerToCombiner : AxiStreamMasterArray(NUM_MASTERS_G-1 downto 0);
-   signal slaveFEXorPrescalerToCombiner  : AxiStreamSlaveArray(NUM_MASTERS_G-1 downto 0);
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
 
-   signal masterCombinerToBatcher              : AxiStreamMasterType;
-   signal slaveCombinerToBatcher               : AxiStreamSlaveType;
+   signal axilWriteMasters : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
 
+   subtype DSP_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 1;
+
+   signal dataInMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dataInSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+
+   signal dataIbMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dataIbSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+
+   signal dspObMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dspObSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+
+   signal dspMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dspSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
 begin
 
-   ---------------------
+   --------------------
    -- AXI-Lite Crossbar
-   ---------------------
+   --------------------
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
-         MASTERS_CONFIG_G   => AXI_CONFIG_C)
+         NUM_MASTER_SLOTS_G => NUM_AXIL_MASTERS_C,
+         MASTERS_CONFIG_G   => AXIL_CONFIG_C)
       port map (
-         axiClk              => sysClk,
-         axiClkRst           => sysRst,
+         axiClk              => axilClk,
+         axiClkRst           => axilRst,
          sAxiWriteMasters(0) => axilWriteMaster,
          sAxiWriteSlaves(0)  => axilWriteSlave,
          sAxiReadMasters(0)  => axilReadMaster,
@@ -109,96 +103,155 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-
-   --------------------------------------------
-   --breaking out the data from detector
-   --------------------------------------------
-
-   --all modules that can't keep up with reater will need input fifo
-
+   ----------------------
+   -- AXI Stream Repeater
+   ----------------------
    U_AxiStreamRepeater : entity work.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
-         NUM_MASTERS_G => 2)
+         NUM_MASTERS_G => NUM_MASTERS_G)
       port map (
          -- Clock and reset
-         axisClk      => sysClk,
-         axisRst      => sysRst,
+         axisClk      => axilClk,
+         axisRst      => axilRst,
          -- Slave
          sAxisMaster  => dataInMaster,
          sAxisSlave   => dataInSlave,
          -- Masters
-         mAxisMasters => masterRepeaterToFEXorPrescaler,
-         mAxisSlaves  => slaveRepeaterToFEXorPrescaler);
+         mAxisMasters => dataInMasters,
+         mAxisSlaves  => dataInSlaves);
 
+   ----------------------------------------         
+   -- FIFO between Repeater and DSP Modules
+   ----------------------------------------    
+   GEN_IB :
+   for i in DSP_INDEX_RANGE_C generate
+      U_FIFO : entity work.AxiStreamFifoV2
+         generic map (
+            -- General Configurations
+            TPD_G               => TPD_G,
+            SLAVE_READY_EN_G    => true,
+            VALID_THOLD_G       => 1,
+            -- FIFO configurations
+            BRAM_EN_G           => true,
+            GEN_SYNC_FIFO_G     => true,
+            FIFO_ADDR_WIDTH_G   => 9,
+            -- AXI Stream Port Configurations
+            SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
+            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+         port map (
+            -- Slave Port
+            sAxisClk    => axilClk,
+            sAxisRst    => axilRst,
+            sAxisMaster => dataInMasters(i),
+            sAxisSlave  => dataInSlaves(i),
+            -- Master Port
+            mAxisClk    => axilClk,
+            mAxisRst    => axilRst,
+            mAxisMaster => dataIbMasters(i),
+            mAxisSlave  => dataIbSlaves(i));
+   end generate GEN_IB;
 
-
-   --------------------------------------------
-   --sending one of the repeated signals from module above to FEX or prescaling
-   --------------------------------------------
-
-
+   -------------
+   -- FEX Module
+   -------------
    U_TimeToolFEX : entity work.TimeToolFEX_placeholder
       generic map (
          TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- System Clock and Reset
-         sysClk          => sysClk,
-         sysRst          => sysRst,
+         sysClk          => axilClk,
+         sysRst          => axilRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster    => masterRepeaterToFEXorPrescaler(0),
-         dataInSlave     => slaveRepeaterToFEXorPrescaler(0),
-         dataOutMaster   => masterFEXorPrescalerToCombiner(0),
-         dataOutSlave    => slaveFEXorPrescalerToCombiner(0),
+         dataInMaster    => dataIbMasters(FEX_INDEX_C),
+         dataInSlave     => dataIbSlaves(FEX_INDEX_C),
+         dataOutMaster   => dspObMasters(FEX_INDEX_C),
+         dataOutSlave    => dspObSlaves(FEX_INDEX_C),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(0),
-         axilReadSlave   => axilReadSlaves(0),
-         axilWriteMaster => axilWriteMasters(0),
-         axilWriteSlave  => axilWriteSlaves(0));
+         axilReadMaster  => axilReadMasters(FEX_INDEX_C),
+         axilReadSlave   => axilReadSlaves(FEX_INDEX_C),
+         axilWriteMaster => axilWriteMasters(FEX_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(FEX_INDEX_C));
 
-   --------------------------------------------
-   --sending one of the repeated signals from module above to FEX or prescaling
-   --------------------------------------------
-
-
+   -------------------
+   -- Prescaler Module
+   -------------------
    U_TimeToolPrescaler : entity work.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- System Clock and Reset
-         sysClk          => sysClk,
-         sysRst          => sysRst,
+         sysClk          => axilClk,
+         sysRst          => axilRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster    => masterRepeaterToFEXorPrescaler(1),
-         dataInSlave     => slaveRepeaterToFEXorPrescaler(1),
-         dataOutMaster   => masterFEXorPrescalerToCombiner(1),
-         dataOutSlave    => slaveFEXorPrescalerToCombiner(1),
+         dataInMaster    => dataIbMasters(PRESCALE_INDEX_C),
+         dataInSlave     => dataIbSlaves(PRESCALE_INDEX_C),
+         dataOutMaster   => dspObMasters(PRESCALE_INDEX_C),
+         dataOutSlave    => dspObSlaves(PRESCALE_INDEX_C),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(1),
-         axilReadSlave   => axilReadSlaves(1),
-         axilWriteMaster => axilWriteMasters(1),
-         axilWriteSlave  => axilWriteSlaves(1));
+         axilReadMaster  => axilReadMasters(PRESCALE_INDEX_C),
+         axilReadSlave   => axilReadSlaves(PRESCALE_INDEX_C),
+         axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
 
+   ---------------------------------------------    
+   -- FIFO between DSP Modules and Event Builder
+   ---------------------------------------------    
+   GEN_OB :
+   for i in DSP_INDEX_RANGE_C generate
+      U_FIFO : entity work.AxiStreamFifoV2
+         generic map (
+            -- General Configurations
+            TPD_G               => TPD_G,
+            SLAVE_READY_EN_G    => true,
+            VALID_THOLD_G       => 1,
+            -- FIFO configurations
+            BRAM_EN_G           => true,
+            GEN_SYNC_FIFO_G     => true,
+            FIFO_ADDR_WIDTH_G   => 9,
+            -- AXI Stream Port Configurations
+            SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
+            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+         port map (
+            -- Slave Port
+            sAxisClk    => axilClk,
+            sAxisRst    => axilRst,
+            sAxisMaster => dspObMasters(i),
+            sAxisSlave  => dspObSlaves(i),
+            -- Master Port
+            mAxisClk    => axilClk,
+            mAxisRst    => axilRst,
+            mAxisMaster => dspMasters(i),
+            mAxisSlave  => dspSlaves(i));
+   end generate GEN_OB;
 
-   --------------------------------------------
-   --AxiStreamBatcherEventBuilder Combines them back together
-   --------------------------------------------
-
-   U_AxiStreamBatcherEventBuilder : entity work.AxiStreamBatcherEventBuilder
+   ----------------------
+   -- EventBuilder Module
+   ----------------------
+   U_EventBuilder : entity work.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G         => TPD_G,
-         NUM_SLAVES_G  => 2,
-         AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         NUM_SLAVES_G  => NUM_AXIL_MASTERS_C,
+         AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- Clock and Reset
-         axisClk      => sysClk,
-         axisRst      => sysRst,
-         -- AXIS Interfaces
-         sAxisMasters => masterFEXorPrescalerToCombiner,
-         sAxisSlaves  => slaveFEXorPrescalerToCombiner,
-         mAxisMaster  => dataOutMaster,
-         mAxisSlave   => dataOutSlave);
+         axisClk                         => axilClk,
+         axisRst                         => axilRst,
+         -- AXI-Lite Interface (axisClk domain)
+         axilReadMaster                  => axilReadMasters(EVENT_INDEX_C),
+         axilReadSlave                   => axilReadSlaves(EVENT_INDEX_C),
+         axilWriteMaster                 => axilWriteMasters(EVENT_INDEX_C),
+         axilWriteSlave                  => axilWriteSlaves(EVENT_INDEX_C),
+         -- Inbound Master AXIS Interfaces
+         sAxisMasters(EVENT_INDEX_C)     => trigMaster,
+         sAxisMasters(DSP_INDEX_RANGE_C) => dspMasters,
+         -- Inbound Slave AXIS Interfaces
+         sAxisSlaves(EVENT_INDEX_C)      => trigSlave,
+         sAxisSlaves(DSP_INDEX_RANGE_C)  => dspSlaves,
+         -- Outbound AXIS
+         mAxisMaster                     => eventMaster,
+         mAxisSlave                      => eventSlave);
 
 end mapping;

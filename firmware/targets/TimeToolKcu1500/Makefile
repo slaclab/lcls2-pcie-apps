@@ -1,5 +1,7 @@
+export INCLUDE_PGP3_10G = 0
+
 # Define Firmware Version Number
-export PRJ_VERSION = 0x00000011
+export PRJ_VERSION = 0x00000012
 
 # Define target part
 export PRJ_PART = xcku115-flvb2104-2-e

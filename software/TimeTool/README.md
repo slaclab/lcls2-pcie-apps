@@ -1,92 +1,88 @@
 # slaclab/lcls2-pcie-apps/software/TimeTool
 
-# Before you clone the GIT repository
+<!--- ######################################################## -->
 
-1) Create a github account:
+# How to install the Rogue With Anaconda
 
-> https://github.com/
+> https://slaclab.github.io/rogue/installing/anaconda.html
 
-2) On the Linux machine that you will clone the github from, generate a SSH key (if not already done)
+<!--- ######################################################## -->
 
-> https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/
+# How to reprogram the FEB firmware via Rogue software
 
-3) Add a new SSH key to your GitHub account
-
-> https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
-
-4) Setup for large filesystems on github (one time step per Unix profile)
-
-``` 
-$ git lfs install 
+1) Setup the rogue environment
+```
+$ cd lcls2-pcie-apps/software/TimeTool
+$ source setup_env_template.sh
 ```
 
-5) Verify that you have git version 2.13.0 (or later) in the $PATH 
-
+2) Run the FEB firmware update script:
 ```
-$ git version
-git version 2.13.0
+$ python scripts/updateFeb.py --lane <PGP_LANE> --mcs <PATH_TO_MCS>
+```
+where <PGP_LANE> is the PGP lane index (range from 0 to 3)
+and <PATH_TO_MCS> is the path to the firmware .MCS file
+
+
+<!--- ######################################################## -->
+
+# How to reprogram the PCIe firmware via Rogue software
+
+1) Setup the rogue environment
+```
+$ cd cd lcls2-pcie-apps/software/TimeTool
+$ source setup_env_template.sh
 ```
 
-6) Verify that you have git-lfs version 2.1.1 (or later) in the $PATH  
-
+2) Run the PCIe firmware update script:
 ```
-$ git-lfs version
-git-lfs/2.1.1
+$ python scripts/updatePcieFpga.py --path ../../firmware/targets/TimeToolKcu1500/images/
 ```
 
-Note: If you need a newer version of git or git-lfs, here's a AFS $PATH for one:
-
-> /afs/slac/g/reseng/git/git/bin
-
-# Clone the GIT repository
-
-``` $ git clone --recursive git@github.com:slaclab/lcls2-pcie-apps```
-
-# How to build the firmware
-
-> Setup your Xilinx Vivado:
-
->> If you are on the SLAC AFS network:
-
-```$ source lcls2-pcie-apps/firmware/setup_slac.csh```
-
->> Else you will need to install Vivado and install the Xilinx Licensing
-
-> Go to the firmware's target directory:
-
-```$ cd lcls2-pcie-apps/firmware/targets/TimeToolKcu1500```
-
-> Build the firmware
-
-```$ make```
-
-> Optional: Open up the project in GUI mode to view the firmware build results
-
-```$ make gui```
-
-Note: For more information about the firmware build system, please refer to this presentation:
-
-> https://docs.google.com/presentation/d/1kvzXiByE8WISo40Xd573DdR7dQU4BpDQGwEgNyeJjTI/edit?usp=sharing
-
-# How to program the KCU1500 via JTAG
-> https://docs.google.com/presentation/d/1VVfkIWN9M_czZiaXhK4iFp-Drj_yc64smbzpSwZ61Cg/edit?usp=sharing
-
-# How to load the driver
-
+3) Reboot the computer
 ```
-# Clone the driver github repo:
-$ git clone --recursive git@github.com:slaclab/aes-stream-drivers
-
-# Go to the driver directory
-$ cd aes-stream-drivers/data_dev/driver/
-
-# Build the driver
-$ make
-
-# Execute load script as sudo
-$ sudo /sbin/insmod ./datadev.ko 
-
-# Check for the loaded device
-$ cat /proc/data_dev0
-
+sudo reboot
 ```
+
+<!--- ######################################################## -->
+
+# How to run the Rogue PyQT GUI
+
+1) Setup the rogue environment
+```
+$ cd cd lcls2-pcie-apps/software/TimeTool
+$ source setup_env_template.sh
+```
+
+2) Lauch the GUI:
+```
+$ python scripts/gui.py
+```
+
+<!--- ######################################################## -->
+
+# How to run the Rogue PyQT GUI with VCS firmware simulator
+
+1) Start up two terminal
+
+2) In the 1st terminal, launch the VCS simulation
+```
+$ source lcls2-pcie-apps/firmware/setup_env_slac.sh
+$ cd lcls2-pcie-apps/firmware/targets/TimeToolKcu1500/
+$ make vcs
+$ cd ../../build/TimeToolKcu1500/TimeToolKcu1500_project.sim/sim_1/behav/
+$ source setup_env.sh
+$ ./sim_vcs_mx.sh
+$ ./simv -gui &
+```
+
+3) When the VCS GUI pops up, start the simulation run
+
+4) In the 2nd terminal, launch the PyQT GUI in simulation mode
+```
+$ cd cd lcls2-pcie-apps/software/TimeTool
+$ source setup_env_template.sh
+$ python scripts/gui.py --dev sim
+```
+
+<!--- ######################################################## -->

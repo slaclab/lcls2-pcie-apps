@@ -2,7 +2,7 @@
 -- File       : TimeToolCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2017-12-04
+-- Last update: 2019-03-22
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 --use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.ALL;
+use ieee.numeric_std.all;
 
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
@@ -41,27 +41,27 @@ entity TimeToolPrescaler is
    generic (
       TPD_G             : time                := 1 ns;
       DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
-      DEBUG_G           : boolean             := true );
+      DEBUG_G           : boolean             := true);
    port (
       -- System Interface
-      sysClk          : in    sl;
-      sysRst          : in    sl;
+      sysClk          : in  sl;
+      sysRst          : in  sl;
       -- DMA Interfaces  (sysClk domain)
-      dataInMaster    : in    AxiStreamMasterType;
-      dataInSlave     : out   AxiStreamSlaveType;
-      dataOutMaster   : out   AxiStreamMasterType;
-      dataOutSlave    : in    AxiStreamSlaveType;
+      dataInMaster    : in  AxiStreamMasterType;
+      dataInSlave     : out AxiStreamSlaveType;
+      dataOutMaster   : out AxiStreamMasterType;
+      dataOutSlave    : in  AxiStreamSlaveType;
       -- AXI-Lite Interface
-      axilReadMaster  : in    AxiLiteReadMasterType;
-      axilReadSlave   : out   AxiLiteReadSlaveType;
-      axilWriteMaster : in    AxiLiteWriteMasterType;
-      axilWriteSlave  : out   AxiLiteWriteSlaveType);
+      axilReadMaster  : in  AxiLiteReadMasterType;
+      axilReadSlave   : out AxiLiteReadSlaveType;
+      axilWriteMaster : in  AxiLiteWriteMasterType;
+      axilWriteSlave  : out AxiLiteWriteSlaveType);
 end TimeToolPrescaler;
 
 architecture mapping of TimeToolPrescaler is
 
-   constant INT_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
-   constant PGP2BTXIN_LEN  : integer := 19;
+   constant INT_CONFIG_C  : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
+   constant PGP2BTXIN_LEN : integer             := 19;
 
    type StateType is (
       IDLE_S,
@@ -70,27 +70,27 @@ architecture mapping of TimeToolPrescaler is
       BLOWOFF_S);
 
    type RegType is record
-      master          : AxiStreamMasterType;
-      slave           : AxiStreamSlaveType;
-      axilReadSlave   : AxiLiteReadSlaveType;
-      axilWriteSlave  : AxiLiteWriteSlaveType;
-      counter         : slv(31 downto 0);
-      prescalingRate  : slv(31 downto 0);
-      axi_test        : slv(31 downto 0);
-      state           : StateType;
-      validate_state  : slv(2 downto 0);
+      master         : AxiStreamMasterType;
+      slave          : AxiStreamSlaveType;
+      axilReadSlave  : AxiLiteReadSlaveType;
+      axilWriteSlave : AxiLiteWriteSlaveType;
+      counter        : slv(31 downto 0);
+      prescalingRate : slv(31 downto 0);
+      scratchPad     : slv(31 downto 0);
+      state          : StateType;
+      validate_state : slv(2 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
-      master          => AXI_STREAM_MASTER_INIT_C,
-      slave           => AXI_STREAM_SLAVE_INIT_C,
-      axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
-      axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
-      counter         => (others=>'0'),
-      prescalingRate  => (others=>'0'),
-      axi_test        => (others=>'0'),
-      state           => IDLE_S,
-      validate_state  => (others=>'0'));
+      master         => AXI_STREAM_MASTER_INIT_C,
+      slave          => AXI_STREAM_SLAVE_INIT_C,
+      axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
+      axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
+      counter        => (others => '0'),
+      prescalingRate => (others => '0'),
+      scratchPad     => (others => '0'),
+      state          => IDLE_S,
+      validate_state => (others => '0'));
 
 ---------------------------------------
 -------record intitial value-----------
@@ -105,8 +105,8 @@ architecture mapping of TimeToolPrescaler is
    signal outCtrl  : AxiStreamCtrlType;
 
    component ila_1
-     port ( clk    : sl;
-           probe0 : slv(127 downto 0) );
+      port (clk    : sl;
+            probe0 : slv(127 downto 0));
    end component;
 
 begin
@@ -114,7 +114,7 @@ begin
    ---------------------------------
    -- Input FIFO
    ---------------------------------
-   U_InFifo: entity work.AxiStreamFifoV2
+   U_InFifo : entity work.AxiStreamFifoV2
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => true,
@@ -138,15 +138,15 @@ begin
    -- Xilinx debug integrated logic analyzer.
    ---------------------------------
    GEN_DEBUG : if DEBUG_G generate
-     U_ILA : ila_1
-       port map ( clk                                    => sysClk,
-                probe0(31  downto 0)                     => r.prescalingRate,
-                probe0(63  downto 32)                    => r.axi_test,
-                probe0(95  downto 64)                    => r.counter,
-                probe0(96)                               => r.master.tLast,
-                --probe0(671 downto 608)                   => r.master.tKeep,
-                --probe0(607 downto 96)                    => r.master.tData,
-                probe0(127 downto 97)                    => (others=>'0'));
+      U_ILA : ila_1
+         port map (clk                   => sysClk,
+                   probe0(31 downto 0)   => r.prescalingRate,
+                   probe0(63 downto 32)  => r.scratchPad,
+                   probe0(95 downto 64)  => r.counter,
+                   probe0(96)            => r.master.tLast,
+                   --probe0(671 downto 608)                   => r.master.tKeep,
+                   --probe0(607 downto 96)                    => r.master.tData,
+                   probe0(127 downto 97) => (others => '0'));
    end generate;
 
 
@@ -154,7 +154,8 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster, outCtrl) is
+   comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, r,
+                   sysRst) is
       variable v      : RegType;
       variable axilEp : AxiLiteEndpointType;
    begin
@@ -169,94 +170,94 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"00000", 0, v.prescalingRate);
-      --axiSlaveRegister (axilEp, x"00000", 8, v.axi_test);
+      axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"0004", 0, v.prescalingRate);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
-      v.slave.tReady    := not outCtrl.pause;
-      v.master.tLast    := '0';
-      v.master.tValid   := '0';
+      v.slave.tReady  := not outCtrl.pause;
+      v.master.tLast  := '0';
+      v.master.tValid := '0';
 
       case r.state is
 
-            when IDLE_S =>
+         when IDLE_S =>
             ------------------------------
             -- check which state
             ------------------------------
-            v.validate_state := (others=>'0');    --debugging signal
+            v.validate_state := (others => '0');  --debugging signal
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
-                  if v.counter = v.prescalingRate then
-                        v.state     := MOVE_S;
-                  else
-                        v.state     := SEND_NULL;
-                  end if;
+               if v.counter = v.prescalingRate then
+                  v.state := MOVE_S;
+               else
+                  v.state := SEND_NULL;
+               end if;
 
             else
-                  v.state           := IDLE_S;
+               v.state := IDLE_S;
             end if;
- 
-            when MOVE_S =>
-                  ------------------------------
-                  -- send regular frame
-                  ------------------------------
-                  v.validate_state(0) := '1';     --debugging signal
-                  if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter = v.prescalingRate then
-                      v.master := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
-                      v.validate_state(1) := '1';   --debugging signal               
 
-                  else
-                      v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
-                      v.slave.tReady  := '0';   --message to upstream that we're not ready
-                      v.master.tLast  := '0';
-                      v.state         := IDLE_S;
-                      v.validate_state(2) := '1';   --debugging signal
+         when MOVE_S =>
+            ------------------------------
+            -- send regular frame
+            ------------------------------
+            v.validate_state(0) := '1';     --debugging signal
+            if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter = v.prescalingRate then
+               v.master            := inMaster;  --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
+               v.validate_state(1) := '1';  --debugging signal               
 
-                  end if;
+            else
+               v.master.tValid     := '0';  --message to downstream data processing that there's no valid data ready
+               v.slave.tReady      := '0';  --message to upstream that we're not ready
+               v.master.tLast      := '0';
+               v.state             := IDLE_S;
+               v.validate_state(2) := '1';  --debugging signal
 
-            when SEND_NULL =>
-                  ------------------------------
-                  -- send null frame
-                  ------------------------------
-                   if v.slave.tReady = '1' and inMaster.tValid = '1' then
-                        v.master.tValid   := '1';
-                        v.master.tLast    := '1';
-                        
-                        v.master.tKeep(DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) := toSlv(1, DMA_AXIS_CONFIG_G.TDATA_BYTES_C);
-                        ssiSetUserEofe(DMA_AXIS_CONFIG_G, v.master, '1');
+            end if;
 
-                        v.state           := BLOWOFF_S;
-                  else
-                        v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
-                        v.slave.tReady  := '0';   --message to upstream that we're not ready
-                        v.master.tLast  := '0';
-                        v.state         := IDLE_S;
-                  end if;
+         when SEND_NULL =>
+            ------------------------------
+            -- send null frame
+            ------------------------------
+            if v.slave.tReady = '1' and inMaster.tValid = '1' then
+               v.master.tValid := '1';
+               v.master.tLast  := '1';
 
-            when BLOWOFF_S =>
-                  if inMaster.tValid ='1' and inMaster.tLast = '1' then
-                        v.state      := IDLE_S;
-                  else
-                        v.master.tValid   := '0';
-                        v.master.tLast    := '0';
-                        v.slave.tReady    := '1';
-                        v.state           := BLOWOFF_S;
+               v.master.tKeep(DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 downto 0) := toSlv(1, DMA_AXIS_CONFIG_G.TDATA_BYTES_C);
+               ssiSetUserEofe(DMA_AXIS_CONFIG_G, v.master, '1');
 
-                  end if;
-   
-        
+               v.state := BLOWOFF_S;
+            else
+               v.master.tValid := '0';  --message to downstream data processing that there's no valid data ready
+               v.slave.tReady  := '0';  --message to upstream that we're not ready
+               v.master.tLast  := '0';
+               v.state         := IDLE_S;
+            end if;
+
+         when BLOWOFF_S =>
+            if inMaster.tValid = '1' and inMaster.tLast = '1' then
+               v.state := IDLE_S;
+            else
+               v.master.tValid := '0';
+               v.master.tLast  := '0';
+               v.slave.tReady  := '1';
+               v.state         := BLOWOFF_S;
+
+            end if;
+
+
 
       end case;
 
       -----------------------------
       --increment prescaling counter. needs to be after the data mover in order for the last packet to be sent
       -----------------------------
-      if inMaster.tLast = '1' and  inMaster.tValid = '1' and v.slave.tReady = '1' then 
-            if v.counter >= v.prescalingRate then
-                  v.counter := (others=>'0');
-            else
-                  v.counter := v.counter + 1;
-            end if;
+      if inMaster.tLast = '1' and inMaster.tValid = '1' and v.slave.tReady = '1' then
+         if v.counter >= v.prescalingRate then
+            v.counter := (others => '0');
+         else
+            v.counter := v.counter + 1;
+         end if;
       end if;
 
       -------------
@@ -286,7 +287,7 @@ begin
    ---------------------------------
    -- Output FIFO
    ---------------------------------
-   U_OutFifo: entity work.AxiStreamFifoV2
+   U_OutFifo : entity work.AxiStreamFifoV2
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,
