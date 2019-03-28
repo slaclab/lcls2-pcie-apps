@@ -11,8 +11,8 @@
 
 import pyrogue as pr
 
-import surf.axi as axi
-import TimeTool as tt
+import surf.protocols.batcher as batcher
+import TimeTool               as tt
 
 class AppLane(pr.Device):
     def __init__(   self,       
@@ -21,7 +21,7 @@ class AppLane(pr.Device):
             **kwargs):
         super().__init__(name=name, description=description, **kwargs) 
 
-        self.add(axi.AxiStreamBatcherEventBuilder( 
+        self.add(batcher.AxiStreamBatcherEventBuilder( 
             name         = 'EventBuilder', 
             offset       = 0x00000, 
             numberSlaves = 3,

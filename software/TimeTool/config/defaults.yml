@@ -43,14 +43,7 @@ TimeToolDev:
       EnableTrig: True
       InvCC: False
       TrigMap: ChA
-      TrigPulseWidth: 0xfff
-      TrigMask: 0x1
-    ###################
-    TrigCtrl[1]:
-      EnableTrig: True
-      InvCC: False
-      TrigMap: ChB
-      TrigPulseWidth: 0xfff
+      TrigPulseWidth: 32.768
       TrigMask: 0x1
     ###################
     BoardTemp:
