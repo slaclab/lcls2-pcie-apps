@@ -30,9 +30,9 @@ use work.SsiPkg.all;
 use STD.textio.all;
 use ieee.std_logic_textio.all;
 
-entity TimeToolKcu1500TB is end TimeToolKcu1500TB;
+entity TimeToolKcu1500Tb is end TimeToolKcu1500Tb;
 
-architecture testbed of TimeToolKcu1500TB is
+architecture testbed of TimeToolKcu1500Tb is
 
    constant TPD_G             : time := 1 ns;
    --constant BUILD_INFO_G      : BuildInfoType;
