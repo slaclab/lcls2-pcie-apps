@@ -2,7 +2,7 @@
 LIST_COMP_TB=AxiVersionTb AxiLiteAsyncTb FifoFwftTb TimeToolKcu1500Tb
 
 # Set the simulation duration
-export VIVADO_PROJECT_SIM_TIME = 1 us
+export VIVADO_PROJECT_SIM_TIME = 100 us
 
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000001
