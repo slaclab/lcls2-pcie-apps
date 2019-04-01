@@ -1,5 +1,5 @@
 # List all the components level simulation testbeds to run
-LIST_COMP_TB=AxiVersionTb AxiLiteAsyncTb FifoFwftTb TimeToolKcu1500Tb
+LIST_COMP_TB=AxiVersionTb AxiLiteAsyncTb FifoFwftTb
 
 # Set the simulation duration
 export VIVADO_PROJECT_SIM_TIME = 100 us
