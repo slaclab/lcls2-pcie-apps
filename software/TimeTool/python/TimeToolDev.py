@@ -170,7 +170,7 @@ class TimeToolDev(kcu1500.Core):
                 # Create a command to execute the frame generator
                 self.add(pr.BaseCommand(   
                     name         = f'GenFrame[{lane}]',
-                    function     = lambda cmd: self._frameGen[lane].myFrameGen(),
+                    function     = lambda cmd, lane=lane: self._frameGen[lane].myFrameGen(),
                 ))                
                 
         # Create arrays to be filled
