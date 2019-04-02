@@ -2,7 +2,7 @@
 -- File       : TDetSemi.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2019-03-28
+-- Last update: 2019-04-01
 -------------------------------------------------------------------------------
 -- Description: TDetSemi File
 -------------------------------------------------------------------------------
@@ -92,16 +92,18 @@ architecture mapping of TDetSemi is
   type AxiRegType is record
     id        : slv(31 downto 0);
     partition : slv( 2 downto 0);
+    reset     : sl;
     enable    : slv(NUM_LANES_G-1 downto 0);
     aFull     : slv(NUM_LANES_G-1 downto 0);
     clear     : sl;
-    length    : slv(23 downto 0);
+    length    : slv(22 downto 0);
     axilWriteSlave  : AxiLiteWriteSlaveType;
     axilReadSlave   : AxiLiteReadSlaveType;
   end record;
   constant AXI_REG_INIT_C : AxiRegType := (
     id        => (others=>'0'),
     partition => (others=>'0'),
+    reset     => '0',
     enable    => (others=>'0'),
     aFull     => (others=>'0'),
     clear     => '0',
@@ -126,7 +128,7 @@ architecture mapping of TDetSemi is
   
   type RegType is record
     state       : StateType;
-    length      : slv(23 downto 0);
+    length      : slv(22 downto 0);
     count       : slv(31 downto 0);
     event       : sl;
     eventSlave  : AxiStreamSlaveType;
@@ -193,8 +195,9 @@ begin
 
     axiSlaveWaitTxn ( ep, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave );
     axiSlaveRegister( ep, x"00", 0, v.partition );
-    axiSlaveRegister( ep, x"00", 3, v.clear );
+    axiSlaveRegister( ep, x"00", 3, v.clear  );
     axiSlaveRegister( ep, x"00", 4, v.length );
+    axiSlaveRegister( ep, x"00",27, v.reset  );
     axiSlaveRegister( ep, x"00",28, v.enable );
     
     axiSlaveRegister( ep, x"04", 0, v.id );
@@ -373,6 +376,7 @@ begin
 
       tdetTiming  (i).id        <= as.id;
       tdetTiming  (i).partition <= as.partition;
+      tdetTiming  (i).reset     <= as.reset;
       tdetTiming  (i).enable    <= as.enable(i);
       tdetTiming  (i).aFull     <= as.aFull (i);
     end loop;
