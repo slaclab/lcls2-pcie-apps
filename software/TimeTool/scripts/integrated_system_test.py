@@ -1,16 +1,16 @@
-import TimeToolDev
+import TimeToolVcsSimTest
 import sys
 import time
 import gc
 
-cl = TimeToolDev.TimeToolDev(
+cl = TimeToolVcsSimTest.TimeToolVcsSimTest(
     dev       = "sim",
     dataDebug = True,
     version3  = False,
     pollEn    = False,
     initRead  = False,
 )
-cl.ReadConfig("config/sim_lcls-pc823236.yml")
+cl.ReadConfig("config/TimeToolVcsSimTest_lcls-pc823236.yml")
 
 cl.GenFrame[0]
 
