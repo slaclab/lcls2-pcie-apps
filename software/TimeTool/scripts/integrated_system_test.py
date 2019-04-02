@@ -17,10 +17,18 @@ cl.GenFrame[0]
 gen_frame_method = cl.GenFrame[0]
 
 cl.Application.AppLane[0].Prescale.DialInPreScaling.set(2)
+start_count = 0
 for i in range(10):
 	#gen_frame_method()
-	cl.GenFrame[0]()
+      cl.GenFrame[0]()
+      while(cl.TimeToolRx.frameCount.get()<start_count+1):
+            time.sleep(1)
 
+      start_count = cl.TimeToolRx.frameCount.get()
+
+      print("counter = "+str(start_count))
+
+cl.stop()
 
 #cl.ClinkFeb[0].UartPiranha4[0]._tx.sendString('ssf 7000')
 #cl.ClinkFeb[0].UartPiranha4[0]._tx.sendString('ssf 6000')
