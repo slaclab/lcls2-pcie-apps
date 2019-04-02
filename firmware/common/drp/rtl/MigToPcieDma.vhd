@@ -2,7 +2,7 @@
 -- File       : MigToPcieDma.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-03-06
--- Last update: 2018-12-15
+-- Last update: 2019-03-28
 -------------------------------------------------------------------------------
 -- Description: Receives transfer requests representing data buffers pending
 -- in local DRAM and moves data to CPU host memory over PCIe AXI interface.
@@ -86,6 +86,10 @@ architecture mapping of MigToPcieDma is
     monSampleCnt   : slv                 (15 downto 0);
     monReadout     : sl;
     monReadoutCnt  : slv                 (19 downto 0);
+    -- Debug
+    taxisFirst     : Slv2Array           (LANES_G-1 downto 0);
+    evCount        : Slv8Array           (LANES_G-1 downto 0);
+    evCountDiff    : slv                 (8*LANES_G-1 downto 0);
   end record;
 
   constant REG_INIT_C : RegType := (
@@ -100,7 +104,10 @@ architecture mapping of MigToPcieDma is
     monSample      => '0',
     monSampleCnt   => (others=>'0'),
     monReadout     => '0',
-    monReadoutCnt  => (others=>'0') );
+    monReadoutCnt  => (others=>'0'),
+    taxisFirst     => (others=>"01"),
+    evCount        => (others=>(others=>'0')),
+    evCountDiff    => (others=>'0') );
 
   signal r   : RegType := REG_INIT_C;
   signal rin : RegType;
@@ -149,7 +156,12 @@ begin
                  probe0(99 downto 68) => taxisMasters(0).tData(31 downto 0),
                  probe0(         100) => taxisMasters(0).tLast,
                  probe0(         101) => axisSlaves  (0).tReady,
-                 probe0(255 downto 102) => (others=>'0') );
+                 probe0(133 downto 102) => r.evCountDiff,
+                 probe0(141 downto 134) => r.evCount(0),
+                 probe0(149 downto 142) => r.evCount(1),
+                 probe0(157 downto 150) => r.evCount(2),
+                 probe0(165 downto 158) => r.evCount(3),
+                 probe0(255 downto 166) => (others=>'0') );
   end generate;
 
   usrRst <= axiRst;
@@ -249,7 +261,8 @@ begin
   end generate;
      
   comb : process ( axiRst, r, sAxilReadMaster, sAxilWriteMaster, migStatus,
-                   monClkRate, monClkLock, monClkFast, monClkSlow ) is
+                   monClkRate, monClkLock, monClkFast, monClkSlow,
+                   taxisMasters, axisSlaves) is
     variable v       : RegType;
     variable regCon  : AxiLiteEndPointType;
     variable regAddr : slv(11 downto 0);
@@ -321,6 +334,16 @@ begin
       v.monReadoutCnt := (others=>'0');
     end if;
 
+    for i in 0 to LANES_G-1 loop
+      if (taxisMasters(i).tValid = '1' and axisSlaves(i).tReady = '1') then
+        v.taxisFirst(i) := r.taxisFirst(i)(0) & taxisMasters(i).tLast;
+        if r.taxisFirst(i)(1) = '1' then
+          v.evCount(i)  := taxisMasters(i).tData(39 downto 32);
+          v.evCountDiff(8*i+7 downto 8*i) := v.evCount(i) - r.evCount(i);
+        end if;
+      end if;
+    end loop;
+    
     if axiRst = '1' then
       v := REG_INIT_C;
     end if;

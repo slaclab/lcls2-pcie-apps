@@ -2,7 +2,7 @@
 -- File       : TDetSemi.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-26
--- Last update: 2018-12-09
+-- Last update: 2019-03-28
 -------------------------------------------------------------------------------
 -- Description: TDetSemi File
 -------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ architecture mapping of TDetSemi is
   signal ain  : AxiRegType;
   signal as   : AxiRegType;
   
-  signal statusv, vstatus : Slv117Array    (NUM_LANES_G-1 downto 0);
+  signal statusv, vstatus : Slv145Array    (NUM_LANES_G-1 downto 0);
   signal status           : TDetStatusArray(NUM_LANES_G-1 downto 0);
 
   type StateType is (IDLE_S,
@@ -210,6 +210,12 @@ begin
       axiSlaveRegisterR( ep, toSlv(16*i+28,8), 0, status(i).cntWrFifo );
       axiSlaveRegisterR( ep, toSlv(16*i+28,8), 8, status(i).cntRdFifo );
       axiSlaveRegisterR( ep, toSlv(16*i+28,8),16, status(i).msgDelay );
+      axiSlaveRegisterR( ep, toSlv( 4*i+80,8), 0, status(i).fullToTrig );
+      axiSlaveRegisterR( ep, toSlv( 4*i+80,8),16, status(i).nfullToTrig );
+      axiSlaveRegisterR( ep, toSlv( 4*i+80,8),28, status(i).txStatus.locked );
+      axiSlaveRegisterR( ep, toSlv( 4*i+80,8),29, status(i).txStatus.resetDone );
+      axiSlaveRegisterR( ep, toSlv( 4*i+80,8),30, status(i).txStatus.bufferByDone );
+      axiSlaveRegisterR( ep, toSlv( 4*i+80,8),31, status(i).txStatus.bufferByErr );
     end loop;
     
     axiSlaveDefault ( ep, v.axilWriteSlave, v.axilReadSlave );
