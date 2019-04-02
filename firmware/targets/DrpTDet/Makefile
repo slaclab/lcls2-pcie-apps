@@ -8,7 +8,8 @@ export OVERRIDE_SUBMODULE_LOCKS = 1
 #  PRJ_VERSION = 0x00000003 - Upgrade l2si-core for XPM changes
 #  PRJ_VERSION = 0x00000004 - Rearrange event header
 #  PRJ_VERSION = 0x00000005 - Rebuild with EventHeaderCacheWrapper
-export PRJ_VERSION = 0x00000005
+#  PRJ_VERSION = 0x00000006 - Put EventHeaderCache into full path, latch RTT
+export PRJ_VERSION = 0x00000006
 
 # Define the Hardware Type in the axi-pcie-core
 export PCIE_HW_TYPE = XilinxKcu1500
