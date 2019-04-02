@@ -29,13 +29,18 @@ class MyCustomMaster(rogue.interfaces.stream.Master):
         frame = self._reqFrame(self._maxSize, True) # Here we request a frame capable of holding 2048 bytes
 
         # Create a 2048 byte array with an incrementing value
-        ba = bytearray([(i&0xFF) for i in range(self._maxSize)])
+        #ba = bytearray([(i&0xFF) for i in range(self._maxSize)])
+        ba = self.make_byte_array()
+        #print(self.make_byte_array())
 
         # Write the data to the frame at offset 0
         frame.write(ba,0)
         
         # Send the frame to the currently attached slaves
         self._sendFrame(frame)
+
+    def make_byte_array(self):
+        return bytearray([(i&0xFF) for i in range(self._maxSize)])
 
 #One of the goals this code satisfies is to to facilitate communication between registers in Xilinx's kcu1500 FPGA and a host linux machine.
 #See comment in TimeTool.py for how to make rogue aware of a FPGA register to communicate with.

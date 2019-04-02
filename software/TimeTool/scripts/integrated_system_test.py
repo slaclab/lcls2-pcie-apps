@@ -27,6 +27,7 @@ for i in range(10):
       start_count = cl.TimeToolRx.frameCount.get()
 
       print("counter = "+str(start_count))
+      print("data_out = "+str(start_count))
 
 cl.stop()
 
