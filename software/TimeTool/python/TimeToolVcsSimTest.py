@@ -54,6 +54,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.add(pr.LocalVariable( name='frameCount',   value=0, mode='RO', pollInterval=1))
         self.add(pr.LocalVariable( name='lengthErrors', value=0, mode='RO', pollInterval=1))
         self.add(pr.LocalVariable( name='dataErrors',   value=0, mode='RO', pollInterval=1))
+        self.parsed_data = 0
 
         self.my_h5_file = h5py.File("first_test.h5",'w')
         self.to_save_to_h5 = []
@@ -72,7 +73,8 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
         to_print = np.array(p)[-1:] 
         #print(np.array(p)[:96],to_print) #comment out for long term test
-        print(np.array(p)[my_mask])
+        #print(np.array(p)[my_mask])
+        self.parsed_data = np.array(p)[my_mask]
         print("____________________________________________________")
         self.frameCount.set(self.frameCount.value() + 1,False)
 
