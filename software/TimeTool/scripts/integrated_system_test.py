@@ -19,16 +19,21 @@ gen_frame_method = cl.GenFrame[0]
 cl.Application.AppLane[0].Prescale.DialInPreScaling.set(2)
 start_count = 0
 for i in range(10):
+      print("counter = "+str(start_count))
 	#gen_frame_method()
       cl.GenFrame[0]()
+
+      too_many_counter  = 0
       while(cl.TimeToolRx.frameCount.get()<start_count+1):
+            too_many_counter = too_many_counter +1
             time.sleep(1)
+            if(too_many_counter>10): break
 
       start_count = cl.TimeToolRx.frameCount.get()
 
       #cl._frameGen[0].make_byte_array()
 
-      print("counter = "+str(start_count))
+ 
       print("data_out = "+str(cl.TimeToolRx.parsed_data))
 
 cl.stop()
