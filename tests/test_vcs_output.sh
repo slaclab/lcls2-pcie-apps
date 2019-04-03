@@ -12,29 +12,18 @@ source setup_env_slac.sh
 
 cd $TOP/firmware/targets/TimeToolKcu1500
 
-#make clean
+make clean
 
-#make vcs
-
-#source $TOP/software/TimeTool/setup_env_template.sh
+make vcs
 
 cd $TOP/firmware/build/TimeToolKcu1500/TimeToolKcu1500_project.sim/sim_1/behav/
 
 source setup_env.sh
 
-#./sim_vcs_mx.sh
+./sim_vcs_mx.sh
 
 ./simv &
-#echo "ran simv"
-
-#screen -d -m -S simvServerScreen 
-#screen -S simvServerScreen -X stuff 'cd $TOP/firmware/build/TimeToolKcu1500/TimeToolKcu1500_project.sim/sim_1/behav/'
-#screen -S simvServerScreen -X stuff $'\012'
-#screen -S simvServerScreen -X stuff 'source setup_env.sh'
-#screen -S simvServerScreen -X stuff $'\012'
-#screen -S simvServerScreen -X stuff './simv'
-#screen -S simvServerScreen -X stuff $'\012'
-
+echo "ran simv"
 
 sleep 5
 
@@ -46,3 +35,5 @@ echo "Sourced setup_enstuff_template.sh"
 
 python scripts/integrated_system_test.py
 echo "ran python script"
+
+pkill simv
