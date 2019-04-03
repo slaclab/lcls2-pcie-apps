@@ -55,6 +55,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.add(pr.LocalVariable( name='lengthErrors', value=0, mode='RO', pollInterval=1))
         self.add(pr.LocalVariable( name='dataErrors',   value=0, mode='RO', pollInterval=1))
         self.parsed_data = 0
+        self.unparsed_data = 0
 
         self.my_h5_file = h5py.File("first_test.h5",'w')
         self.to_save_to_h5 = []
@@ -65,6 +66,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
     def _acceptFrame(self,frame):
         p = bytearray(frame.getPayload())
         frame.read(p,0)
+        self.unparsed_data = p
         print(len(p))
         my_mask = np.arange(36)
         if(len(p)>100):
