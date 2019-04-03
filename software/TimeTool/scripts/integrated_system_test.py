@@ -12,11 +12,10 @@ cl = TimeToolVcsSimTest.TimeToolVcsSimTest(
 )
 cl.ReadConfig("config/TimeToolVcsSimTest_lcls-pc823236.yml")
 
-cl.GenFrame[0]
-
 gen_frame_method = cl.GenFrame[0]
 
 cl.Application.AppLane[0].Prescale.DialInPreScaling.set(2)
+
 start_count = 0
 for i in range(10):
       print("counter = "+str(start_count))
@@ -27,7 +26,7 @@ for i in range(10):
       while(cl.TimeToolRx.frameCount.get()<start_count+1):
             too_many_counter = too_many_counter +1
             time.sleep(1)
-            if(too_many_counter>10): break
+            if(too_many_counter>20): break
 
       start_count = cl.TimeToolRx.frameCount.get()
 

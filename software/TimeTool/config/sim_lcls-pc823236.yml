@@ -19,36 +19,3 @@ TimeToolDev:
         ScratchPad: 0x000000
         DialInPreScaling: 0x0
   #########################################################################################################
-  Hardware:
-    Timing:
-      ###################
-      TimingDbgMon:
-        Loopback: 0x0
-        # UseMiniTpg: False
-        UseMiniTpg: True # True for standalone testing!!!
-      ###################
-      Triggering: # https://confluence.slac.stanford.edu/download/attachments/216713616/ConfigEvrV2CoreTriggersYaml.pdf
-        ###################
-        Ch[:]:
-          EnableReg: True
-          RateSel: 0x1028 # LCLS-I @ 120 Hz
-          # RateSel: 0x0 # No triggering
-          DestSel: 0x20000
-        ###################
-        LocalTrig[:]:
-          EnableTrig: True
-          Polarity: Rising
-          # Delay: 625000 # (156.25 MHz) x 4 ms = 625000
-          Delay: 0x0 # zero delay for low latency local trigger
-          Width: 0x1 # 0x1 = one cycle pulse
-        ###################
-        RemoteTrig[:]:
-          EnableTrig: True
-          Polarity: Rising
-          Delay: 0x0 # zero delay for low latency fiber trigger
-          Width: 0x1 # 0x1 = one cycle pulse          
-      ###################
-      TimingFrameRx:
-        ClkSel: 0x0 # 0x0 = LCLS-I timing
-        RxDown: 0x0 # Reset the latching register
-      ###################
