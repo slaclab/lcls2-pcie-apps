@@ -152,7 +152,7 @@ begin
       wait until axiRst = '1';
       wait until axiRst = '0';
 
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"0000_0000", x"7", true);
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"0000_0004", x"7", true);
 
    end process test;
 

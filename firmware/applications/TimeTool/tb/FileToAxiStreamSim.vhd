@@ -103,7 +103,7 @@ begin
       --w_SUM <= (others=>'1');
 
       --file_open(file_RESULTS, "output_results.txt", write_mode);
-      file_open(file_VECTORS, "/u1/sioan/lcls2-pcie-apps/sim_input_data.dat",  read_mode);
+      file_open(file_VECTORS, "/u1/sioan/slaclab/lcls2-pcie-apps/sim_input_data.dat",  read_mode);
       
 
     while not endfile(file_VECTORS) loop
