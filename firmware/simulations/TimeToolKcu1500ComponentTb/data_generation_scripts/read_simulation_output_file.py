@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import IPython
 
 
-my_output_file = "/u1/sioan/lcls2-pcie-apps/output_results.dat"
-my_input_file = "/u1/sioan/lcls2-pcie-apps/sim_input_data.dat"
+my_output_file = "/u1/sioan//slaclab/lcls2-pcie-apps/output_results.dat"
+my_input_file = "/u1/sioan//slaclab/lcls2-pcie-apps/sim_input_data.dat"
 
 
 def read_sim_file(my_input_file,ncols,unsigned):

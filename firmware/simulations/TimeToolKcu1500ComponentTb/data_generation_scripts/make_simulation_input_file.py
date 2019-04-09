@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-my_file = "/u1/sioan/lcls2-pcie-apps/sim_input_data.dat"
+my_file = "/u1/sioan/slaclab/lcls2-pcie-apps/sim_input_data.dat"
 
 n_frames                = 27
 bits_per_pixel          = 8

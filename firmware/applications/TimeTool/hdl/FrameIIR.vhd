@@ -35,7 +35,7 @@ library unisim;
 use unisim.vcomponents.all;
 
 -------------------------------------------------------------------------------
--- This file performs the the prescaling, or the amount of raw data which is stored
+-- This file performs the accumulation for the background subtraction
 -------------------------------------------------------------------------------
 
 entity FrameIIR is
