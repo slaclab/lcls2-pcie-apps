@@ -1,10 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import IPython
+import os
 
+top_path                 = os.getcwd().split("lcls2-pcie-apps")[0]+"/lcls2-pcie-apps"
+testing_package_path     = top_path+"/firmware/applications/TimeTool/tb/"
+test_file_path           = [i for i in open(testing_package_path+"TestingPkg.vhd").read().split("\n") if "constant TEST_FILE_PATH" in i][0].split("\"")[1]
 
-my_output_file = "/u1/sioan//slaclab/lcls2-pcie-apps/output_results.dat"
-my_input_file = "/u1/sioan//slaclab/lcls2-pcie-apps/sim_input_data.dat"
+my_output_file = test_file_path+"/output_results.dat"
+my_input_file  = test_file_path+"/sim_input_data.dat"
 
 
 def read_sim_file(my_input_file,ncols,unsigned):
