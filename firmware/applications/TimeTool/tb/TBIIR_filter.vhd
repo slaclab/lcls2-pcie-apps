@@ -26,6 +26,7 @@ use work.AxiPciePkg.all;
 use work.TimingPkg.all;
 use work.Pgp2bPkg.all;
 use work.SsiPkg.all;
+use work.TestingPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
@@ -33,6 +34,8 @@ use ieee.std_logic_textio.all;
 entity TBIIR_filter is end TBIIR_filter;
 
 architecture testbed of TBIIR_filter is
+
+   constant TEST_OUTPUT_FILE_NAME : string := TEST_FILE_PATH & "/output_results.dat";
 
    constant TPD_G             : time := 1 ns;
    --constant BUILD_INFO_G      : BuildInfoType;
@@ -174,7 +177,7 @@ begin
 
       to_file := appOutMaster;
 
-      file_open(file_RESULTS, "/u1/sioan/slaclab/lcls2-pcie-apps/output_results.dat", write_mode);
+      file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
 
       while true loop
 
