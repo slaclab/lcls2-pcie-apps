@@ -65,9 +65,7 @@ architecture mapping of NullPacketFilter is
 
    type StateType is (
       IDLE_S,
-      MOVE_S,
-      SEND_NULL,
-      BLOWOFF_S);
+      MOVE_S);
 
    type RegType is record
       master         : AxiStreamMasterType;
@@ -140,6 +138,7 @@ begin
 
       -- Latch the current value
       v := r;
+      v.scratchPad(0) := ssiGetUserEofe(DMA_AXIS_CONFIG_G, inMaster);
 
       ------------------------      
       -- AXI-Lite Transactions
@@ -164,7 +163,7 @@ begin
             -- check which state
             ------------------------------
             --v.validate_state := (others => '0');  --debugging signal
-            if v.slave.tReady = '1' and inMaster.tValid = '1' and (ssiGetUserEofe(DMA_AXIS_CONFIG_G, inMaster) = '1') then
+            if v.slave.tReady = '1' and inMaster.tValid = '1' and (ssiGetUserEofe(DMA_AXIS_CONFIG_G, inMaster) = '0') then
                   v.state := MOVE_S;
             else
                   v.state := IDLE_S;
