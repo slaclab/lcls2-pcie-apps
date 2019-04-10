@@ -28,9 +28,9 @@ use work.Pgp2bPkg.all;
 use work.SsiPkg.all;
 use work.TestingPkg.all;
 
-entity TimeToolPrescalerTB is end TimeToolPrescalerTB;
+entity TBNullPacketFilter is end TBNullPacketFilter;
 
-architecture testbed of TimeToolPrescalerTB is
+architecture testbed of TBNullPacketFilter is
 
    constant TPD_G             : time := 1 ns;
    --constant BUILD_INFO_G      : BuildInfoType;
@@ -62,6 +62,9 @@ architecture testbed of TimeToolPrescalerTB is
    signal appInSlave   : AxiStreamSlaveType;
    signal appOutMaster : AxiStreamMasterType;
    signal appOutSlave  : AxiStreamSlaveType;
+
+   signal PrescalerToNullFilterMaster  : AxiStreamMasterType;
+   signal PrescalerToNullFilterSlave   : AxiStreamSlaveType;
 
    signal axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal axilWriteSlave  : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
@@ -132,6 +135,25 @@ begin
          -- DMA Interface (sysClk domain)
          dataInMaster    => appInMaster,
          dataInSlave     => appInSlave,
+         dataOutMaster   => PrescalerToNullFilterMaster,
+         dataOutSlave    => PrescalerToNullFilterSlave,
+         -- AXI-Lite Interface (sysClk domain)
+         axilReadMaster  => axilReadMaster,
+         axilReadSlave   => axilReadSlave,
+         axilWriteMaster => axilWriteMaster,
+         axilWriteSlave  => axilWriteSlave);
+
+   U_NullPacketFilter : entity work.NullPacketFilter
+      generic map (
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- System Clock and Reset
+         sysClk          => dmaClk,
+         sysRst          => dmaRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster    => PrescalerToNullFilterMaster,
+         dataInSlave     => PrescalerToNullFilterSlave,
          dataOutMaster   => appOutMaster,
          dataOutSlave    => appOutSlave,
          -- AXI-Lite Interface (sysClk domain)
