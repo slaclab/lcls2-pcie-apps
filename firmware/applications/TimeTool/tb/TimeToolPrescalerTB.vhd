@@ -26,6 +26,7 @@ use work.AxiPciePkg.all;
 use work.TimingPkg.all;
 use work.Pgp2bPkg.all;
 use work.SsiPkg.all;
+use work.TestingPkg.all;
 
 entity TimeToolPrescalerTB is end TimeToolPrescalerTB;
 

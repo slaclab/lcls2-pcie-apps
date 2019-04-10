@@ -1,7 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-my_file = "/u1/sioan/lcls2-pcie-apps/sim_input_data.dat"
+top_path                 = os.getcwd().split("lcls2-pcie-apps")[0]+"/lcls2-pcie-apps"
+testing_package_path     = top_path+"/firmware/applications/TimeTool/tb/"
+test_file_path           = [i for i in open(testing_package_path+"TestingPkg.vhd").read().split("\n") if "constant TEST_FILE_PATH" in i][0].split("\"")[1]
+
+
+
+my_file = test_file_path+"/sim_input_data.dat"
 
 n_frames                = 27
 bits_per_pixel          = 8
