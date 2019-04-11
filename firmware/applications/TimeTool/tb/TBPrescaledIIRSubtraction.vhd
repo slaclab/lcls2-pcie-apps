@@ -210,7 +210,7 @@ begin
          axisRst      => axilRst,
          -- Slave
          sAxisMaster  => appInMaster,
-         --sAxisSlave   => appInSlave, this pin can only be driven once in simulation
+         --sAxisSlave   => appInSlave, --this pin can only be driven once in simulation
          -- Masters
          mAxisMasters => dataInMasters,
          mAxisSlaves  => dataInSlaves);
@@ -344,8 +344,8 @@ begin
       wait until axiRst = '1';
       wait until axiRst = '0';
 
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"4", true);  --prescaler
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"2", true);  --iir time constant
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"5", true);  --prescaler
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"3", true);  --iir time constant
 
    end process test;
 

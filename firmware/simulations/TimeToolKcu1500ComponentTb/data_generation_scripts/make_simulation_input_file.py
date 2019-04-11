@@ -10,7 +10,9 @@ test_file_path           = [i for i in open(testing_package_path+"TestingPkg.vhd
 
 my_file = test_file_path+"/sim_input_data.dat"
 
-n_frames                = 27
+n_frames                = 54
+dropped_shot_rate       = 6
+starting_drop           = 5
 bits_per_pixel          = 8
 pixels_per_transfer     = 16
 pixels_per_frame        = 2048      #frame and packet are being used interchangeably
@@ -32,8 +34,11 @@ for i in range(n_frames):
 
       x = np.arange(pixels_per_frame)
       my_frame_array = amplitude*gaussian(x,pixels_per_frame/2.0,sigma)
-      edge_position = int(pixels_per_frame/2+(jitter*np.random.rand()-0.5))
-      my_frame_array[edge_position:] = my_frame_array[edge_position:] *0.2
+
+
+      if(i%dropped_shot_rate!=starting_drop):
+            edge_position = int(pixels_per_frame/2+(jitter*np.random.rand()-0.5))
+            my_frame_array[edge_position:] = my_frame_array[edge_position:] *0.2
 
       my_frame_list = []
       for j in range(0,pixels_per_frame,pixels_per_transfer):
