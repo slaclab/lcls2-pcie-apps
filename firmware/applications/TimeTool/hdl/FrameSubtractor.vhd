@@ -74,8 +74,7 @@ architecture mapping of FrameSubtractor is
 
    type StateType is (
       IDLE_S,
-      SUBTRACT_AND_MOVE_S,
-      UPDATE_PEDESTAL_S);
+      MOVE_S);
 
    type RegType is record
       master                : AxiStreamMasterType;
@@ -91,6 +90,7 @@ architecture mapping of FrameSubtractor is
       coef_signed           : signed(7 downto 0);
       axi_test              : slv(31 downto 0);
       state                 : StateType;
+      state_pedestal        : StateType;
       aSingleFrame          : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
       storedPedestalFrame   : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
    end record RegType;
@@ -109,6 +109,7 @@ architecture mapping of FrameSubtractor is
       coef_signed           => to_signed(1,8),
       axi_test              => (others=>'0'),
       state                 => IDLE_S,
+      state_pedestal        => IDLE_S,
       aSingleFrame          => (others => (others => '0') ),
       storedPedestalFrame   => (others => (others => '0') ));
 
@@ -133,8 +134,8 @@ begin
    ---------------------------------
    -- No-Input FIFO. 
    ---------------------------------
-   pedestalInMasterBuf <= pedestalInMaster;     --may migrate to buffered input fifo 
-   pedestalInSlave     <= pedestalInSlaveBuf;   --may migrate to buffered input fifo 
+   pedestalInMasterBuf    <= pedestalInMaster;     --may migrate to buffered input fifo 
+   pedestalInSlave        <= pedestalInSlaveBuf;   --may migrate to buffered input fifo 
 
    ---------------------------------
    -- Input FIFO
@@ -191,9 +192,16 @@ begin
       -- Main Part of Code
       ------------------------ 
 
-      v.slave.tReady    := not outCtrl.pause;
-      v.master.tLast    := '0';
-      v.master.tValid   := '0';
+      v.slave.tReady          := not outCtrl.pause;
+      v.master.tLast          := '0';
+      v.master.tValid         := '0';
+
+      v.pedestalMaster.tValid := '0';
+      v.pedestalMaster.tLast  := '0';
+
+      ------------------------      
+      -- First State Machine
+      ------------------------ 
 
       case r.state is
 
@@ -201,34 +209,29 @@ begin
             ------------------------------
             -- check which state
             ------------------------------
-            if pedestalInMasterBuf.tValid ='1' then                        --this one takes priority cause its lower rate.
-                        v.slave.tReady           := '0';                        --prevent following elsif from getting executed
-                        v.pedestalSlave.tReady   := '1';
-                        v.state                  := UPDATE_PEDESTAL_S;
-
-            elsif v.slave.tReady = '1' and inMaster.tValid = '1' then   --if this one was first, pedestal may never update
-                        v.state     := SUBTRACT_AND_MOVE_S;
+            if v.slave.tReady = '1' and inMaster.tValid = '1' then   --if this one was first, pedestal may never update
+                        v.state     := MOVE_S;
 
             else
                   v.slave.tReady    :='0';
-                  v.pedestalSlave.tReady   := '0';
- 
-
                   v.state           := IDLE_S;
+
             end if;
 
-            when SUBTRACT_AND_MOVE_S  => 
+            when MOVE_S  => 
             ------------------------------
             -- update slv logic array
             ------------------------------
-               v.state     := SUBTRACT_AND_MOVE_S;
+               v.state     := MOVE_S;
                if v.slave.tReady = '1' and inMaster.tValid = '1' then
                   v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
                                                               --tReady is propogated from downstream to upstream
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
-                        v.aSingleFrame(v.counter + i)    := RESIZE(((signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i))*64*v.storedPedestalFrame(v.counter + i))/(v.storedPedestalFrame(v.counter + i)*v.storedPedestalFrame(v.counter + i)+1),8);
+
+                        v.aSingleFrame(v.counter + i)    := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i)/2),8);
+                        --v.aSingleFrame(v.counter + i)    := RESIZE(((signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i)/2)*64*v.storedPedestalFrame(v.counter + i))/(v.storedPedestalFrame(v.counter + i)*v.storedPedestalFrame(v.counter + i)+1),8);
                         v.master.tData(i*8+7 downto i*8) := std_logic_vector(v.aSingleFrame(v.counter + i));                       --output 
 
                   end loop;             
@@ -238,8 +241,8 @@ begin
 
                   if v.master.tLast = '1' then
                         v.counter            := 0;
-                        v.slave.tReady       := '0';
-                        v.state              := IDLE_S;
+                        --v.slave.tReady       := '0';
+                        --v.state              := IDLE_S;
                   end if;
                   
                   
@@ -254,11 +257,37 @@ begin
 
                end if; 
            
-            when UPDATE_PEDESTAL_S  => 
+ 
+
+      end case;
+
+
+      ------------------------      
+      -- Second State Machine
+      ------------------------ 
+      case r.state_pedestal is
+
+            when IDLE_S =>
+            ------------------------------
+            -- check which state
+            ------------------------------
+            if pedestalInMasterBuf.tValid ='1' then
+
+                  v.pedestalSlave.tReady   := '1';
+                  v.state_pedestal         := MOVE_S;
+
+            else
+
+                  v.pedestalSlave.tReady   := '0';
+                  v.state_pedestal           := IDLE_S;
+
+            end if;
+           
+            when MOVE_S  => 
             ------------------------------
             -- update slv logic array
             ------------------------------
-               v.state                := UPDATE_PEDESTAL_S;
+               v.state_pedestal  := MOVE_S;
                if pedestalInMasterBuf.tValid = '1' then
 
 
@@ -277,8 +306,8 @@ begin
 
                   if v.pedestalMaster.tLast = '1' then
                         v.pedestal_counter            := 0;
-                        v.pedestalSlave.tReady        := '0';
-                        v.state                       := IDLE_S;
+                        --v.pedestalSlave.tReady        := '0';
+                        --v.state_pedestal              := IDLE_S;
                   end if;
                   
 
@@ -288,7 +317,7 @@ begin
                   v.pedestalMaster.tValid  := '0';   --message to downstream data processing that there's no valid data ready
                   v.pedestalSlave.tReady   := '0';   --message to upstream that we're not ready
                   v.pedestalMaster.tLast   := '0';
-                  v.state                  := IDLE_S;
+                  v.state_pedestal         := IDLE_S;
                end if;     
 
       end case;
