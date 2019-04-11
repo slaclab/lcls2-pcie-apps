@@ -230,7 +230,7 @@ begin
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
 
-                        v.aSingleFrame(v.counter + i)    := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i)/2),8);
+                        v.aSingleFrame(v.counter + i)    := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i)/1),8);
                         --v.aSingleFrame(v.counter + i)    := RESIZE(((signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i)/2)*64*v.storedPedestalFrame(v.counter + i))/(v.storedPedestalFrame(v.counter + i)*v.storedPedestalFrame(v.counter + i)+1),8);
                         v.master.tData(i*8+7 downto i*8) := std_logic_vector(v.aSingleFrame(v.counter + i));                       --output 
 
