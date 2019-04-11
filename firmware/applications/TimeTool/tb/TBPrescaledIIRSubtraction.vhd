@@ -31,9 +31,9 @@ use work.TestingPkg.all;
 use STD.textio.all;
 use ieee.std_logic_textio.all;
 
-entity TBPrescaledIIR is end TBPrescaledIIR;
+entity TBPrescaledIIRSubtraction is end TBPrescaledIIRSubtraction;
 
-architecture testbed of TBPrescaledIIR is
+architecture testbed of TBPrescaledIIRSubtraction is
 
    constant TEST_OUTPUT_FILE_NAME : string := TEST_FILE_PATH & "/output_results.dat";
 
@@ -48,11 +48,15 @@ architecture testbed of TBPrescaledIIR is
    ----------------------------
    ----------------------------
    ----------------------------
-   constant NUM_AXIL_MASTERS_C  : natural := NUM_MASTERS_G;
+   constant NUM_AXIL_MASTERS_C  : natural := 4;
 
-   constant PRESCALE_INDEX_C    : natural := 0;
-   constant NULL_FILTER_INDEX_C : natural := 1;
-   constant FRAME_IIR_INDEX_C   : natural := 2;
+   constant PRESCALE_INDEX_C           : natural := 0;
+   constant NULL_FILTER_INDEX_C        : natural := 1;
+   constant FRAME_IIR_INDEX_C          : natural := 2;
+   constant FRAME_SUBTRACTOR_INDEX_C   : natural := 3;
+
+
+   constant NUM_REPEATER_OUTS          : natural := 2;
 
 
    subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
@@ -66,6 +70,7 @@ architecture testbed of TBPrescaledIIR is
 
 
    constant DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+
 
    constant CLK_PERIOD_G : time := 10 ns;
 
@@ -93,6 +98,10 @@ architecture testbed of TBPrescaledIIR is
    signal NullFilterToFrameIIRMaster  : AxiStreamMasterType;
    signal NullFilterToFrameIIRSlave   : AxiStreamSlaveType;
 
+   signal FrameIIRToSubtractorMaster  : AxiStreamMasterType;
+   signal FrameIIRToSubtractorSlave  : AxiStreamSlaveType;
+
+
    signal axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal axilWriteSlave  : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
    signal axilReadMaster  : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
@@ -103,7 +112,13 @@ architecture testbed of TBPrescaledIIR is
    signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
 
+   subtype REPEATER_INDEX_RANGE_C is integer range NUM_REPEATER_OUTS-1 downto 0;
 
+   signal dataInMasters : AxiStreamMasterArray(REPEATER_INDEX_RANGE_C);
+   signal dataInSlaves  : AxiStreamSlaveArray(REPEATER_INDEX_RANGE_C);
+
+   signal dataIbMasters : AxiStreamMasterArray(REPEATER_INDEX_RANGE_C);
+   signal dataIbSlaves  : AxiStreamSlaveArray(REPEATER_INDEX_RANGE_C);
 
    signal axiClk   : sl;
    signal axiRst   : sl;
@@ -181,6 +196,55 @@ begin
             mAxisMaster => appInMaster,
             mAxisSlave  => appInSlave);
 
+   ----------------------
+   -- AXI Stream Repeater
+   ----------------------
+   U_AxiStreamRepeater : entity work.AxiStreamRepeater
+      generic map (
+         TPD_G         => TPD_G,
+         NUM_MASTERS_G => 2)
+      port map (
+         -- Clock and reset
+         axisClk      => axilClk,
+         axisRst      => axilRst,
+         -- Slave
+         sAxisMaster  => appInMaster,
+         sAxisSlave   => appInSlave,
+         -- Masters
+         mAxisMasters => dataInMasters,
+         mAxisSlaves  => dataInSlaves);
+
+   ----------------------------------------         
+   -- FIFO between Repeater and DSP Modules
+   ----------------------------------------    
+   GEN_IB :
+   for i in REPEATER_INDEX_RANGE_C generate
+      U_FIFO : entity work.AxiStreamFifoV2
+         generic map (
+            -- General Configurations
+            TPD_G               => TPD_G,
+            SLAVE_READY_EN_G    => true,
+            VALID_THOLD_G       => 1,
+            -- FIFO configurations
+            BRAM_EN_G           => true,
+            GEN_SYNC_FIFO_G     => true,
+            FIFO_ADDR_WIDTH_G   => 9,
+            -- AXI Stream Port Configurations
+            SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
+            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
+         port map (
+            -- Slave Port
+            sAxisClk    => axilClk,
+            sAxisRst    => axilRst,
+            sAxisMaster => dataInMasters(i),
+            sAxisSlave  => dataInSlaves(i),
+            -- Master Port
+            mAxisClk    => axilClk,
+            mAxisRst    => axilRst,
+            mAxisMaster => dataIbMasters(i),
+            mAxisSlave  => dataIbSlaves(i));
+   end generate GEN_IB;
+
    --------------------
    -- Modules to be tested
    --------------------  
@@ -195,8 +259,8 @@ begin
          sysClk          => dmaClk,
          sysRst          => dmaRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster    => appInMaster,
-         dataInSlave     => appInSlave,
+         dataInMaster    => dataIbMasters(0),
+         dataInSlave     => dataIbSlaves(0),
          dataOutMaster   => PrescalerToNullFilterMaster,
          dataOutSlave    => PrescalerToNullFilterSlave,
          -- AXI-Lite Interface (sysClk domain)
@@ -236,13 +300,35 @@ begin
          -- DMA Interface (sysClk domain)
          dataInMaster    => NullFilterToFrameIIRMaster,
          dataInSlave     => NullFilterToFrameIIRSlave,
-         dataOutMaster   => appOutMaster,
-         dataOutSlave    => appOutSlave,
+         dataOutMaster   => FrameIIRToSubtractorMaster,
+         dataOutSlave    => FrameIIRToSubtractorSlave,
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMasters(FRAME_IIR_INDEX_C),
          axilReadSlave   => axilReadSlaves(FRAME_IIR_INDEX_C),
          axilWriteMaster => axilWriteMasters(FRAME_IIR_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(FRAME_IIR_INDEX_C));
+
+   U_FrameSubtractor : entity work.FrameSubtractor
+      generic map (
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- System Clock and Reset
+         sysClk           => dmaClk,
+         sysRst           => dmaRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster     => FrameIIRToSubtractorMaster,
+         dataInSlave      => FrameIIRToSubtractorSlave,
+         dataOutMaster    => appOutMaster,
+         dataOutSlave     => appOutSlave,
+         -- Pedestal DMA Interfaces  (sysClk domain)
+         pedestalInMaster =>  dataIbMasters(1),
+         pedestalInSlave  =>  dataIbSlaves(1),
+         -- AXI-Lite Interface (sysClk domain)
+         axilReadMaster  => axilReadMasters(FRAME_SUBTRACTOR_INDEX_C),
+         axilReadSlave   => axilReadSlaves(FRAME_SUBTRACTOR_INDEX_C),
+         axilWriteMaster => axilWriteMasters(FRAME_SUBTRACTOR_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(FRAME_SUBTRACTOR_INDEX_C));
 
   ---------------------------------
    -- AXI-Lite Register Transactions

@@ -85,9 +85,10 @@ architecture mapping of FrameSubtractor is
       axilReadSlave         : AxiLiteReadSlaveType;
       axilWriteSlave        : AxiLiteWriteSlaveType;
       counter               : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
+      pedestal_counter      : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
       scratchPad            : slv(31 downto 0);
       timeConstant          : slv(7 downto 0);
-      tConst_signed         : signed(7 downto 0);
+      coef_signed           : signed(7 downto 0);
       axi_test              : slv(31 downto 0);
       state                 : StateType;
       aSingleFrame          : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
@@ -102,9 +103,10 @@ architecture mapping of FrameSubtractor is
       axilReadSlave         => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave        => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter               => 0,
+      pedestal_counter      => 0,
       scratchPad            => (others => '0'),
       timeConstant          => (others=>'0'),
-      tConst_signed         => to_signed(1,8),
+      coef_signed           => to_signed(1,8),
       axi_test              => (others=>'0'),
       state                 => IDLE_S,
       aSingleFrame          => (others => (others => '0') ),
@@ -128,9 +130,11 @@ architecture mapping of FrameSubtractor is
 
 
 begin
-
-   pedestalInMasterBuf <= pedestalInMaster;  --may migrate to buffered input fifo 
-   pedestalInSlaveBuf  <= pedestalInSlave;   --may migrate to buffered input fifo 
+   ---------------------------------
+   -- No-Input FIFO. 
+   ---------------------------------
+   pedestalInMasterBuf <= pedestalInMaster;     --may migrate to buffered input fifo 
+   pedestalInSlave     <= pedestalInSlaveBuf;   --may migrate to buffered input fifo 
 
    ---------------------------------
    -- Input FIFO
@@ -181,7 +185,7 @@ begin
       ------------------------      
       -- updating time constant
       ------------------------       
-      v.tConst_signed := signed(v.timeConstant);
+      v.coef_signed := signed(v.timeConstant);
 
       ------------------------      
       -- Main Part of Code
@@ -197,14 +201,17 @@ begin
             ------------------------------
             -- check which state
             ------------------------------
-            if v.slave.tReady = '1' and inMaster.tValid = '1' then
-                        v.state     := SUBTRACT_AND_MOVE_S;
-               
-            elsif pedestalInMaster.tValid ='1' then
+            if pedestalInMaster.tValid ='1' then                        --this one takes priority cause its lower rate.
                         v.state     := UPDATE_PEDESTAL_S;
+
+            elsif v.slave.tReady = '1' and inMaster.tValid = '1' then   --if this one was first, pedestal may never update
+                        v.state     := SUBTRACT_AND_MOVE_S;
 
             else
                   v.slave.tReady    :='0';
+                  v.pedestalSlave.tReady   := '0';
+ 
+
                   v.state           := IDLE_S;
             end if;
 
@@ -215,17 +222,12 @@ begin
 
                if v.slave.tReady = '1' and inMaster.tValid = '1' then
                   v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
+                                                              --tReady is propogated from downstream to upstream
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
-                        v.aSingleFrame(v.counter + i)             := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8)-v.storedPedestalFrame(v.counter + i)),8);
-                        v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.aSingleFrame(v.counter + i));                       --output 
-                       
-                        --v.aSingleFrame(v.counter + i)             := RESIZE((v.aSingleFrame(v.counter + i)-storedPedestalFrame(v.counter + i)),8);
-                        --v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.aSingleFrame(v.counter + i));                       --output 
-                       
-                        --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed-1)+signed(inMaster.tdata(i*8+7 downto i*8)))/v.tConst_signed,8);
-                        --v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
+                        v.aSingleFrame(v.counter + i)    := RESIZE(signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i),8);
+                        v.master.tData(i*8+7 downto i*8) := std_logic_vector(v.aSingleFrame(v.counter + i));                       --output 
 
                   end loop;             
                
@@ -236,13 +238,14 @@ begin
                         v.counter            := 0;
                   end if;
                   
-                  v.state     := UPDATE_AND_MOVE_S;
+                  v.state     := SUBTRACT_AND_MOVE_S;
 
                else
                   v.master.tValid  := '0';   --message to downstream data processing that there's no valid data ready
                   v.slave.tReady   := '0';   --message to upstream that we're not ready
                   v.master.tLast   := '0';
                   v.state          := IDLE_S;
+
                end if; 
            
             when UPDATE_PEDESTAL_S  => 
@@ -250,31 +253,32 @@ begin
             -- update slv logic array
             ------------------------------
 
-               if v.slave.tReady = '1' and pedestalInMasterBuf.tValid = '1' then
+               if pedestalInMasterBuf.tValid = '1' then
 
                   v.pedestalMaster  := pedestalInMasterBuf ;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
+                                                                 
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
-                        v.storedPedestalFrame(v.counter + i)        := RESIZE(pedestalInMasterBuf.tdata(i*8+7 downto i*8),8);
+                        v.storedPedestalFrame(v.counter + i)        := RESIZE(signed(pedestalInMasterBuf.tdata(i*8+7 downto i*8)),8);
                         
 
                   end loop;
 
                  
-                  v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;
+                  v.pedestal_counter                  := v.pedestal_counter+INT_CONFIG_C.TDATA_BYTES_C;
 
-                  if v.master.tLast = '1' then
-                        v.counter            := 0;
+                  if v.pedestalMaster.tLast = '1' then
+                        v.pedestal_counter            := 0;
                   end if;
                   
                   v.state     := UPDATE_PEDESTAL_S;
 
                else
-                  v.master.tValid  := '0';   --message to downstream data processing that there's no valid data ready
-                  v.slave.tReady   := '0';   --message to upstream that we're not ready
-                  v.master.tLast   := '0';
-                  v.state          := IDLE_S;
+                  v.pedestalMaster.tValid  := '0';   --message to downstream data processing that there's no valid data ready
+                  v.pedestalSlave.tReady   := '0';   --message to upstream that we're not ready
+                  v.pedestalMaster.tLast   := '0';
+                  v.state                  := IDLE_S;
                end if;     
 
       end case;
@@ -290,9 +294,13 @@ begin
       rin <= v;
 
       -- Outputs 
-      axilReadSlave  <= r.axilReadSlave;
-      axilWriteSlave <= r.axilWriteSlave;
-      inSlave        <= v.slave;
+      axilReadSlave             <= r.axilReadSlave;
+      axilWriteSlave            <= r.axilWriteSlave;
+      inSlave                   <= v.slave;
+      pedestalInSlaveBuf        <= v.pedestalSlave;
+
+
+
 
    end process comb;
 
