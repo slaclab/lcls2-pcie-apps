@@ -131,6 +131,7 @@ architecture testbed of TBPrescaledIIRSubtraction is
 begin
 
    appOutSlave.tReady <= '1';
+   appInSlave.tReady  <= '1';
    axilClk            <= axiClk;
    axilRst            <= axiRst;
    
@@ -209,7 +210,7 @@ begin
          axisRst      => axilRst,
          -- Slave
          sAxisMaster  => appInMaster,
-         sAxisSlave   => appInSlave,
+         --sAxisSlave   => appInSlave, this pin can only be driven once in simulation
          -- Masters
          mAxisMasters => dataInMasters,
          mAxisSlaves  => dataInSlaves);
@@ -317,13 +318,13 @@ begin
          sysClk           => dmaClk,
          sysRst           => dmaRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster     => FrameIIRToSubtractorMaster,
-         dataInSlave      => FrameIIRToSubtractorSlave,
+         dataInMaster     => dataIbMasters(1),
+         dataInSlave      => dataIbSlaves(1),
          dataOutMaster    => appOutMaster,
          dataOutSlave     => appOutSlave,
          -- Pedestal DMA Interfaces  (sysClk domain)
-         pedestalInMaster =>  dataIbMasters(1),
-         pedestalInSlave  =>  dataIbSlaves(1),
+         pedestalInMaster =>  FrameIIRToSubtractorMaster,
+         pedestalInSlave  =>  FrameIIRToSubtractorSlave,
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMasters(FRAME_SUBTRACTOR_INDEX_C),
          axilReadSlave   => axilReadSlaves(FRAME_SUBTRACTOR_INDEX_C),
