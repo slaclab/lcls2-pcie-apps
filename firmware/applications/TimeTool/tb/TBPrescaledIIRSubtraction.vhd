@@ -344,7 +344,7 @@ begin
       wait until axiRst = '1';
       wait until axiRst = '0';
 
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"1", true);  --prescaler
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"4", true);  --prescaler
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"2", true);  --iir time constant
 
    end process test;

@@ -162,7 +162,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster, outCtrl) is
+   comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster,pedestalInMasterBuf, outCtrl) is
       variable v      : RegType := REG_INIT_C ;
       variable axilEp : AxiLiteEndpointType;
    begin
@@ -201,8 +201,10 @@ begin
             ------------------------------
             -- check which state
             ------------------------------
-            if pedestalInMaster.tValid ='1' then                        --this one takes priority cause its lower rate.
-                        v.state     := UPDATE_PEDESTAL_S;
+            if pedestalInMasterBuf.tValid ='1' then                        --this one takes priority cause its lower rate.
+                        v.slave.tReady           := '0';                        --prevent following elsif from getting executed
+                        v.pedestalSlave.tReady   := '1';
+                        v.state                  := UPDATE_PEDESTAL_S;
 
             elsif v.slave.tReady = '1' and inMaster.tValid = '1' then   --if this one was first, pedestal may never update
                         v.state     := SUBTRACT_AND_MOVE_S;
@@ -219,7 +221,7 @@ begin
             ------------------------------
             -- update slv logic array
             ------------------------------
-
+               v.state     := SUBTRACT_AND_MOVE_S;
                if v.slave.tReady = '1' and inMaster.tValid = '1' then
                   v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
                                                               --tReady is propogated from downstream to upstream
@@ -236,9 +238,13 @@ begin
 
                   if v.master.tLast = '1' then
                         v.counter            := 0;
+                        v.slave.tReady       := '0';
+                        v.state              := IDLE_S;
                   end if;
                   
-                  v.state     := SUBTRACT_AND_MOVE_S;
+                  
+
+
 
                else
                   v.master.tValid  := '0';   --message to downstream data processing that there's no valid data ready
@@ -252,15 +258,16 @@ begin
             ------------------------------
             -- update slv logic array
             ------------------------------
-
+               v.state                := UPDATE_PEDESTAL_S;
                if pedestalInMasterBuf.tValid = '1' then
+
 
                   v.pedestalMaster  := pedestalInMasterBuf ;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
                                                                  
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
-                        v.storedPedestalFrame(v.counter + i)        := RESIZE(signed(pedestalInMasterBuf.tdata(i*8+7 downto i*8)),8);
+                        v.storedPedestalFrame(v.pedestal_counter + i)        := RESIZE(signed(pedestalInMasterBuf.tdata(i*8+7 downto i*8)),8);
                         
 
                   end loop;
@@ -270,9 +277,12 @@ begin
 
                   if v.pedestalMaster.tLast = '1' then
                         v.pedestal_counter            := 0;
+                        v.pedestalSlave.tReady        := '0';
+                        v.state                       := IDLE_S;
                   end if;
                   
-                  v.state     := UPDATE_PEDESTAL_S;
+
+
 
                else
                   v.pedestalMaster.tValid  := '0';   --message to downstream data processing that there's no valid data ready
