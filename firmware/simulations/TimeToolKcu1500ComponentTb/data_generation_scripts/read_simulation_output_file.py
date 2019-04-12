@@ -26,7 +26,9 @@ def read_sim_file(my_input_file,ncols,signed):
                   if(unsigned):
                         my_input_data.append([int(i[j:j+8],2) for j in range(0,128,8)]) #unsigned reading
                   else:
-                        my_input_data.append([((-1)**int(i[j]))*int(i[j+1:j+8],2) for j in range(0,128,8)]) #signed reading
+                        my_input_data.append([int(i[j:j+8],2) for j in range(0,128,8)]) 
+                        #my_input_data.append([((-1)**int(i[j]))*int(i[j+1:j+8],2) for j in range(0,128,8)]) #signed reading
+                        #my_input_data.append([((-1)**int(i[j]))*int(i[j+1:j+8],2) for j in range(0,128,8)]) #signed reading
             except:
                   my_input_data.append([0 for i in range(0,128,8)])
                   
@@ -37,8 +39,8 @@ def read_sim_file(my_input_file,ncols,signed):
 
       return my_input_data
 
-my_input_data = read_sim_file(my_input_file,2,signed=False)
-my_output_data = read_sim_file(my_output_file,2,signed=False)
+my_input_data = np.array(read_sim_file(my_input_file,2,signed=False))
+my_output_data = np.array(read_sim_file(my_output_file,2,signed=False)).astype(dtype=np.int8)
 
 plt.figure(0)
 plt.plot(my_input_data)
