@@ -1,7 +1,11 @@
 import numpy as np
+import matplotlib
+matplotlib.use("Qt5agg")
 import matplotlib.pyplot as plt
 import IPython
 import os
+
+plt.ion()
 
 top_path                 = os.getcwd().split("lcls2-pcie-apps")[0]+"/lcls2-pcie-apps"
 testing_package_path     = top_path+"/firmware/applications/TimeTool/tb/"
@@ -11,9 +15,10 @@ my_output_file = test_file_path+"/output_results.dat"
 my_input_file  = test_file_path+"/sim_input_data.dat"
 
 
-def read_sim_file(my_input_file,ncols,unsigned):
+def read_sim_file(my_input_file,ncols,signed):
 
-      my_input_data = []
+      unsigned          = not signed
+      my_input_data     = []
       loaded_input_data = open(my_input_file)
       for i in loaded_input_data:
             #print(i)
@@ -32,11 +37,13 @@ def read_sim_file(my_input_file,ncols,unsigned):
 
       return my_input_data
 
-my_input_data = read_sim_file(my_input_file,2,True)
-my_output_data = read_sim_file(my_output_file,2,False)
+my_input_data = read_sim_file(my_input_file,2,signed=False)
+my_output_data = read_sim_file(my_output_file,2,signed=False)
 
 plt.figure(0)
 plt.plot(my_input_data)
+thismanager = plt.get_current_fig_manager()
+thismanager.window.move(0,250)
 
 plt.figure(1)
 plt.plot(my_output_data)
