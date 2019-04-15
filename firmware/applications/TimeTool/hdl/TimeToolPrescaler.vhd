@@ -197,7 +197,7 @@ begin
                v.state := IDLE_S;
             end if;
 
-            v.slave.tReady  := '0';
+            v.slave.tReady  := '0';  --may need to be after v.state := IDLE_S statement
 
          when MOVE_S =>
             ------------------------------

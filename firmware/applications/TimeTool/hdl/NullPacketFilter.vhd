@@ -165,6 +165,7 @@ begin
             --v.validate_state := (others => '0');  --debugging signal
             if v.slave.tReady = '1' and inMaster.tValid = '1' and (ssiGetUserEofe(DMA_AXIS_CONFIG_G, inMaster) = '0') then
                   v.state := MOVE_S;
+                  v.slave.tReady := '0';
             else
                   v.state := IDLE_S;
             end if;
