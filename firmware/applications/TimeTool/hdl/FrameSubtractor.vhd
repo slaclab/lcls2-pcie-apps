@@ -210,11 +210,12 @@ begin
             -- check which state
             ------------------------------
             if v.slave.tReady = '1' and inMaster.tValid = '1' then   --if this one was first, pedestal may never update
-                        v.state     := MOVE_S;
+                  v.state           := MOVE_S;
+                  v.slave.tReady    :='0';
 
             else
-                  v.slave.tReady    :='0';
                   v.state           := IDLE_S;
+                  v.slave.tReady    :='0';
 
             end if;
 
@@ -222,7 +223,7 @@ begin
             ------------------------------
             -- update slv logic array
             ------------------------------
-               v.state     := MOVE_S;
+               v.slave.tReady    :='1';
                if v.slave.tReady = '1' and inMaster.tValid = '1' then
                   v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
                                                               --tReady is propogated from downstream to upstream
@@ -273,13 +274,12 @@ begin
             ------------------------------
             if pedestalInMasterBuf.tValid ='1' then
 
-                  v.pedestalSlave.tReady   := '1';
                   v.state_pedestal         := MOVE_S;
+                  v.pedestalSlave.tReady   := '0';
 
             else
-
+                  v.state_pedestal         := IDLE_S;
                   v.pedestalSlave.tReady   := '0';
-                  v.state_pedestal           := IDLE_S;
 
             end if;
            
@@ -287,7 +287,7 @@ begin
             ------------------------------
             -- update slv logic array
             ------------------------------
-               v.state_pedestal  := MOVE_S;
+               v.pedestalSlave.tReady   := '1';
                if pedestalInMasterBuf.tValid = '1' then
 
 
