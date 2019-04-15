@@ -35,10 +35,15 @@ for i in range(n_frames):
       x = np.arange(pixels_per_frame)
       my_frame_array = amplitude*gaussian(x,pixels_per_frame/2.0,sigma)
 
-
       if(i%dropped_shot_rate!=starting_drop):
             edge_position = int(pixels_per_frame/2+(jitter*np.random.rand()-0.5))
             my_frame_array[edge_position:] = my_frame_array[edge_position:] *0.2
+
+      my_frame_array[0] = 73
+      my_frame_array[-1] = 123
+
+      if(i%400==1):
+            my_frame_array = my_frame_array * 0
 
       my_frame_list = []
       for j in range(0,pixels_per_frame,pixels_per_transfer):
