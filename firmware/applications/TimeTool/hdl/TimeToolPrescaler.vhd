@@ -197,11 +197,14 @@ begin
                v.state := IDLE_S;
             end if;
 
+            v.slave.tReady  := '0';
+
          when MOVE_S =>
             ------------------------------
             -- send regular frame
             ------------------------------
             v.validate_state(0) := '1';     --debugging signal
+            v.slave.tReady  := not outCtrl.pause;
             if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter = v.prescalingRate then
                v.master            := inMaster;  --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
                v.validate_state(1) := '1';  --debugging signal               
