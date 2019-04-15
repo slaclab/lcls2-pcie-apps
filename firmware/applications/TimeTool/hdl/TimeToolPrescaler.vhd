@@ -222,6 +222,7 @@ begin
             ------------------------------
             -- send null frame
             ------------------------------
+            v.slave.tReady  := not outCtrl.pause;
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
                v.master.tValid := '1';
                v.master.tLast  := '1';
