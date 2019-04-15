@@ -180,8 +180,8 @@ begin
             -- check which state
             ------------------------------
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
-                        v.state     := UPDATE_AND_MOVE_S;
-               
+                        v.state          := UPDATE_AND_MOVE_S;
+                        v.slave.tReady   := '0';
 
             else
                   v.slave.tReady    :='0';
@@ -202,16 +202,6 @@ begin
                         v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed-1)+signed(inMaster.tdata(i*8+7 downto i*8)))/v.tConst_signed,8);
                         v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
 
-                        --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*7+signed(inMaster.tdata(i*8+7 downto i*8)))/8,8);
-                        --v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
-
-                  
-                        --v.rollingImage(v.counter)  := (v.rollingImage(v.counter)/32)*31 + signed(inMaster.tdata)/32;
-                        --v.master.tData             := std_logic_vector(v.rollingImage(v.counter));
-                        --v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 )  := ((v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ))/32)*31; --+ signed(inMaster.tdata(i*8+7 downto i*8))/32;
-                        --v.rollingImage(v.counter + i )     := to_signed(v.counter,8);
-                        
-                        --v.master.tData(i*8+7 downto i*8)        := std_logic_vector(v.rollingImage(v.counter + i*8+7 downto v.counter + i*8 ));
 
                   end loop;
 
@@ -221,6 +211,7 @@ begin
 
                   if v.master.tLast = '1' then
                         v.counter            := 0;
+                        --v.state     := IDLE_S;
                   end if;
                   
                   v.state     := UPDATE_AND_MOVE_S;
