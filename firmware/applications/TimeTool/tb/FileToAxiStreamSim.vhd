@@ -25,6 +25,7 @@ use work.AxiStreamPkg.all;
 use work.AxiPkg.all;
 use work.SsiPkg.all;
 use work.AxiPciePkg.all;
+use work.TestingPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
@@ -68,6 +69,8 @@ architecture rtl of FileToAxiStreamSim is
       counter      => 100,
       state        => IDLE_S);
 
+   constant TEST_INPUT_FILE_NAME : string := TEST_FILE_PATH & "/sim_input_data.dat";
+
    file file_VECTORS : text;
    file file_RESULTS : text;
  
@@ -103,7 +106,7 @@ begin
       --w_SUM <= (others=>'1');
 
       --file_open(file_RESULTS, "output_results.txt", write_mode);
-      file_open(file_VECTORS, "/u1/sioan/lcls2-pcie-apps/sim_input_data.dat",  read_mode);
+      file_open(file_VECTORS, TEST_INPUT_FILE_NAME,  read_mode);
       
 
     while not endfile(file_VECTORS) loop
