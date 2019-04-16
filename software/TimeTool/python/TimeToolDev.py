@@ -10,7 +10,7 @@ import surf.axi               as axi
 import surf.protocols.batcher as batcher
 
 import numpy as np
-import h5py
+#import h5py
 
 import rogue.interfaces.stream
 
@@ -55,7 +55,6 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.add(pr.LocalVariable( name='lengthErrors', value=0, mode='RO', pollInterval=1))
         self.add(pr.LocalVariable( name='dataErrors',   value=0, mode='RO', pollInterval=1))
 
-        self.my_h5_file = h5py.File("first_test.h5",'w')
         self.to_save_to_h5 = []
 
         for i in range(8):
