@@ -10,7 +10,7 @@ import surf.axi               as axi
 import surf.protocols.batcher as batcher
 
 import numpy as np
-import h5py
+#import h5py
 
 import rogue.interfaces.stream
 
@@ -57,7 +57,6 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.parsed_data = 0
         self.unparsed_data = 0
 
-        self.my_h5_file = h5py.File("first_test.h5",'w')
         self.to_save_to_h5 = []
 
         for i in range(8):
