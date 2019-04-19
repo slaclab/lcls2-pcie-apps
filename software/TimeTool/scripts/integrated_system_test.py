@@ -10,7 +10,7 @@ cl = TimeToolVcsSimTest.TimeToolVcsSimTest(
     pollEn    = False,
     initRead  = False,
 )
-cl.ReadConfig("config/TimeToolVcsSimTest_lcls-pc823236.yml")
+cl.LoadConfig("config/TimeToolVcsSimTest_lcls-pc823236.yml")
 
 gen_frame_method = cl.GenFrame[0]
 
