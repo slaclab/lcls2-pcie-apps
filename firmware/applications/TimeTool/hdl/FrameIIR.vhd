@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
--- File       : TimeToolCore.vhd
+-- File       : FrameIIR.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
 -- Last update: 2017-12-04
