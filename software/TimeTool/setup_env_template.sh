@@ -1,6 +1,6 @@
 # Setup environment
 source /afs/slac.stanford.edu/g/reseng/vol26/anaconda/miniconda3/etc/profile.d/conda.sh
-conda activate rogue_v3.3.1
+conda activate rogue_v3.4.0
 
 # Package directories
 export SURF_DIR=${PWD}/../../firmware/submodules/surf/python
