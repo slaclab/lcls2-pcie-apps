@@ -51,7 +51,7 @@ TimeToolDev:
         Ch[0]:
           enable: True
           EnableReg: True
-          RateSel: 0x102b
+          RateSel: 0x1028
           DestSel: 0x20000
         LocalTrig[0]:
           enable: True
@@ -147,7 +147,7 @@ TimeToolDev:
       enable: True
     BoardTemp:
       enable: True
-      AlertMaskWrite: True
+      AlertMaskWrite: False
       AlertMask: True
       StopWrite: False
       Stop: False
@@ -157,13 +157,13 @@ TimeToolDev:
       LcritMask: False
       FaultQueueWrite: False
       FaultQueue: False
-      ConvertRateWrite: 0x8
+      ConvertRateWrite: 0x0
       ConvertRate: '16'
-      LocalHighSetpointWrite: 0x46
+      LocalHighSetpointWrite: 0x0
       LocalHighSetpoint: 70
       LocalLowSetpointWrite: 0x0
       LocalLowSetpoint: 0
-      RemoteHighSetpointHighByteWrite: 0x46
+      RemoteHighSetpointHighByteWrite: 0x0
       RemoteHighSetpoint: 70
       RemoteLowSetpointHighByteWrite: 0x0
       RemoteLowSetpoint: 0
@@ -223,7 +223,7 @@ TimeToolDev:
           SSF: '3'
           SSG: ''
           STG: ''
-          STM: '1'
+          STM: '0'
           SVM: '1'
           USD: ''
           USL: ''
