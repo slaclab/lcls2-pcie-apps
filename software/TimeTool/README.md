@@ -4,12 +4,11 @@
 
 # Dependences 
 
-1) Software: Rogue (v3.4.1)[https://github.com/slaclab/rogue/releases/tag/v3.4.1]
+1) Software: Rogue@[v3.4.1](https://github.com/slaclab/rogue/releases/tag/v3.4.1)
 
-2) DMA Driver: aes-stream-drivers (v5.4.0)[https://github.com/slaclab/aes-stream-drivers/releases/tag/v5.4.0]
+2) DMA Driver: aes-stream-drivers@[v5.4.0](https://github.com/slaclab/aes-stream-drivers/releases/tag/v5.4.0)
 
-3) FEB board Firmware Image: ClinkFebPgp2b_1ch-0x00000030-20190422155523-ruckman-31260360.mcs
-https://github.com/slaclab/cameralink-gateway/blob/master/firmware/targets/ClinkFebPgp2b_1ch/images/ClinkFebPgp2b_1ch-0x00000030-20190422155523-ruckman-31260360.mcs
+3) FEB board Firmware Image: [ClinkFebPgp2b_1ch-0x00000030](https://github.com/slaclab/cameralink-gateway/blob/master/firmware/targets/ClinkFebPgp2b_1ch/images/ClinkFebPgp2b_1ch-0x00000030-20190422155523-ruckman-31260360.mcs)
 
 4) Firmware Submodules:
 ```
