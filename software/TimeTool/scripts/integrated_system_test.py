@@ -1,9 +1,11 @@
-import TimeToolVcsSimTest
+#!/usr/bin/env python3
+import setupLibPaths
+import TimeToolDev
 import sys
 import time
 import gc
 
-cl = TimeToolVcsSimTest.TimeToolVcsSimTest(
+cl = TimeToolDev.TimeToolDev(
     dev       = "sim",
     dataDebug = True,
     version3  = False,

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import setupLibPaths
 import pyrogue.gui
 import TimeToolDev
 import sys
@@ -49,7 +50,7 @@ parser.add_argument(
     "--dataDebug", 
     type     = argBool,
     required = False,
-    default  = False,
+    default  = True,
     help     = "Enable TimeToolRx module",
 )  
 
