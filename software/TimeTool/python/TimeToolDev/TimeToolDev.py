@@ -92,8 +92,10 @@ class TimeToolDev(kcu1500.Core):
                 
                 # Check if VCS or not
                 if (dev!='sim'): 
+                    #print("using TimeToolRx")
                     self._dbg[lane] = streams.TimeToolRx(expand=True)
                 else:
+                    #print("using TimeToolRxVcs")
                     self._dbg[lane] = streams.TimeToolRxVcs(expand=True)
                 
                 # Connect the streams

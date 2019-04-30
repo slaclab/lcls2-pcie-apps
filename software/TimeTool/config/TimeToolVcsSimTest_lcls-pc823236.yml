@@ -7,7 +7,7 @@ TimeToolDev:
       enable: True
       EventBuilder:
         enable: True
-        Bypass: 0x1
+        Bypass: 0x0
         Timeout: 0x0
         Blowoff: False
       Fex:

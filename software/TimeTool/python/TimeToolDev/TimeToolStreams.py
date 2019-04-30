@@ -85,6 +85,8 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
             self.add(pr.LocalVariable( name='byteError{}'.format(i), disp='{:#x}', value=0, mode='RO', pollInterval=1))
 
     def _acceptFrame(self,frame):
+        print("TimeToolRx accepting frame ")
+        self.parsed_data_test = p
         p = bytearray(frame.getPayload())
         frame.read(p,0)
         print(len(p))
@@ -141,8 +143,10 @@ class TimeToolRxVcs(TimeToolRx):
 
     def __init__(self, name='TimeToolRx', **kwargs):
         super().__init__(name=name,**kwargs)
+        print("Initializing TimeToolRxVcs")
 
     def _acceptFrame(self,frame):
+        print("TimeToolRxVcs accepting frame ")
         p = bytearray(frame.getPayload())
         frame.read(p,0)
         self.unparsed_data = p

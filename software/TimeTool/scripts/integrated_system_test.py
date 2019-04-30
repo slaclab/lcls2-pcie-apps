@@ -4,6 +4,7 @@ import TimeToolDev
 import sys
 import time
 import gc
+import IPython
 
 cl = TimeToolDev.TimeToolDev(
     dev       = "sim",
@@ -19,6 +20,9 @@ gen_frame_method = cl.GenFrame[0]
 cl.Application.AppLane[0].Prescale.DialInPreScaling.set(2)
 
 start_count = 0
+
+IPython.embed()
+
 for i in range(10):
       print("counter = "+str(start_count))
 	#gen_frame_method()
