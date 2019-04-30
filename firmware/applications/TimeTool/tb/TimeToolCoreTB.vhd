@@ -31,9 +31,9 @@ use work.TestingPkg.all;
 use STD.textio.all;
 use ieee.std_logic_textio.all;
 
-entity TBPrescaledIIRSubtraction is end TBPrescaledIIRSubtraction;
+entity TimeToolCoreTB is end TimeToolCoreTB;
 
-architecture testbed of TBPrescaledIIRSubtraction is
+architecture testbed of TimeToolCoreTB is
 
    constant TEST_OUTPUT_FILE_NAME : string := TEST_FILE_PATH & "/output_results.dat";
 
@@ -210,12 +210,13 @@ begin
          axilRst         => axiRst,
          -- Trigger Event streams (axilClk domain)
          --trigMaster      => trigMaster,  -- takes too long too simulate
+         trigMaster        => AXI_STREAM_MASTER_INIT_C,
          --trigSlave       => trigSlave,   -- takes too long too simulate
          -- DMA Interface (sysClk domain)
          dataInMaster    => appInMaster,
          dataInSlave     => appInSlave,
          eventMaster     => appOutMaster,
-         --eventSlave      => appOutSlave, --this pin can can only be driven once
+         eventSlave      => appOutSlave,
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
