@@ -9,11 +9,14 @@
 # contained in the LICENSE.txt file.
 #-----------------------------------------------------------------------------
 import pyrogue as pr
+import os
 
-pr.addLibraryPath('../../../firmware/submodules/surf/python')
-pr.addLibraryPath('../../../firmware/submodules/axi-pcie-core/python')
-pr.addLibraryPath('../../../firmware/submodules/lcls-timing-core/python')
-pr.addLibraryPath('../../../firmware/submodules/lcls2-pgp-fw-lib/python')
-pr.addLibraryPath('../../../firmware/applications/TimeTool/python')
-pr.addLibraryPath('../../../firmware/submodules/clink-gateway-fw-lib/python')
-pr.addLibraryPath('../python')
+top_level = os.getcwd().split('software')[0]
+
+pr.addLibraryPath(top_level+'firmware/submodules/surf/python')
+pr.addLibraryPath(top_level+'firmware/submodules/axi-pcie-core/python')
+pr.addLibraryPath(top_level+'firmware/submodules/lcls-timing-core/python')
+pr.addLibraryPath(top_level+'firmware/submodules/lcls2-pgp-fw-lib/python')
+pr.addLibraryPath(top_level+'firmware/applications/TimeTool/python')
+pr.addLibraryPath(top_level+'firmware/submodules/clink-gateway-fw-lib/python')
+pr.addLibraryPath(top_level+'/software/TimeTool/python')
