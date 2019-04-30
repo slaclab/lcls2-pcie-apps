@@ -87,10 +87,10 @@ architecture testbed of TimeToolCoreTB is
    signal dmaClk       : sl;
    signal dmaRst       : sl;
 
-   signal appInMaster  : AxiStreamMasterType;
-   signal appInSlave   : AxiStreamSlaveType;
-   signal appOutMaster : AxiStreamMasterType;
-   signal appOutSlave  : AxiStreamSlaveType;
+   signal appInMaster  : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
+   signal appInSlave   : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
+   signal appOutMaster : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
+   signal appOutSlave  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
 
    signal PrescalerToNullFilterMaster  : AxiStreamMasterType;
    signal PrescalerToNullFilterSlave   : AxiStreamSlaveType;
@@ -214,7 +214,7 @@ begin
          --trigSlave       => trigSlave,   -- takes too long too simulate
          -- DMA Interface (sysClk domain)
          dataInMaster    => appInMaster,
-         dataInSlave     => appInSlave,
+         --dataInSlave     => appInSlave,
          eventMaster     => appOutMaster,
          eventSlave      => appOutSlave,
          -- AXI-Lite Interface (sysClk domain)
