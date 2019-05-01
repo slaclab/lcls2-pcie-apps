@@ -86,8 +86,8 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
     def _acceptFrame(self,frame):
         print("TimeToolRx accepting frame ")
-        self.parsed_data_test = p
         p = bytearray(frame.getPayload())
+        self.parsed_data_test = p
         frame.read(p,0)
         print(len(p))
         my_mask = np.arange(36)
