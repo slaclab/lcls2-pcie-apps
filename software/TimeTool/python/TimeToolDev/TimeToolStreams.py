@@ -48,6 +48,7 @@ class TimeToolTxEmulation(rogue.interfaces.stream.Master):
 class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
     def __init__(self, name='TimeToolRx', **kwargs):
+        print("Initializing TimeToolRx")
         rogue.interfaces.stream.Slave.__init__(self)
         pr.Device.__init__(self,name=name,**kwargs)
 
@@ -87,7 +88,6 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
     def _acceptFrame(self,frame):
         print("TimeToolRx accepting frame ")
         p = bytearray(frame.getPayload())
-        self.parsed_data_test = p
         frame.read(p,0)
         print(len(p))
         my_mask = np.arange(36)
@@ -142,8 +142,9 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 class TimeToolRxVcs(TimeToolRx):
 
     def __init__(self, name='TimeToolRx', **kwargs):
-        super().__init__(name=name,**kwargs)
         print("Initializing TimeToolRxVcs")
+        super().__init__(name=name,**kwargs)
+       
 
     def _acceptFrame(self,frame):
         print("TimeToolRxVcs accepting frame ")

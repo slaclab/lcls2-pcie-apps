@@ -9,11 +9,15 @@ import IPython
 cl = TimeToolDev.TimeToolDev(
     dev       = "sim",
     dataDebug = True,
-    version3  = False,
+    #version3  = False,
     pollEn    = False,
     initRead  = False,
 )
 cl.LoadConfig("config/TimeToolVcsSimTest_lcls-pc823236.yml")
+
+cl.Application.AppLane[0].EventBuilder.Bypass.set(0x1)
+
+cl.StartRun()
 
 gen_frame_method = cl.GenFrame[0]
 
@@ -21,7 +25,7 @@ cl.Application.AppLane[0].Prescale.DialInPreScaling.set(2)
 
 start_count = 0
 
-IPython.embed()
+#IPython.embed()
 
 for i in range(10):
       print("counter = "+str(start_count))
