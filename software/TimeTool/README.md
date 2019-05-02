@@ -1,4 +1,25 @@
-# slaclab/lcls2-pcie-apps/software/TimeTool
+### slaclab/lcls2-pcie-apps/software/TimeTool
+
+<!--- ######################################################## -->
+
+# Dependences 
+
+1) Software: Rogue@[v3.4.1](https://github.com/slaclab/rogue/releases/tag/v3.4.1)
+
+2) DMA Driver: aes-stream-drivers@[v5.4.0](https://github.com/slaclab/aes-stream-drivers/releases/tag/v5.4.0)
+
+3) FEB board Firmware Image: [ClinkFebPgp2b_1ch-0x00000030](https://github.com/slaclab/cameralink-gateway/blob/master/firmware/targets/ClinkFebPgp2b_1ch/images/ClinkFebPgp2b_1ch-0x00000030-20190422155523-ruckman-31260360.mcs)
+
+4) Firmware Submodules:
+```
+ f59a00e4294803fa3c11a5e33da7c41b7c1241d4 axi-pcie-core (v2.1.5)
+ 1df89143fe43f2ce942dc8a4f51fd0f9d9a1418a clink-gateway-fw-lib (v1.0.4)
+ 949a2e14cda1e2c4fbdd43676ca9210296719105 l2si-core (v1.0.1)
+ 8bb7837112a5b71d65bac7bc9ae57eacc71aaa35 lcls-timing-core (v1.12.6)
+ 4870f98eacd26a543b5ec7c2ef64cfbade0d2ed6 lcls2-pgp-fw-lib (v1.1.1)
+ b447a00864e68c39ed2e7b93f5b00869adf91369 ruckus (v1.7.6)
+ 29f5472999a85c5943fce0124652019a8e4bf660 surf (v1.9.9)
+```
 
 <!--- ######################################################## -->
 
