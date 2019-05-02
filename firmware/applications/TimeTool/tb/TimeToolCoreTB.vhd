@@ -92,30 +92,12 @@ architecture testbed of TimeToolCoreTB is
    signal appOutMaster : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
    signal appOutSlave  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
 
-   signal PrescalerToNullFilterMaster  : AxiStreamMasterType;
-   signal PrescalerToNullFilterSlave   : AxiStreamSlaveType;
-
-   signal NullFilterToFrameIIRMaster  : AxiStreamMasterType;
-   signal NullFilterToFrameIIRSlave   : AxiStreamSlaveType;
-
-   signal FrameIIRToSubtractorMaster  : AxiStreamMasterType;
-   signal FrameIIRToSubtractorSlave  : AxiStreamSlaveType;
-
-
    signal axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal axilWriteSlave  : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
    signal axilReadMaster  : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
    signal axilReadSlave   : AxiLiteReadSlaveType   := AXI_LITE_READ_SLAVE_INIT_C;
 
-   signal axilWriteMasters : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
-   signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
-
    subtype REPEATER_INDEX_RANGE_C is integer range NUM_REPEATER_OUTS-1 downto 0;
-
-   signal dataInMasters : AxiStreamMasterArray(REPEATER_INDEX_RANGE_C);
-   signal dataInSlaves  : AxiStreamSlaveArray(REPEATER_INDEX_RANGE_C);
 
    signal dataIbMasters : AxiStreamMasterArray(REPEATER_INDEX_RANGE_C);
    signal dataIbSlaves  : AxiStreamSlaveArray(REPEATER_INDEX_RANGE_C);
@@ -135,26 +117,6 @@ begin
    axilClk            <= axiClk;
    axilRst            <= axiRst;
    
-   --------------------
-   -- AXI-Lite Crossbar
-   --------------------
-   U_XBAR : entity work.AxiLiteCrossbar
-      generic map (
-         TPD_G              => TPD_G,
-         NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => NUM_AXIL_MASTERS_C,
-         MASTERS_CONFIG_G   => AXIL_CONFIG_C)
-      port map (
-         axiClk              => axilClk,
-         axiClkRst           => axilRst,
-         sAxiWriteMasters(0) => axilWriteMaster,
-         sAxiWriteSlaves(0)  => axilWriteSlave,
-         sAxiReadMasters(0)  => axilReadMaster,
-         sAxiReadSlaves(0)   => axilReadSlave,
-         mAxiWriteMasters    => axilWriteMasters,
-         mAxiWriteSlaves     => axilWriteSlaves,
-         mAxiReadMasters     => axilReadMasters,
-         mAxiReadSlaves      => axilReadSlaves);
 
    --------------------
    -- Clocks and Resets
@@ -239,7 +201,7 @@ begin
 
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"5", true);  --prescaler
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0004", x"3", true);  --fex add value
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0fd0", x"0", true);  --event builder bypass
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0fd0", x"1", true);  --event builder bypass
 
    end process test;
 
