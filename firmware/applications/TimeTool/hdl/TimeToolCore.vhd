@@ -51,7 +51,7 @@ architecture mapping of TimeToolCore is
 
    constant NUM_MASTERS_G      : positive := 2;
 
-   constant NUM_AXIL_MASTERS_C : natural  := 4;
+   constant NUM_AXIL_MASTERS_C : natural  := NUM_MASTERS_G+2;
 
    constant EVENT_INDEX_C      : natural  := 0;
    constant FEX_INDEX_C        : natural  := 1;
@@ -67,7 +67,7 @@ architecture mapping of TimeToolCore is
    signal axilReadMasters             : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
    signal axilReadSlaves              : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
 
-   subtype DSP_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 1;
+   subtype DSP_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-2 downto 1;
 
    signal dataInMasters               : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
    signal dataInSlaves                : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
@@ -81,11 +81,11 @@ architecture mapping of TimeToolCore is
    signal dspMasters                  : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
    signal dspSlaves                   : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal byPassIntoTimeToolMaster    : AxiStreamMasterType;
-   signal byPassIntoTimeToolSlave     : AxiStreamSlaveType;
+   signal byPassToTimeToolMaster      : AxiStreamMasterType;
+   signal byPassToTimeToolSlave       : AxiStreamSlaveType;
 
-   signal timeToolIntoByPassMaster    : AxiStreamMasterType;
-   signal timeToolIntoByPassSlave     : AxiStreamSlaveType;
+   signal timeToolToByPassMaster      : AxiStreamMasterType;
+   signal timeToolToByPassSlave       : AxiStreamSlaveType;
 
 
 
@@ -108,11 +108,11 @@ begin
          dataOutMaster        => eventMaster,
          dataOutSlave         => eventSlave,
 
-         fromTimeToolMaster   => byPassIntoTimeToolMaster,
-         fromTimeToolSlave    : out AxiStreamSlaveType;
+         fromTimeToolMaster   => timeToolToByPassMaster,
+         fromTimeToolSlave    => timeToolToByPassSlave,
 
-         toTimeToolMaster     : out  AxiStreamMasterType;
-         toTimeToolSlave      : in   AxiStreamSlaveType;
+         toTimeToolMaster     => byPassToTimeToolMaster,
+         toTimeToolSlave      => byPassToTimeToolSlave,
 
 
          -- AXI-Lite Interface (sysClk domain)
@@ -120,6 +120,25 @@ begin
          axilReadSlave        => axilReadSlaves(BYPASS_INDEX_C),
          axilWriteMaster      => axilWriteMasters(BYPASS_INDEX_C),
          axilWriteSlave       => axilWriteSlaves(BYPASS_INDEX_C));
+
+
+   ----------------------
+   -- AXI Stream Repeater
+   ----------------------
+   U_AxiStreamRepeater : entity work.AxiStreamRepeater
+      generic map (
+         TPD_G         => TPD_G,
+         NUM_MASTERS_G => NUM_MASTERS_G)
+      port map (
+         -- Clock and reset
+         axisClk      => axilClk,
+         axisRst      => axilRst,
+         -- Slave
+         sAxisMaster  => byPassToTimeToolMaster,
+         sAxisSlave   => byPassToTimeToolSlave,
+         -- Masters
+         mAxisMasters => dataInMasters,
+         mAxisSlaves  => dataInSlaves);
 
    --------------------
    -- AXI-Lite Crossbar
@@ -142,23 +161,6 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-   ----------------------
-   -- AXI Stream Repeater
-   ----------------------
-   U_AxiStreamRepeater : entity work.AxiStreamRepeater
-      generic map (
-         TPD_G         => TPD_G,
-         NUM_MASTERS_G => NUM_MASTERS_G)
-      port map (
-         -- Clock and reset
-         axisClk      => axilClk,
-         axisRst      => axilRst,
-         -- Slave
-         sAxisMaster  => dataInMaster,
-         sAxisSlave   => dataInSlave,
-         -- Masters
-         mAxisMasters => dataInMasters,
-         mAxisSlaves  => dataInSlaves);
 
    ----------------------------------------         
    -- FIFO between Repeater and DSP Modules
@@ -272,7 +274,7 @@ begin
    U_EventBuilder : entity work.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G         => TPD_G,
-         NUM_SLAVES_G  => NUM_AXIL_MASTERS_C,
+         NUM_SLAVES_G  => NUM_MASTERS_G+1,
          AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- Clock and Reset
@@ -290,7 +292,7 @@ begin
          sAxisSlaves(EVENT_INDEX_C)      => trigSlave,
          sAxisSlaves(DSP_INDEX_RANGE_C)  => dspSlaves,
          -- Outbound AXIS
-         mAxisMaster                     => eventMaster,
-         mAxisSlave                      => eventSlave);
+         mAxisMaster                     => timeToolToByPassMaster,
+         mAxisSlave                      => timeToolToByPassSlave);
 
 end mapping;

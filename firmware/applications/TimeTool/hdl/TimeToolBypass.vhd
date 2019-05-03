@@ -45,11 +45,6 @@ entity TimeToolByPass is
       dataOutMaster        : out AxiStreamMasterType;
       dataOutSlave         : in  AxiStreamSlaveType;
 
-      dataInMaster         : in  AxiStreamMasterType;
-      dataInSlave          : out AxiStreamSlaveType;
-      dataOutMaster        : out AxiStreamMasterType;
-      dataOutSlave         : in  AxiStreamSlaveType;
-
       fromTimeToolMaster   : in  AxiStreamMasterType;
       fromTimeToolSlave    : out AxiStreamSlaveType;
 
@@ -83,8 +78,11 @@ architecture mapping of TimeToolByPass is
 
       toTimeToolMaster     : AxiStreamMasterType;
       toTimeToolSlave      : AxiStreamSlaveType;
+
+      fromTimeToolMaster   : AxiStreamMasterType;
+      fromTimeToolSlave    : AxiStreamSlaveType;
   
-      byPass               : sl;
+      byPass               : slv(31 downto 0);
       scratchPad           : slv(31 downto 0);
       axilReadSlave        : AxiLiteReadSlaveType;
       axilWriteSlave       : AxiLiteWriteSlaveType;
@@ -95,34 +93,43 @@ architecture mapping of TimeToolByPass is
    ---------------------------------------
 
    constant REG_INIT_C : RegType := (
-      master               => AXI_STREAM_MASTER_INIT_C,
-      slave                => AXI_STREAM_SLAVE_INIT_C,
+      master                 => AXI_STREAM_MASTER_INIT_C,
+      slave                  => AXI_STREAM_SLAVE_INIT_C,
 
-      toTimeToolMaster     => AXI_STREAM_MASTER_INIT_C,
-      toTimeToolSlave      => AXI_STREAM_SLAVE_INIT_C,
+      toTimeToolMaster       => AXI_STREAM_MASTER_INIT_C,
+      toTimeToolSlave        => AXI_STREAM_SLAVE_INIT_C,
 
-      byPass               => '0',
-      scratchPad           => (others => '0'),
-      axilReadSlave        => AXI_LITE_READ_SLAVE_INIT_C,
-      axilWriteSlave       => AXI_LITE_WRITE_SLAVE_INIT_C);
+      fromTimeToolMaster     => AXI_STREAM_MASTER_INIT_C,
+      fromTimeToolSlave      => AXI_STREAM_SLAVE_INIT_C,
+
+      byPass                 => (others => '0'),
+      scratchPad             => (others => '0'),
+      axilReadSlave          => AXI_LITE_READ_SLAVE_INIT_C,
+      axilWriteSlave         => AXI_LITE_WRITE_SLAVE_INIT_C);
 
    ---------------------------------------
    -------record intitial value-----------
    ---------------------------------------
 
 
-   signal r        : RegType := REG_INIT_C;
-   signal rin      : RegType;
+   signal r                       : RegType := REG_INIT_C;
+   signal rin                     : RegType;
 
-   signal inMaster : AxiStreamMasterType;
-   signal inSlave  : AxiStreamSlaveType;
-   signal outCtrl  : AxiStreamCtrlType;
+   signal inMaster                : AxiStreamMasterType;
+   signal inSlave                 : AxiStreamSlaveType;
+   signal outCtrl                 : AxiStreamCtrlType;
 
-   signal inMaster : AxiStreamMasterType;
-   signal inSlave  : AxiStreamSlaveType;
+   signal fromTimeToolMasterBuf   : AxiStreamMasterType;
+   signal fromTimeToolSlaveBuf    : AxiStreamSlaveType;
 
+   signal toTimeToolSlaveBuf      : AxiStreamSlaveType;
 
 begin
+
+
+   fromTimeToolMasterBuf   <=  fromTimeToolMaster;  
+   fromTimeToolSlave       <=  fromTimeToolSlaveBuf;
+   toTimeToolSlaveBuf      <=  toTimeToolSlave;
 
    ---------------------------------
    -- Input FIFO
@@ -176,15 +183,19 @@ begin
       
 
 
-      if(v.byPass='1') then
-            v.master                  := inMaster;
-            v.slave.tReady            := not outCtrl.pause;
+      if(v.byPass(0) = '1') then
+            v.Master                    := inMaster;
+            v.slave.tReady              := not outCtrl.pause;
           
-      else:
-            v.toTimeToolMaster        := inMaster;
-            v.toTimeToolSlave.tReady  := not outCtrl.pause;
-            v.master                  := fromTimeToolMasterBuf;
-            v.slave                   := fromTimeToolSlaveBuf;
+      else
+            v.toTimeToolMaster          := inMaster;
+            v.Master                    := fromTimeToolMasterBuf;
+
+
+
+            v.fromTimeToolSlave.tReady  := not outCtrl.pause;
+            v.slave                     := toTimeToolSlaveBuf;
+            
 
       end if;
 
@@ -199,9 +210,10 @@ begin
       rin <= v;
 
       -- Outputs 
-      axilReadSlave  <= r.axilReadSlave;
-      axilWriteSlave <= r.axilWriteSlave;
-      inSlave        <= v.slave;
+      axilReadSlave          <= r.axilReadSlave;
+      axilWriteSlave         <= r.axilWriteSlave;
+      inSlave                <= v.slave;
+      fromTimeToolSlaveBuf   <= v.fromTimeToolSlave;
 
    end process comb;
 
@@ -211,6 +223,13 @@ begin
          r <= rin after TPD_G;
       end if;
    end process seq;
+
+   ---------------------------------
+   -- Output Signals (not FIFO buffered)
+   ---------------------------------
+
+   toTimeToolMaster       <= r.toTimeToolMaster;
+
 
    ---------------------------------
    -- Output FIFO
