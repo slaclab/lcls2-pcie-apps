@@ -49,38 +49,77 @@ end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
-   constant NUM_MASTERS_G : positive := 2;
+   constant NUM_MASTERS_G      : positive := 2;
 
-   constant NUM_AXIL_MASTERS_C : natural := NUM_MASTERS_G+1;
+   constant NUM_AXIL_MASTERS_C : natural  := 4;
 
-   constant EVENT_INDEX_C    : natural := 0;
-   constant FEX_INDEX_C      : natural := 1;
-   constant PRESCALE_INDEX_C : natural := 2;
+   constant EVENT_INDEX_C      : natural  := 0;
+   constant FEX_INDEX_C        : natural  := 1;
+   constant PRESCALE_INDEX_C   : natural  := 2;
+   constant BYPASS_INDEX_C     : natural  := 3;
 
-   subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
+   subtype  AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
 
-   signal axilWriteMasters : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
-   signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteMasters            : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteSlaves             : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilReadMasters             : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilReadSlaves              : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
 
    subtype DSP_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 1;
 
-   signal dataInMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
-   signal dataInSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+   signal dataInMasters               : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dataInSlaves                : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal dataIbMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
-   signal dataIbSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+   signal dataIbMasters               : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dataIbSlaves                : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal dspObMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
-   signal dspObSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+   signal dspObMasters                : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dspObSlaves                 : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal dspMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
-   signal dspSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+   signal dspMasters                  : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dspSlaves                   : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+
+   signal byPassIntoTimeToolMaster    : AxiStreamMasterType;
+   signal byPassIntoTimeToolSlave     : AxiStreamSlaveType;
+
+   signal timeToolIntoByPassMaster    : AxiStreamMasterType;
+   signal timeToolIntoByPassSlave     : AxiStreamSlaveType;
+
+
 
 begin
+
+   -------------
+   -- ByPass Module
+   -------------
+   U_TimetoolBypass : entity work.TimetoolBypass
+      generic map (
+         TPD_G                => TPD_G,
+         DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_C)
+      port map (
+         -- System Clock and Reset
+         sysClk               => axilClk,
+         sysRst               => axilRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster         => dataInMaster,
+         dataInSlave          => dataInSlave,
+         dataOutMaster        => eventMaster,
+         dataOutSlave         => eventSlave,
+
+         fromTimeToolMaster   => byPassIntoTimeToolMaster,
+         fromTimeToolSlave    : out AxiStreamSlaveType;
+
+         toTimeToolMaster     : out  AxiStreamMasterType;
+         toTimeToolSlave      : in   AxiStreamSlaveType;
+
+
+         -- AXI-Lite Interface (sysClk domain)
+         axilReadMaster       => axilReadMasters(BYPASS_INDEX_C),
+         axilReadSlave        => axilReadSlaves(BYPASS_INDEX_C),
+         axilWriteMaster      => axilWriteMasters(BYPASS_INDEX_C),
+         axilWriteSlave       => axilWriteSlaves(BYPASS_INDEX_C));
 
    --------------------
    -- AXI-Lite Crossbar
