@@ -15,6 +15,8 @@ cl = TimeToolDev.TimeToolDev(
 )
 cl.LoadConfig("config/TimeToolVcsSimTest_lcls-pc823236.yml")
 
+cl.Application.AppLane[0].ByPass.ByPass.set(0x1)
+
 cl.Application.AppLane[0].EventBuilder.Bypass.set(0x1)
 
 cl.StartRun()
@@ -22,6 +24,7 @@ cl.StartRun()
 gen_frame_method = cl.GenFrame[0]
 
 cl.Application.AppLane[0].Prescale.DialInPreScaling.set(2)
+
 
 start_count = 0
 
