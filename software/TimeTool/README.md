@@ -4,7 +4,7 @@
 
 # Dependences 
 
-1) Software: Rogue@[v3.4.1](https://github.com/slaclab/rogue/releases/tag/v3.4.1)
+1) Software: Rogue@[v3.5](https://github.com/slaclab/rogue/releases/tag/v3.5.0)
 
 2) DMA Driver: aes-stream-drivers@[v5.4.0](https://github.com/slaclab/aes-stream-drivers/releases/tag/v5.4.0)
 
