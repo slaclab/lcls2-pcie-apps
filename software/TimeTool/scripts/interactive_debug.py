@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#import pyrogue.gui
+import setupLibPaths
 import TimeToolDev
 import sys
 import time
