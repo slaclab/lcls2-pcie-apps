@@ -15,7 +15,7 @@ cl = TimeToolDev.TimeToolDev(
 )
 cl.LoadConfig("config/TimeToolVcsSimTest_lcls-pc823236.yml")
 
-cl.Application.AppLane[0].ByPass.ByPass.set(0x1)
+cl.Application.AppLane[0].ByPass.ByPass.set(0x0)
 
 cl.Application.AppLane[0].EventBuilder.Bypass.set(0x1)
 

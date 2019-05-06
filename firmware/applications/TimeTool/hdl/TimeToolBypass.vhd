@@ -157,7 +157,7 @@ begin
    -- Application
    ---------------------------------
    comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, r,
-                   sysRst) is
+                   sysRst,fromTimeToolMasterBuf, fromTimeToolSlaveBuf,toTimeToolSlaveBuf) is
       variable v      : RegType;
       variable axilEp : AxiLiteEndpointType;
    begin
