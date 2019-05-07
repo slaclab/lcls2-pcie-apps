@@ -35,6 +35,7 @@ class TimeToolDev(kcu1500.Core):
             numLane     = numLane, 
             **kwargs
         )
+        self.dev    = dev,
         
                         
         # Check if not doing simulation
