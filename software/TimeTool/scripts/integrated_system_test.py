@@ -81,7 +81,7 @@ cl.Application.AppLane[0].ByPass.ByPass.set(0x1)
 
 
 cl.StartRun()
-IPython.embed()
+#IPython.embed()
 
 if(cl.dev[0]=='sim'):
     cl.GenFrame[0]()
