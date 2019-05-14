@@ -70,7 +70,7 @@ architecture testbed of TBAxiStreamFifoV2 is
 
 
    constant DMA_AXIS_CONFIG_G           : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
-   constant DMA_AXIS_DOWNSIZED_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(1, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
+   constant DMA_AXIS_DOWNSIZED_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(8, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
 
    constant CLK_PERIOD_G : time := 10 ns;
 
@@ -137,7 +137,7 @@ architecture testbed of TBAxiStreamFifoV2 is
 begin
 
    appOutSlave.tReady <= '1';
-   appInSlave.tReady  <= '1';
+   --appInSlave.tReady  <= '1';
    axilClk            <= axiClk;
    axilRst            <= axiRst;
    
@@ -216,7 +216,7 @@ begin
          axisRst      => axilRst,
          -- Slave
          sAxisMaster  => appInMaster,
-         --sAxisSlave   => appInSlave, --this pin can only be driven once in simulation
+         sAxisSlave   => appInSlave, --this pin can only be driven once in simulation
          -- Masters
          mAxisMasters => dataInMasters,
          mAxisSlaves  => dataInSlaves);
