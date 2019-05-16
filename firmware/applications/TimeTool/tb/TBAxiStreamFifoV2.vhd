@@ -70,7 +70,7 @@ architecture testbed of TBAxiStreamFifoV2 is
 
 
    constant DMA_AXIS_CONFIG_G           : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
-   constant DMA_AXIS_DOWNSIZED_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(8, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
+   constant DMA_AXIS_DOWNSIZED_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
 
    constant CLK_PERIOD_G : time := 10 ns;
 
@@ -92,20 +92,11 @@ architecture testbed of TBAxiStreamFifoV2 is
    signal appOutMaster : AxiStreamMasterType;
    signal appOutSlave  : AxiStreamSlaveType;
 
-   signal PrescalerToNullFilterMaster  : AxiStreamMasterType;
-   signal PrescalerToNullFilterSlave   : AxiStreamSlaveType;
-
-   signal NullFilterToFrameIIRMaster  : AxiStreamMasterType;
-   signal NullFilterToFrameIIRSlave   : AxiStreamSlaveType;
-
-   signal FrameIIRToSubtractorMaster  : AxiStreamMasterType;
-   signal FrameIIRToSubtractorSlave   : AxiStreamSlaveType;
+  
 
    signal downToUpSizeMaster          : AxiStreamMasterType;
    signal downToUpSizeSlave           : AxiStreamSlaveType;
 
-   signal subtractorToDownSizeMaster  : AxiStreamMasterType;
-   signal subtractorToDownSizeSlave   : AxiStreamSlaveType;
 
 
    signal axilWriteMaster  : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
@@ -120,11 +111,6 @@ architecture testbed of TBAxiStreamFifoV2 is
 
    subtype REPEATER_INDEX_RANGE_C is integer range NUM_REPEATER_OUTS-1 downto 0;
 
-   signal dataInMasters : AxiStreamMasterArray(REPEATER_INDEX_RANGE_C);
-   signal dataInSlaves  : AxiStreamSlaveArray(REPEATER_INDEX_RANGE_C);
-
-   signal dataIbMasters : AxiStreamMasterArray(REPEATER_INDEX_RANGE_C);
-   signal dataIbSlaves  : AxiStreamSlaveArray(REPEATER_INDEX_RANGE_C);
 
    signal axiClk   : sl;
    signal axiRst   : sl;
@@ -192,151 +178,16 @@ begin
    --------------------  
 
       --U_CamOutput : entity work.AxiStreamCameraOutput
-      U_CamOutput : entity work.FileToAxiStreamSim
+      U_CamOutput : entity work.FileToAxiStreamSimTwoProcess
          generic map (
-            TPD_G         => TPD_G,
-            BYTE_SIZE_C   => 2+1,
-            AXIS_CONFIG_G => SRC_CONFIG_C)
+            TPD_G          => TPD_G,
+            BYTE_SIZE_C    => 2+1,
+            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G)
          port map (
-            axiClk      => axiClk,
-            axiRst      => axiRst,
-            mAxisMaster => appInMaster,
-            mAxisSlave  => appInSlave);
-
-   ----------------------
-   -- AXI Stream Repeater
-   ----------------------
-   U_AxiStreamRepeater : entity work.AxiStreamRepeater
-      generic map (
-         TPD_G         => TPD_G,
-         NUM_MASTERS_G => 2)
-      port map (
-         -- Clock and reset
-         axisClk      => axilClk,
-         axisRst      => axilRst,
-         -- Slave
-         sAxisMaster  => appInMaster,
-         sAxisSlave   => appInSlave, --this pin can only be driven once in simulation
-         -- Masters
-         mAxisMasters => dataInMasters,
-         mAxisSlaves  => dataInSlaves);
-
-   ----------------------------------------         
-   -- FIFO between Repeater and DSP Modules
-   ----------------------------------------    
-   GEN_IB :
-   for i in REPEATER_INDEX_RANGE_C generate
-      U_FIFO : entity work.AxiStreamFifoV2
-         generic map (
-            -- General Configurations
-            TPD_G               => TPD_G,
-            SLAVE_READY_EN_G    => true,
-            VALID_THOLD_G       => 1,
-            -- FIFO configurations
-            BRAM_EN_G           => true,
-            GEN_SYNC_FIFO_G     => true,
-            FIFO_ADDR_WIDTH_G   => 9,
-            -- AXI Stream Port Configurations
-            SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
-            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
-         port map (
-            -- Slave Port
-            sAxisClk    => axilClk,
-            sAxisRst    => axilRst,
-            sAxisMaster => dataInMasters(i),
-            sAxisSlave  => dataInSlaves(i),
-            -- Master Port
-            mAxisClk    => axilClk,
-            mAxisRst    => axilRst,
-            mAxisMaster => dataIbMasters(i),
-            mAxisSlave  => dataIbSlaves(i));
-   end generate GEN_IB;
-
-   --------------------
-   -- Modules to be tested
-   --------------------  
-
-
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
-      generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
-      port map (
-         -- System Clock and Reset
-         sysClk          => dmaClk,
-         sysRst          => dmaRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster    => dataIbMasters(0),
-         dataInSlave     => dataIbSlaves(0),
-         dataOutMaster   => PrescalerToNullFilterMaster,
-         dataOutSlave    => PrescalerToNullFilterSlave,
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(PRESCALE_INDEX_C),
-         axilReadSlave   => axilReadSlaves(PRESCALE_INDEX_C),
-         axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
-
-   U_NullPacketFilter : entity work.NullPacketFilter
-      generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
-      port map (
-         -- System Clock and Reset
-         sysClk          => dmaClk,
-         sysRst          => dmaRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster    => PrescalerToNullFilterMaster,
-         dataInSlave     => PrescalerToNullFilterSlave,
-         dataOutMaster   => NullFilterToFrameIIRMaster,
-         dataOutSlave    => NullFilterToFrameIIRSlave,
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(NULL_FILTER_INDEX_C),
-         axilReadSlave   => axilReadSlaves(NULL_FILTER_INDEX_C),
-         axilWriteMaster => axilWriteMasters(NULL_FILTER_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(NULL_FILTER_INDEX_C));
-
-
-   U_FrameIIR : entity work.FrameIIR
-      generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
-      port map (
-         -- System Clock and Reset
-         sysClk          => dmaClk,
-         sysRst          => dmaRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster    => NullFilterToFrameIIRMaster,
-         dataInSlave     => NullFilterToFrameIIRSlave,
-         dataOutMaster   => FrameIIRToSubtractorMaster,
-         dataOutSlave    => FrameIIRToSubtractorSlave,
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(FRAME_IIR_INDEX_C),
-         axilReadSlave   => axilReadSlaves(FRAME_IIR_INDEX_C),
-         axilWriteMaster => axilWriteMasters(FRAME_IIR_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(FRAME_IIR_INDEX_C));
-
-   U_FrameSubtractor : entity work.FrameSubtractor
-      generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
-      port map (
-         -- System Clock and Reset
-         sysClk           => dmaClk,
-         sysRst           => dmaRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster     => dataIbMasters(1),
-         dataInSlave      => dataIbSlaves(1),
-         dataOutMaster    => subtractorToDownSizeMaster,
-         dataOutSlave     => subtractorToDownSizeSlave,
-         -- Pedestal DMA Interfaces  (sysClk domain)
-         pedestalInMaster =>  FrameIIRToSubtractorMaster,
-         pedestalInSlave  =>  FrameIIRToSubtractorSlave,
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(FRAME_SUBTRACTOR_INDEX_C),
-         axilReadSlave   => axilReadSlaves(FRAME_SUBTRACTOR_INDEX_C),
-         axilWriteMaster => axilWriteMasters(FRAME_SUBTRACTOR_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(FRAME_SUBTRACTOR_INDEX_C));
-
+            sysClk         => axiClk,
+            sysRst         => axiRst,
+            dataOutMaster  => appInMaster,
+            dataOutSlave   => appInSlave);
 
       U_down_size_test : entity work.AxiStreamFifoV2
          generic map (
@@ -355,8 +206,8 @@ begin
             -- Slave Port
             sAxisClk    => axilClk,
             sAxisRst    => axilRst,
-            sAxisMaster => subtractorToDownSizeMaster,
-            sAxisSlave  => subtractorToDownSizeSlave,
+            sAxisMaster => appInMaster,
+            sAxisSlave  => appInSlave,
             -- Master Port
             mAxisClk    => axilClk,
             mAxisRst    => axilRst,
