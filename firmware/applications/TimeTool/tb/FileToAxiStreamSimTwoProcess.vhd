@@ -60,10 +60,13 @@ end FileToAxiStreamSimTwoProcess;
 architecture mapping of FileToAxiStreamSimTwoProcess is
 
    constant TEST_INPUT_FILE_NAME : string := TEST_FILE_PATH & "/sim_input_data.dat";
-   constant c1_WIDTH   : natural := 8;
-   constant c2_WIDTH   : natural := 2;
-   signal r_ADD_TERM1  : std_logic_vector(BITS_PER_TRANSFER-1 downto 0) := (others => '0');
-   signal r_ADD_TERM2  : sl := '0';
+   constant c1_WIDTH      : natural := 8;
+   constant c2_WIDTH      : natural := 2;
+   signal r_ADD_TERM1     : std_logic_vector(BITS_PER_TRANSFER-1 downto 0) := (others => '0');
+   signal r_ADD_TERM2     : sl := '0';
+
+   signal fileClk         : sl := '0';
+   signal fileRst         : sl := '0';
 
    constant INT_CONFIG_C  : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
    constant PGP2BTXIN_LEN : integer             := 19;
@@ -79,13 +82,24 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
    type RegType is record
       master         : AxiStreamMasterType;
       slave          : AxiStreamSlaveType;
+
+      v_ADD_TERM1    : std_logic_vector(BITS_PER_TRANSFER-1 downto 0);
+      v_ADD_TERM2    : sl;
+      v_SPACE        : character;
+
       state          : StateType;
-      validate_state : slv(2 downto 0);
+      validate_state : slv(31 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
       master         => AXI_STREAM_MASTER_INIT_C,
       slave          => AXI_STREAM_SLAVE_INIT_C,
+
+      v_ADD_TERM1    => (others => '0'),
+      v_ADD_TERM2    => '0',
+      v_SPACE        => ' ',
+
+
       state          => IDLE_S,
       validate_state => (others => '0'));
 
@@ -103,10 +117,22 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
 begin
    file_open(file_VECTORS, TEST_INPUT_FILE_NAME,  read_mode);
 
+   --------------------
+   -- Clocks and Resets
+   --------------------
+   U_axilClk_2 : entity work.ClkRst
+      generic map (
+         CLK_PERIOD_G      => 30 ns,
+         RST_START_DELAY_G => 0  ns,
+         RST_HOLD_TIME_G   => 1000 ns)
+      port map (
+         clkP => fileClk,
+         rst  => fileRst);
+
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (outCtrl, r,sysRst) is
+   comb : process (fileClk) is
       variable v           : RegType;
       variable v_ILINE     : line;
       variable v_OLINE     : line;
@@ -115,8 +141,8 @@ begin
       variable v_SPACE     : character;
 
    begin
-      
-
+        
+      v := r;
       v.slave.tReady  := not outCtrl.pause;
       v.master.tLast  := '0';
       v.master.tValid := '1';
@@ -138,13 +164,15 @@ begin
             --v.validate_state(0)    := '1';     --debugging signal
             if v.slave.tReady = '1' then
                   readline(file_VECTORS, v_ILINE);
-                  read(v_ILINE, v_ADD_TERM1);
-                  read(v_ILINE, v_SPACE);           -- read in the space character
-                  read(v_ILINE, v_ADD_TERM2);
+                  read(v_ILINE, v.v_ADD_TERM1);
+                  read(v_ILINE, v.v_SPACE);           -- read in the space character
+                  read(v_ILINE, v.v_ADD_TERM2);
 
-                  v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v_ADD_TERM1;
-                  v.master.tLast                                      := v_ADD_TERM2;
+                  v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v.v_ADD_TERM1;
+                  v.master.tLast                                      := v.v_ADD_TERM2;
                   v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
+
+                  v.validate_state := v.validate_state+'1';
 
 
             else
