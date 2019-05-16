@@ -122,7 +122,7 @@ begin
    --------------------
    U_axilClk_2 : entity work.ClkRst
       generic map (
-         CLK_PERIOD_G      => 30 ns,
+         CLK_PERIOD_G      => 23 ns,
          RST_START_DELAY_G => 0  ns,
          RST_HOLD_TIME_G   => 1000 ns)
       port map (
@@ -225,8 +225,8 @@ begin
          SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
          MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
-         sAxisClk    => sysClk,
-         sAxisRst    => sysRst,
+         sAxisClk    => fileClk,
+         sAxisRst    => fileRst,
          sAxisMaster => r.Master,
          sAxisCtrl   => outCtrl,
          mAxisClk    => sysClk,

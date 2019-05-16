@@ -39,8 +39,8 @@ for i in range(n_frames):
             edge_position = int(pixels_per_frame/2+(jitter*np.random.rand()-0.5))
             my_frame_array[edge_position:] = my_frame_array[edge_position:] *0.2
 
-      my_frame_array[0] = 73        #test values to makes sure no pixels are being lost
-      my_frame_array[-1] = 123      #test values to makes sure no pixels are being lost
+      my_frame_array[0] = -73        #test values to makes sure no pixels are being lost
+      my_frame_array[-1] = 119      #test values to makes sure no pixels are being lost
 
       if(i%400==1):
             my_frame_array = my_frame_array * 0
