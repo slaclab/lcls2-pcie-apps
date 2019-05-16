@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
--- File       : TimeToolCore.vhd
+-- File       : NullPacketFilter.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
 -- Last update: 2019-03-22
