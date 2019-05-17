@@ -65,14 +65,14 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
    signal r_ADD_TERM1     : std_logic_vector(BITS_PER_TRANSFER-1 downto 0) := (others => '0');
    signal r_ADD_TERM2     : sl := '0';
 
-   signal fileClk         : sl := '0';
-   signal fileRst         : sl := '0';
+   signal fileClk                : sl := '0';
+   signal fileRst                : sl := '0';
+   signal fileClk_subharmonics   : slv(31 downto 0)      :=    (others => '0')  ;
 
    constant INT_CONFIG_C  : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
    constant PGP2BTXIN_LEN : integer             := 19;
 
    file file_VECTORS : text;
-   file file_RESULTS : text;
 
 
    type StateType is (
@@ -80,25 +80,24 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
       MOVE_S);
 
    type RegType is record
-      master         : AxiStreamMasterType;
-      slave          : AxiStreamSlaveType;
+      master           : AxiStreamMasterType;
+      slave            : AxiStreamSlaveType;
 
-      v_ADD_TERM1    : std_logic_vector(BITS_PER_TRANSFER-1 downto 0);
-      v_ADD_TERM2    : sl;
-      v_SPACE        : character;
+      v_ADD_TERM1      : std_logic_vector(BITS_PER_TRANSFER-1 downto 0);
+      v_ADD_TERM2      : sl;
+      v_SPACE          : character;
 
-      state          : StateType;
-      validate_state : slv(31 downto 0);
+      state            : StateType;
+      validate_state   : slv(31 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
-      master         => AXI_STREAM_MASTER_INIT_C,
-      slave          => AXI_STREAM_SLAVE_INIT_C,
+      master           => AXI_STREAM_MASTER_INIT_C,
+      slave            => AXI_STREAM_SLAVE_INIT_C,
 
-      v_ADD_TERM1    => (others => '0'),
-      v_ADD_TERM2    => '0',
-      v_SPACE        => ' ',
-
+      v_ADD_TERM1      => (others => '0'),
+      v_ADD_TERM2      => '0',
+      v_SPACE          => ' ',
 
       state          => IDLE_S,
       validate_state => (others => '0'));
@@ -131,7 +130,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (r,sysRst,outCtrl,fileClk) is
+   comb : process (r,sysRst,outCtrl,fileClk_subharmonics(0)) is
       variable v           : RegType;
       variable v_ILINE     : line;
       variable v_OLINE     : line;
@@ -176,6 +175,9 @@ begin
 
                   v.validate_state := v.validate_state+'1';
 
+                  if v.master.tLast ='1' then
+                        v.validate_state := (others=>'0');            
+                  end if;
 
             else
                v.master.tLast      := '0';
@@ -207,8 +209,9 @@ begin
 
    seq : process (fileClk) is
    begin
-      if (rising_edge(sysClk)) then
+      if (rising_edge(fileClk)) then
          r <= rin after TPD_G;
+         fileClk_subharmonics <= fileClk_subharmonics+'1' after TPD_G;
       end if;
    end process seq;
 

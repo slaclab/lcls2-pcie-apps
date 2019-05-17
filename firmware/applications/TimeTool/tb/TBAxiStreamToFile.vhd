@@ -62,46 +62,15 @@ architecture testbed of TBAxiStreamToFile is
       TUSER_BITS_C  => 2,
       TUSER_MODE_C  => TUSER_FIRST_LAST_C);
 
-   signal userClk156   : sl;
-   signal dmaClk       : sl;
-   signal dmaRst       : sl;
-
    signal appInMaster  : AxiStreamMasterType;
    signal appInSlave   : AxiStreamSlaveType;
-
-  
-
-   signal downToUpSizeMaster          : AxiStreamMasterType;
-   signal downToUpSizeSlave           : AxiStreamSlaveType;
-
 
    signal axiClk   : sl;
    signal axiRst   : sl;
 
-   signal axilClk   : sl;
-   signal axilRst   : sl;
-
    file file_RESULTS : text;
 
 begin
-
-   --appInSlave.tReady  <= '1';
-   axilClk            <= axiClk;
-   axilRst            <= axiRst;
-   
-
-   --------------------
-   -- Clocks and Resets
-   --------------------
-   U_axilClk_2 : entity work.ClkRst
-      generic map (
-         CLK_PERIOD_G      => CLK_PERIOD_G,
-         RST_START_DELAY_G => 0 ns,
-         RST_HOLD_TIME_G   => 1000 ns)
-      port map (
-         clkP => dmaClk,
-         rst  => dmaRst);
-
 
    --------------------
    -- Clocks and Resets
