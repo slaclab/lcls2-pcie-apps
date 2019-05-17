@@ -68,8 +68,6 @@ architecture testbed of TBAxiStreamToFile is
 
    signal appInMaster  : AxiStreamMasterType;
    signal appInSlave   : AxiStreamSlaveType;
-   signal appOutMaster : AxiStreamMasterType;
-   signal appOutSlave  : AxiStreamSlaveType;
 
   
 
@@ -87,7 +85,6 @@ architecture testbed of TBAxiStreamToFile is
 
 begin
 
-   appOutSlave.tReady <= '1';
    --appInSlave.tReady  <= '1';
    axilClk            <= axiClk;
    axilRst            <= axiRst;
@@ -145,38 +142,5 @@ begin
             sysRst         => axiRst,
             dataInMaster   => appInMaster,
             dataInSlave    => appInSlave);
-
-
-
-
-
-   ---------------------------------
-   -- save_file
-   ---------------------------------
-   save_to_file : process is
-      variable to_file              : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
-      variable v_OLINE              : line; 
-      constant c_WIDTH              : natural := 128;
-      constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
-
-   begin
-
-      to_file := appOutMaster;
-
-      file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
-
-      while true loop
-
-            --write(v_OLINE, appInMaster.tData(c_WIDTH -1 downto 0), right, c_WIDTH);
-            write(v_OLINE, appOutMaster.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
-            writeline(file_RESULTS, v_OLINE);
-
-            wait for CLK_PERIOD_G;
-
-      end loop;
-      
-      file_close(file_RESULTS);
-
-   end process save_to_file;
 
 end testbed;

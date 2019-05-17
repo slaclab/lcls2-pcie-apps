@@ -96,6 +96,9 @@ architecture mapping of AxiStreamSimToFileTwoProcess is
    signal inSlave                  : AxiStreamSlaveType    :=    AXI_STREAM_SLAVE_INIT_C;  
    signal outCtrl                  : AxiStreamCtrlType     :=    AXI_STREAM_CTRL_INIT_C;
 
+
+   signal pseudo_random            : slv(31 downto 0)      :=    (others => '0')  ;
+
    file file_RESULTS : text;
 
 begin
@@ -131,7 +134,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (r,sysRst,inMaster) is
+   comb : process (r,sysRst,inMaster,pseudo_random(0)) is
       variable v           : RegType;
       variable v_ILINE     : line;
       variable v_OLINE     : line;
@@ -146,14 +149,14 @@ begin
       --------------------------
       v := r;
 
-      v.pseudo_random :=  RESIZE(v.pseudo_random*v.pseudo_random+ PSEUDO_RAND_COEF,32);
+      --pseudo_random :=  RESIZE(pseudo_random*pseudo_random+ PSEUDO_RAND_COEF,32);
 
 
 
       --------------------------
       --setting slave state and loading data
       --------------------------
-      v.slave.tReady  :=  v.pseudo_random(0);
+      v.slave.tReady  :=  '1';
       v.Master        :=  dataInMaster;
 
       case r.state is
@@ -202,6 +205,9 @@ begin
    begin
       if (rising_edge(sysClk)) then
          r <= rin after TPD_G;
+         -- pseudo random for driving tReady signal
+         pseudo_random <=  RESIZE(pseudo_random*pseudo_random+ PSEUDO_RAND_COEF,32);
+
       end if;
    end process seq;
 

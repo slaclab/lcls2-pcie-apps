@@ -111,7 +111,6 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
    signal r        : RegType := REG_INIT_C;
    signal rin      : RegType;
 
-   signal inSlave  : AxiStreamSlaveType;
    signal outCtrl  : AxiStreamCtrlType;
 
 begin
@@ -122,7 +121,7 @@ begin
    --------------------
    U_axilClk_2 : entity work.ClkRst
       generic map (
-         CLK_PERIOD_G      => 23 ns,
+         CLK_PERIOD_G      => 10 ns,
          RST_START_DELAY_G => 0  ns,
          RST_HOLD_TIME_G   => 1000 ns)
       port map (
@@ -132,7 +131,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (fileClk) is
+   comb : process (r,sysRst,outCtrl,fileClk) is
       variable v           : RegType;
       variable v_ILINE     : line;
       variable v_OLINE     : line;
@@ -153,9 +152,12 @@ begin
             ------------------------------
             -- check which state
             ------------------------------
-            --v.validate_state := (others => '0');  --debugging signal
-            v.state := MOVE_S;
-
+            if v.slave.tReady = '1' then
+                  v.state := MOVE_S;
+                  v.master.tValid := '0';
+            else
+                  v.state := IDLE_S;
+            end if;
 
          when MOVE_S =>
             ------------------------------
@@ -198,14 +200,12 @@ begin
       end if;
 
       -- Register the variable for next clock cycle
-      rin <= v;
+      rin      <= v;
 
-      -- Outputs 
-      inSlave        <= v.slave;
 
    end process comb;
 
-   seq : process (sysClk) is
+   seq : process (fileClk) is
    begin
       if (rising_edge(sysClk)) then
          r <= rin after TPD_G;
