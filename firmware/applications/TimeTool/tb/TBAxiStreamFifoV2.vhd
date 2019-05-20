@@ -42,27 +42,6 @@ architecture testbed of TBAxiStreamFifoV2 is
    constant TPD_G             : time             := 1 ns;
 
    constant DMA_SIZE_C        : positive         := 1;
-
-   constant NUM_MASTERS_G     : positive         := 3;
-
-   ----------------------------
-   ----------------------------
-   ----------------------------
-   constant NUM_AXIL_MASTERS_C  : natural := 4;
-
-   constant PRESCALE_INDEX_C           : natural := 0;
-   constant NULL_FILTER_INDEX_C        : natural := 1;
-   constant FRAME_IIR_INDEX_C          : natural := 2;
-   constant FRAME_SUBTRACTOR_INDEX_C   : natural := 3;
-
-
-   constant NUM_REPEATER_OUTS          : natural := 2;
-
-
-   subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
-
-   constant AXIL_CONFIG_C  : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
-
  
    ----------------------------
    ----------------------------
@@ -83,83 +62,19 @@ architecture testbed of TBAxiStreamFifoV2 is
       TUSER_BITS_C  => 2,
       TUSER_MODE_C  => TUSER_FIRST_LAST_C);
 
-   signal userClk156   : sl;
-   signal dmaClk       : sl;
-   signal dmaRst       : sl;
+   signal appInMaster                 : AxiStreamMasterType;
+   signal appInSlave                  : AxiStreamSlaveType;
 
-   signal appInMaster  : AxiStreamMasterType;
-   signal appInSlave   : AxiStreamSlaveType;
-   signal appOutMaster : AxiStreamMasterType;
-   signal appOutSlave  : AxiStreamSlaveType;
-
-  
+   signal appOutMaster                : AxiStreamMasterType;
+   signal appOutSlave                 : AxiStreamSlaveType;
 
    signal downToUpSizeMaster          : AxiStreamMasterType;
    signal downToUpSizeSlave           : AxiStreamSlaveType;
 
-
-
-   signal axilWriteMaster  : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
-   signal axilWriteSlave   : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
-   signal axilReadMaster   : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
-   signal axilReadSlave    : AxiLiteReadSlaveType   := AXI_LITE_READ_SLAVE_INIT_C;
-
-   signal axilWriteMasters : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
-   signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
-
-   subtype REPEATER_INDEX_RANGE_C is integer range NUM_REPEATER_OUTS-1 downto 0;
-
-
-   signal axiClk   : sl;
-   signal axiRst   : sl;
-
-   signal axilClk   : sl;
-   signal axilRst   : sl;
-
-   file file_RESULTS : text;
+   signal axiClk                      : sl;
+   signal axiRst                      : sl;
 
 begin
-
-   appOutSlave.tReady <= '1';
-   --appInSlave.tReady  <= '1';
-   axilClk            <= axiClk;
-   axilRst            <= axiRst;
-   
-   --------------------
-   -- AXI-Lite Crossbar
-   --------------------
-   U_XBAR : entity work.AxiLiteCrossbar
-      generic map (
-         TPD_G              => TPD_G,
-         NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => NUM_AXIL_MASTERS_C,
-         MASTERS_CONFIG_G   => AXIL_CONFIG_C)
-      port map (
-         axiClk              => axilClk,
-         axiClkRst           => axilRst,
-         sAxiWriteMasters(0) => axilWriteMaster,
-         sAxiWriteSlaves(0)  => axilWriteSlave,
-         sAxiReadMasters(0)  => axilReadMaster,
-         sAxiReadSlaves(0)   => axilReadSlave,
-         mAxiWriteMasters    => axilWriteMasters,
-         mAxiWriteSlaves     => axilWriteSlaves,
-         mAxiReadMasters     => axilReadMasters,
-         mAxiReadSlaves      => axilReadSlaves);
-
-   --------------------
-   -- Clocks and Resets
-   --------------------
-   U_axilClk_2 : entity work.ClkRst
-      generic map (
-         CLK_PERIOD_G      => CLK_PERIOD_G,
-         RST_START_DELAY_G => 0 ns,
-         RST_HOLD_TIME_G   => 1000 ns)
-      port map (
-         clkP => dmaClk,
-         rst  => dmaRst);
-
 
    --------------------
    -- Clocks and Resets
@@ -177,10 +92,10 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStreamSimTwoProcess
+      U_CamOutput : entity work.FileToAxiStream
          generic map (
-            TPD_G          => TPD_G,
-            BYTE_SIZE_C    => 2+1,
+            TPD_G              => TPD_G,
+            BYTE_SIZE_C        => 2+1,
             DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G)
          port map (
             sysClk         => axiClk,
@@ -198,18 +113,19 @@ begin
             BRAM_EN_G           => true,
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 9,
+            FIFO_PAUSE_THRESH_G => 500,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
             MASTER_AXI_CONFIG_G => DMA_AXIS_DOWNSIZED_CONFIG_G)
          port map (
             -- Slave Port
-            sAxisClk    => axilClk,
-            sAxisRst    => axilRst,
+            sAxisClk    => axiClk,
+            sAxisRst    => axiRst,
             sAxisMaster => appInMaster,
             sAxisSlave  => appInSlave,
             -- Master Port
-            mAxisClk    => axilClk,
-            mAxisRst    => axilRst,
+            mAxisClk    => axiClk,
+            mAxisRst    => axiRst,
             mAxisMaster => downToUpSizeMaster,
             mAxisSlave  => downToUpSizeSlave);
 
@@ -223,66 +139,32 @@ begin
             BRAM_EN_G           => true,
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 9,
+            FIFO_PAUSE_THRESH_G => 500,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => DMA_AXIS_DOWNSIZED_CONFIG_G,
             MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
          port map (
             -- Slave Port
-            sAxisClk    => axilClk,
-            sAxisRst    => axilRst,
+            sAxisClk    => axiClk,
+            sAxisRst    => axiRst,
             sAxisMaster => downToUpSizeMaster,
             sAxisSlave  => downToUpSizeSlave,
             -- Master Port
-            mAxisClk    => axilClk,
-            mAxisRst    => axilRst,
+            mAxisClk    => axiClk,
+            mAxisRst    => axiRst,
             mAxisMaster => appOutMaster,
             mAxisSlave  => appOutSlave);
 
-  ---------------------------------
-   -- AXI-Lite Register Transactions
-   ---------------------------------
-   test : process is
-      variable debugData : slv(31 downto 0) := (others => '0');
-   begin
-      debugData := x"1111_1111";
-      ------------------------------------------
-      -- Wait for the AXI-Lite reset to complete
-      ------------------------------------------
-      wait until axiRst = '1';
-      wait until axiRst = '0';
 
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"5", true);  --prescaler
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"3", true);  --iir time constant
-
-   end process test;
-
-   ---------------------------------
-   -- save_file
-   ---------------------------------
-   save_to_file : process is
-      variable to_file              : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
-      variable v_OLINE              : line; 
-      constant c_WIDTH              : natural := 128;
-      constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
-
-   begin
-
-      to_file := appOutMaster;
-
-      file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
-
-      while true loop
-
-            --write(v_OLINE, appInMaster.tData(c_WIDTH -1 downto 0), right, c_WIDTH);
-            write(v_OLINE, appOutMaster.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
-            writeline(file_RESULTS, v_OLINE);
-
-            wait for CLK_PERIOD_G;
-
-      end loop;
-      
-      file_close(file_RESULTS);
-
-   end process save_to_file;
+      U_FileInput : entity work.AxiStreamToFile
+         generic map (
+            TPD_G              => TPD_G,
+            BYTE_SIZE_C        => 2+1,
+            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G)
+         port map (
+            sysClk         => axiClk,
+            sysRst         => axiRst,
+            dataInMaster   => appOutMaster,
+            dataInSlave    => appOutSlave);
 
 end testbed;
