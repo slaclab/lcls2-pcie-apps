@@ -65,10 +65,6 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
    signal r_ADD_TERM1     : std_logic_vector(BITS_PER_TRANSFER-1 downto 0) := (others => '0');
    signal r_ADD_TERM2     : sl := '0';
 
-   signal fileClk                : sl := '0';
-   signal fileRst                : sl := '0';
-   signal fileClk_subharmonics   : slv(31 downto 0)      :=    (others => '0')  ;
-
    constant INT_CONFIG_C  : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
    constant PGP2BTXIN_LEN : integer             := 19;
 
@@ -90,7 +86,10 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
       state            : StateType;
       validate_state   : slv(31 downto 0);
    end record RegType;
-
+   
+   ---------------------------------------
+   -------record intitial value-----------
+   ---------------------------------------
    constant REG_INIT_C : RegType := (
       master           => AXI_STREAM_MASTER_INIT_C,
       slave            => AXI_STREAM_SLAVE_INIT_C,
@@ -102,15 +101,17 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
       state          => IDLE_S,
       validate_state => (others => '0'));
 
----------------------------------------
--------record intitial value-----------
----------------------------------------
 
 
-   signal r        : RegType := REG_INIT_C;
-   signal rin      : RegType;
+   signal fileClk                : sl := '0';
+   signal fileRst                : sl := '0';
+   signal fileClk_subharmonics   : slv(31 downto 0)      :=    (others => '0')  ;
 
-   signal outCtrl  : AxiStreamCtrlType;
+
+   signal r                      : RegType := REG_INIT_C;
+   signal rin                    : RegType;
+
+   signal outCtrl                : AxiStreamCtrlType;
 
 begin
    file_open(file_VECTORS, TEST_INPUT_FILE_NAME,  read_mode);
@@ -120,7 +121,7 @@ begin
    --------------------
    U_axilClk_2 : entity work.ClkRst
       generic map (
-         CLK_PERIOD_G      => 10 ns,
+         CLK_PERIOD_G      => 23 ns,
          RST_START_DELAY_G => 0  ns,
          RST_HOLD_TIME_G   => 1000 ns)
       port map (
@@ -133,7 +134,6 @@ begin
    comb : process (r,sysRst,outCtrl,fileClk_subharmonics(0)) is
       variable v           : RegType;
       variable v_ILINE     : line;
-      variable v_OLINE     : line;
       variable v_ADD_TERM1 : std_logic_vector(BITS_PER_TRANSFER-1 downto 0);
       variable v_ADD_TERM2 : sl := '0';
       variable v_SPACE     : character;
@@ -197,7 +197,7 @@ begin
       -------------
       -- Reset
       -------------
-      if (sysRst = '1') then
+      if (fileRst = '1') then
          v := REG_INIT_C;
       end if;
 

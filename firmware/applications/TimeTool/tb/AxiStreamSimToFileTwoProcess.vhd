@@ -89,12 +89,15 @@ architecture mapping of AxiStreamSimToFileTwoProcess is
 ---------------------------------------
 
 
-   signal r        : RegType := REG_INIT_C;
-   signal rin      : RegType;
+   signal r                        : RegType := REG_INIT_C;
+   signal rin                      : RegType;
 
    signal inMaster                 : AxiStreamMasterType   :=    AXI_STREAM_MASTER_INIT_C;
    signal inSlave                  : AxiStreamSlaveType    :=    AXI_STREAM_SLAVE_INIT_C;  
    signal outCtrl                  : AxiStreamCtrlType     :=    AXI_STREAM_CTRL_INIT_C;
+
+   signal fileClk                  : sl := '0';
+   signal fileRst                  : sl := '0';
 
 
    signal pseudo_random            : slv(31 downto 0)      :=    (others => '0')  ;
@@ -108,6 +111,17 @@ begin
 
    file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
 
+   --------------------
+   -- Clocks and Resets
+   --------------------
+   U_axilClk_2 : entity work.ClkRst
+      generic map (
+         CLK_PERIOD_G      => 23 ns,
+         RST_START_DELAY_G => 0  ns,
+         RST_HOLD_TIME_G   => 1000 ns)
+      port map (
+         clkP => fileClk,
+         rst  => fileRst);
 
    ---------------------------------
    -- Input FIFO
@@ -126,21 +140,17 @@ begin
          sAxisRst    => sysRst,
          sAxisMaster => dataInMaster,
          sAxisSlave  => dataInSlave,
-         mAxisClk    => sysClk,
-         mAxisRst    => sysRst,
+         mAxisClk    => fileClk,
+         mAxisRst    => fileRst,
          mAxisMaster => inMaster,
          mAxisSlave  => inSlave);
 
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (r,sysRst,inMaster,pseudo_random(0)) is
+   comb : process (r,fileRst,inMaster) is
       variable v           : RegType;
-      variable v_ILINE     : line;
       variable v_OLINE     : line;
-      variable v_ADD_TERM1 : std_logic_vector(BITS_PER_TRANSFER-1 downto 0);
-      variable v_ADD_TERM2 : sl := '0';
-      variable v_SPACE     : character;
 
    begin
       
@@ -149,14 +159,12 @@ begin
       --------------------------
       v := r;
 
-      --pseudo_random :=  RESIZE(pseudo_random*pseudo_random+ PSEUDO_RAND_COEF,32);
-
-
 
       --------------------------
       --setting slave state and loading data
       --------------------------
       v.slave.tReady  :=  '1';
+      --v.slave.tReady  :=  pseudo_random(6);
       v.Master        :=  dataInMaster;
 
       case r.state is
@@ -172,10 +180,18 @@ begin
 
            end if;
 
+           v.slave.tReady  :=  '0';
+
          when MOVE_S =>
            if v.slave.tReady = '1' and v.Master.tValid ='1' then
              write(v_OLINE, v.master.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
              writeline(file_RESULTS, v_OLINE);
+
+            v.validate_state := v.validate_state+'1';
+
+            if v.master.tLast ='1' then
+                  v.validate_state := (others=>'0');            
+            end if;
 
            else
               v.state := IDLE_S;
@@ -189,7 +205,7 @@ begin
       -------------
       -- Reset
       -------------
-      if (sysRst = '1') then
+      if (fileRst = '1') then
          v := REG_INIT_C;
       end if;
 
@@ -201,13 +217,10 @@ begin
 
    end process comb;
 
-   seq : process (sysClk) is
+   seq : process (fileClk) is
    begin
-      if (rising_edge(sysClk)) then
+      if (rising_edge(fileClk)) then
          r <= rin after TPD_G;
-         -- pseudo random for driving tReady signal
-         pseudo_random <=  RESIZE(pseudo_random*pseudo_random+ PSEUDO_RAND_COEF,32);
-
       end if;
    end process seq;
 
