@@ -165,7 +165,7 @@ begin
       --------------------------
       v.slave.tReady  :=  '1';
       --v.slave.tReady  :=  pseudo_random(6);
-      v.Master        :=  dataInMaster;
+      v.Master        :=  inMaster;
 
       case r.state is
 
@@ -189,9 +189,9 @@ begin
 
             v.validate_state := v.validate_state+'1';
 
-            if v.master.tLast ='1' then
-                  v.validate_state := (others=>'0');            
-            end if;
+            --if v.master.tLast ='1' then
+            --      v.validate_state := v.validate_state - 127;            
+            --end if;
 
            else
               v.state := IDLE_S;

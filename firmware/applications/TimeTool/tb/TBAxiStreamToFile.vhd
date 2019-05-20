@@ -68,8 +68,6 @@ architecture testbed of TBAxiStreamToFile is
    signal axiClk   : sl;
    signal axiRst   : sl;
 
-   file file_RESULTS : text;
-
 begin
 
    --------------------
@@ -88,7 +86,6 @@ begin
    -- Test data
    --------------------  
 
-      --U_CamOutput : entity work.AxiStreamCameraOutput
       U_CamOutput : entity work.FileToAxiStreamSimTwoProcess
          generic map (
             TPD_G              => TPD_G,
@@ -100,7 +97,7 @@ begin
             dataOutMaster  => appInMaster,
             dataOutSlave   => appInSlave);
 
-      --U_CamOutput : entity work.AxiStreamCameraOutput
+
       U_FileInput : entity work.AxiStreamSimToFileTwoProcess
          generic map (
             TPD_G              => TPD_G,
