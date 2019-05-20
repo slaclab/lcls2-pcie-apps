@@ -86,7 +86,7 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStreamSimTwoProcess
+      U_CamOutput : entity work.FileToAxiStream
          generic map (
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
