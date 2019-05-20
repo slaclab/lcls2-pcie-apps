@@ -47,7 +47,8 @@ entity FileToAxiStream is
       DMA_AXIS_CONFIG_G  : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
       DEBUG_G            : boolean             := true;
       BYTE_SIZE_C        : positive            := 1;
-      BITS_PER_TRANSFER  : natural             := 128);
+      BITS_PER_TRANSFER  : natural             := 128;
+      CLK_PERIOD_G       : time                := 23 ns);
    port (
       -- System Interface
       sysClk          : in  sl;
@@ -67,6 +68,7 @@ architecture mapping of FileToAxiStream is
 
    constant INT_CONFIG_C  : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
    constant PGP2BTXIN_LEN : integer             := 19;
+   constant FRAME_PERIOD  : slv(31 downto 0)    := (8=>'1',others => '0');
 
    file file_VECTORS : text;
 
@@ -84,7 +86,7 @@ architecture mapping of FileToAxiStream is
       v_SPACE          : character;
 
       state            : StateType;
-      validate_state   : slv(31 downto 0);
+      counter          : slv(31 downto 0);
    end record RegType;
    
    ---------------------------------------
@@ -99,7 +101,7 @@ architecture mapping of FileToAxiStream is
       v_SPACE          => ' ',
 
       state          => IDLE_S,
-      validate_state => (others => '0'));
+      counter => (others => '0'));
 
 
 
@@ -125,7 +127,7 @@ begin
    --------------------
    U_axilClk_2 : entity work.ClkRst
       generic map (
-         CLK_PERIOD_G      => 23 ns,
+         CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0  ns,
          RST_HOLD_TIME_G   => 1000 ns)
       port map (
@@ -148,19 +150,34 @@ begin
        loop
             wait until rising_edge(fileClk);
                   v := r;
-                  v.master.tValid := '1';
+                  v.master.tValid := '0';
+
+
+
+                  if  v.counter = 0 then
+                        v.master.tValid := '1';
 
                 
-                  readline(file_VECTORS, v_ILINE);
-                  read(v_ILINE, v.v_ADD_TERM1);
-                  read(v_ILINE, v.v_SPACE);           -- read in the space character
-                  read(v_ILINE, v.v_ADD_TERM2);
+                        readline(file_VECTORS, v_ILINE);
+                        read(v_ILINE, v.v_ADD_TERM1);
+                        read(v_ILINE, v.v_SPACE);           -- read in the space character
+                        read(v_ILINE, v.v_ADD_TERM2);
 
-                  v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v.v_ADD_TERM1;
-                  v.master.tLast                                      := v.v_ADD_TERM2;
-                  v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
+                        v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v.v_ADD_TERM1;
+                        v.master.tLast                                      := v.v_ADD_TERM2;
+                        v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
 
-                  v.validate_state := v.validate_state+'1';
+                        if v.master.tLast ='1' then       
+                              v.counter := FRAME_PERIOD;
+
+                        end if;
+
+                  else
+                        v.counter := v.counter-1;
+                        
+                  end if;
+
+                  
 
 
                   -------------

@@ -47,7 +47,8 @@ entity AxiStreamToFile is
       DMA_AXIS_CONFIG_G  : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
       DEBUG_G            : boolean             := true;
       BYTE_SIZE_C        : positive            := 1;
-      BITS_PER_TRANSFER  : natural             := 128);
+      BITS_PER_TRANSFER  : natural             := 128;
+      CLK_PERIOD_G       : time                := 23 ns);
    port (
       -- System Interface
       sysClk          : in  sl;
@@ -117,7 +118,7 @@ begin
    --------------------
    U_axilClk_2 : entity work.ClkRst
       generic map (
-         CLK_PERIOD_G      => 23 ns,
+         CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0  ns,
          RST_HOLD_TIME_G   => 1000 ns)
       port map (
