@@ -98,7 +98,7 @@ begin
             dataOutSlave   => appInSlave);
 
 
-      U_FileInput : entity work.AxiStreamSimToFileTwoProcess
+      U_FileInput : entity work.AxiStreamToFile
          generic map (
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,

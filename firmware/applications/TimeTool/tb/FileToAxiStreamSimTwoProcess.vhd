@@ -114,6 +114,10 @@ architecture mapping of FileToAxiStreamSimTwoProcess is
    signal outCtrl                : AxiStreamCtrlType;
 
 begin
+
+   --------------------------
+   --read file
+   --------------------------
    file_open(file_VECTORS, TEST_INPUT_FILE_NAME,  read_mode);
 
    --------------------

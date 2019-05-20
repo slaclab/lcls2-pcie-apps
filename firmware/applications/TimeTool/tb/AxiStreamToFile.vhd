@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
--- File       : AxiStreamSimToFileTwoProcess.vhd
+-- File       : AxiStreamToFile.vhd
 -- Company    : SLAC National Accelerator Laboratory
 
 -- Last update: 2019-03-22
@@ -41,7 +41,7 @@ use unisim.vcomponents.all;
 -- This file performs the the prescaling, or the amount of raw data which is stored
 -------------------------------------------------------------------------------
 
-entity AxiStreamSimToFileTwoProcess is
+entity AxiStreamToFile is
    generic (
       TPD_G              : time                := 1 ns;
       DMA_AXIS_CONFIG_G  : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
@@ -55,9 +55,9 @@ entity AxiStreamSimToFileTwoProcess is
       -- DMA Interfaces  (sysClk domain)
       dataInMaster        : in    AxiStreamMasterType;
       dataInSlave         : out   AxiStreamSlaveType);
-end AxiStreamSimToFileTwoProcess;
+end AxiStreamToFile;
 
-architecture mapping of AxiStreamSimToFileTwoProcess is
+architecture mapping of AxiStreamToFile is
 
    constant TEST_OUTPUT_FILE_NAME : string              := TEST_FILE_PATH & "/output_results.dat";
    constant PSEUDO_RAND_COEF      : slv(31 downto 0)    := (0=>'1',1=>'1',others=>'0');
@@ -98,6 +98,7 @@ architecture mapping of AxiStreamSimToFileTwoProcess is
 
    signal fileClk                  : sl := '0';
    signal fileRst                  : sl := '0';
+
 
 
    signal pseudo_random            : slv(31 downto 0)      :=    (others => '0')  ;
@@ -145,85 +146,31 @@ begin
          mAxisMaster => inMaster,
          mAxisSlave  => inSlave);
 
-   ---------------------------------
-   -- Application
-   ---------------------------------
-   comb : process (r,fileRst,inMaster) is
-      variable v           : RegType;
-      variable v_OLINE     : line;
+   save_to_file : process is
+      variable v_OLINE              : line; 
+      constant c_WIDTH              : natural := 128;
+      constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
 
    begin
+      inSlave.tReady <= '1';
+
+      file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
+
+      loop
+            wait until rising_edge(fileClk);
+
+            if inMaster.tValid ='1' then
+
+                  write(v_OLINE, inMaster.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
+                  writeline(file_RESULTS, v_OLINE);
+
+            end if;
+
+      end loop;
       
-      --------------------------
-      --latch previous state
-      --------------------------
-      v := r;
+      file_close(file_RESULTS);
 
-
-      --------------------------
-      --setting slave state and loading data
-      --------------------------
-      v.slave.tReady  :=  '1';
-      --v.slave.tReady  :=  pseudo_random(6);
-      v.Master        :=  inMaster;
-
-      case r.state is
-
-         when IDLE_S =>
-            ------------------------------
-           if v.slave.tReady = '1' and v.Master.tValid ='1' then
-
-              v.state := MOVE_S;
-
-           else
-              v.state := IDLE_S;
-
-           end if;
-
-           v.slave.tReady  :=  '0';
-
-         when MOVE_S =>
-           if v.slave.tReady = '1' and v.Master.tValid ='1' then
-             --write(v_OLINE, v.master.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
-             write(v_OLINE, v.validate_state);
-             writeline(file_RESULTS, v_OLINE);
-
-             v.validate_state := v.validate_state+'1';
-
-            --if v.master.tLast ='1' then
-            --      v.validate_state := v.validate_state - 127;            
-            --end if;
-
-           else
-              v.state := IDLE_S;
-                   
-           end if;
-
-      end case;
-
-
-
-      -------------
-      -- Reset
-      -------------
-      if (fileRst = '1') then
-         v := REG_INIT_C;
-      end if;
-
-      -- Register the variable for next clock cycle
-      rin <= v;
-
-      -- Outputs 
-      inSlave        <= v.slave;
-
-   end process comb;
-
-   seq : process (fileClk) is
-   begin
-      if (rising_edge(fileClk)) then
-         r <= rin after TPD_G;
-      end if;
-   end process seq;
+   end process save_to_file;
 
 
 end mapping;
