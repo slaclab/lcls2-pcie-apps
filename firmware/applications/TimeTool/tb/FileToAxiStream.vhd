@@ -151,11 +151,10 @@ begin
             wait until rising_edge(fileClk);
                   v := r;
                   v.master.tValid := '0';
-                  v.master.tLast  := '0';
 
 
 
-                  if  v.counter = 0 then
+                  if  v.counter >= FRAME_PERIOD then
                         v.master.tValid := '1';
 
                 
@@ -169,12 +168,12 @@ begin
                         v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
 
                         if v.master.tLast ='1' then       
-                              v.counter := FRAME_PERIOD;
+                              v.counter := (others => '0');
 
                         end if;
 
                   else
-                        v.counter      := v.counter-1;
+                        v.counter      := v.counter+1;
                         --v.master.tLast := '0';
                         
                   end if;
@@ -190,18 +189,19 @@ begin
                   end if;
 
                   -- Register the variable for next clock cycle
-                  rin      <= v;
+                  --rin      <= v;
+                  r        <= v after TPD_G;
       end loop;
       
    end process sim;
 
-   seq : process (fileClk) is
-   begin
-      if (rising_edge(fileClk)) then
-         r <= rin after TPD_G;
-         fileClk_subharmonics <= fileClk_subharmonics+'1' after TPD_G;
-      end if;
-   end process seq;
+--   seq : process (fileClk) is
+--   begin
+--      if (rising_edge(fileClk)) then
+--         r <= rin after TPD_G;
+--         fileClk_subharmonics <= fileClk_subharmonics+'1' after TPD_G;
+--     end if;
+--   end process seq;
 
    ---------------------------------
    -- Output FIFO
