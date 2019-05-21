@@ -68,7 +68,7 @@ architecture mapping of FileToAxiStream is
 
    constant INT_CONFIG_C  : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
    constant PGP2BTXIN_LEN : integer             := 19;
-   constant FRAME_PERIOD  : slv(31 downto 0)    := (8=>'1',others => '0');
+   constant FRAME_PERIOD  : slv(31 downto 0)    := (12=>'1',others => '0');
 
    file file_VECTORS : text;
 
@@ -151,6 +151,7 @@ begin
             wait until rising_edge(fileClk);
                   v := r;
                   v.master.tValid := '0';
+                  v.master.tLast  := '0';
 
 
 
@@ -173,7 +174,8 @@ begin
                         end if;
 
                   else
-                        v.counter := v.counter-1;
+                        v.counter      := v.counter-1;
+                        --v.master.tLast := '0';
                         
                   end if;
 
@@ -209,8 +211,8 @@ begin
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,
          GEN_SYNC_FIFO_G     => true,
-         FIFO_ADDR_WIDTH_G   => 9,
-         FIFO_PAUSE_THRESH_G => 500,
+         FIFO_ADDR_WIDTH_G   => 11,
+         FIFO_PAUSE_THRESH_G => 2000,
          SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
          MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (

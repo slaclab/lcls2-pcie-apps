@@ -49,7 +49,7 @@ architecture testbed of TBAxiStreamFifoV2 is
 
 
    constant DMA_AXIS_CONFIG_G           : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
-   constant DMA_AXIS_DOWNSIZED_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
+   constant DMA_AXIS_DOWNSIZED_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(1, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
 
    constant CLK_PERIOD_G : time := 10 ns;
 
@@ -96,7 +96,8 @@ begin
          generic map (
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
-            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G)
+            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
+            CLK_PERIOD_G       => 10 ns)
          port map (
             sysClk         => axiClk,
             sysRst         => axiRst,
@@ -160,7 +161,8 @@ begin
          generic map (
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
-            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G)
+            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
+            CLK_PERIOD_G       => 10 ns)
          port map (
             sysClk         => axiClk,
             sysRst         => axiRst,

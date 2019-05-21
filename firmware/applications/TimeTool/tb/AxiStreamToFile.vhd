@@ -100,7 +100,7 @@ architecture mapping of AxiStreamToFile is
    signal fileClk                  : sl := '0';
    signal fileRst                  : sl := '0';
 
-
+   signal clocked_tvalid           : sl := '1';
 
    signal pseudo_random            : slv(31 downto 0)      :=    (others => '0')  ;
 
@@ -110,6 +110,7 @@ begin
    --------------------------
    --write file
    --------------------------
+   clocked_tvalid <= fileClk and inMaster.tValid;
 
    file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
 
@@ -133,8 +134,8 @@ begin
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => true,
          GEN_SYNC_FIFO_G     => true,
-         FIFO_ADDR_WIDTH_G   => 9,
-         FIFO_PAUSE_THRESH_G => 500,
+         FIFO_ADDR_WIDTH_G   => 11,
+         FIFO_PAUSE_THRESH_G => 2000,
          SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
          MASTER_AXI_CONFIG_G => INT_CONFIG_C)
       port map (
@@ -153,12 +154,13 @@ begin
       constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
 
    begin
+      
       inSlave.tReady <= '1';
-
       file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
 
       loop
             wait until rising_edge(fileClk);
+
 
             if inMaster.tValid ='1' then
 
