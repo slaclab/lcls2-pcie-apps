@@ -97,7 +97,7 @@ begin
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
             DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
-            CLK_PERIOD_G       => 10 ns)
+            CLK_PERIOD_G       => 23 ns)
          port map (
             sysClk         => axiClk,
             sysRst         => axiRst,
@@ -162,7 +162,7 @@ begin
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
             DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
-            CLK_PERIOD_G       => 10 ns)
+            CLK_PERIOD_G       => 24 ns)
          port map (
             sysClk         => axiClk,
             sysRst         => axiRst,

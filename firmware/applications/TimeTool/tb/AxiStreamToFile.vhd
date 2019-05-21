@@ -66,32 +66,11 @@ architecture mapping of AxiStreamToFile is
    constant c_WIDTH               : natural := 128;
 
 
-   type StateType is (
-      IDLE_S,
-      MOVE_S);
 
-   type RegType is record
-      master         : AxiStreamMasterType;
-      slave          : AxiStreamSlaveType;
-      state          : StateType;
-      pseudo_random  : slv(31 downto 0);
-      validate_state : slv(31 downto 0);
-   end record RegType;
-
-   constant REG_INIT_C : RegType := (
-      master         => AXI_STREAM_MASTER_INIT_C,
-      slave          => AXI_STREAM_SLAVE_INIT_C,
-      state          => IDLE_S,
-      pseudo_random  => (others => '0'),
-      validate_state => (others => '0'));
 
 ---------------------------------------
 -------record intitial value-----------
 ---------------------------------------
-
-
-   signal r                        : RegType := REG_INIT_C;
-   signal rin                      : RegType;
 
    signal inMaster                 : AxiStreamMasterType   :=    AXI_STREAM_MASTER_INIT_C;
    signal inSlave                  : AxiStreamSlaveType    :=    AXI_STREAM_SLAVE_INIT_C;  
@@ -133,9 +112,9 @@ begin
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => true,
-         GEN_SYNC_FIFO_G     => true,
+         --GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 11,
-         FIFO_PAUSE_THRESH_G => 2000,
+         FIFO_PAUSE_THRESH_G => 2036,
          SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
          MASTER_AXI_CONFIG_G => INT_CONFIG_C)
       port map (
@@ -159,8 +138,6 @@ begin
       file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
 
       loop
-            wait until rising_edge(fileClk);
-
 
             if inMaster.tValid ='1' then
 
@@ -168,6 +145,8 @@ begin
                   writeline(file_RESULTS, v_OLINE);
 
             end if;
+
+            wait until rising_edge(fileClk);
 
       end loop;
       

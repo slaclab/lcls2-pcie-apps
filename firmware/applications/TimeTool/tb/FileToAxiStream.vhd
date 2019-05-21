@@ -210,9 +210,9 @@ begin
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,
-         GEN_SYNC_FIFO_G     => true,
+         --GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 11,
-         FIFO_PAUSE_THRESH_G => 2000,
+         FIFO_PAUSE_THRESH_G => 2036,
          SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
          MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
