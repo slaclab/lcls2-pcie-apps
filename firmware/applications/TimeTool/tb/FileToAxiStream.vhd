@@ -174,7 +174,7 @@ begin
 
                   else
                         v.counter      := v.counter+1;
-                        --v.master.tLast := '0';
+                        v.master.tLast := '0';
                         
                   end if;
 
