@@ -39,6 +39,8 @@ for i in range(n_frames):
             edge_position = int(pixels_per_frame/2+(jitter*np.random.rand()-0.5))
             my_frame_array[edge_position:] = my_frame_array[edge_position:] *0.2
 
+      my_frame_array = np.convolve(np.ones(8)/8,my_frame_array,mode='same').astype(np.int)      
+      
       my_frame_array[0]  = 123        #test values to makes sure no pixels are being lost
       my_frame_array[-1] = 73      #test values to makes sure no pixels are being lost
 

@@ -50,4 +50,8 @@ thismanager.window.move(0,250)
 plt.figure(1)
 plt.plot(my_output_data)
 
+plt.figure(2)
+plt.plot(np.convolve([-1,-1,-1,-1,1,1,1,1],my_input_data))
+
+
 plt.show()
