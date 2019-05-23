@@ -54,8 +54,8 @@ entity FileToAxiStream is
       sysClk          : in  sl;
       sysRst          : in  sl;
       -- DMA Interfaces  (sysClk domain)
-      dataOutMaster   : out AxiStreamMasterType;
-      dataOutSlave    : in  AxiStreamSlaveType);
+      dataOutMaster   : out AxiStreamMasterType  := AXI_STREAM_MASTER_INIT_C;
+      dataOutSlave    : in  AxiStreamSlaveType   := AXI_STREAM_SLAVE_INIT_C );
 end FileToAxiStream;
 
 architecture mapping of FileToAxiStream is
@@ -111,9 +111,9 @@ architecture mapping of FileToAxiStream is
 
 
    signal r                      : RegType := REG_INIT_C;
-   signal rin                    : RegType;
+   signal rin                    : RegType := REG_INIT_C;
 
-   signal outCtrl                : AxiStreamCtrlType;
+   signal outCtrl                : AxiStreamCtrlType  :=    AXI_STREAM_CTRL_INIT_C;
 
 begin
 
@@ -128,8 +128,8 @@ begin
    U_axilClk_2 : entity work.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
-         RST_START_DELAY_G => 0  ns,
-         RST_HOLD_TIME_G   => 1000 ns)
+         RST_START_DELAY_G => 1  ns,
+         RST_HOLD_TIME_G   => 50 ns)
       port map (
          clkP => fileClk,
          rst  => fileRst);

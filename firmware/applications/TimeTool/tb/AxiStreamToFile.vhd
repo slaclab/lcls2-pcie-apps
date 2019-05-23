@@ -55,7 +55,7 @@ entity AxiStreamToFile is
       sysRst          : in  sl;
       -- DMA Interfaces  (sysClk domain)
       dataInMaster        : in    AxiStreamMasterType;
-      dataInSlave         : out   AxiStreamSlaveType);
+      dataInSlave         : out   AxiStreamSlaveType :=    AXI_STREAM_SLAVE_INIT_C );
 end AxiStreamToFile;
 
 architecture mapping of AxiStreamToFile is

@@ -77,6 +77,7 @@ architecture testbed of TBAxiStreamFIR is
    signal axiClk                      : sl;
    signal axiRst                      : sl;
 
+   signal delayedAxiClk               : sl                  :=   '0';
 
    component fir_compiler_0
       port (aclk                    : std_logic;
@@ -92,6 +93,8 @@ architecture testbed of TBAxiStreamFIR is
 
 begin
 
+   delayedAxiClk <= axiClk after CLK_PERIOD_G/8;
+
    --------------------
    -- Clocks and Resets
    --------------------
@@ -99,7 +102,7 @@ begin
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 1 ns,
-         RST_HOLD_TIME_G   => 2 ns)
+         RST_HOLD_TIME_G   => 50 ns)
       port map (
          clkP => axiClk,
          rst  => axiRst);
@@ -144,11 +147,12 @@ begin
             mAxisClk    => axiClk,
             mAxisRst    => axiRst,
             mAxisMaster => resizeFIFOToFIRMaster,
-            mAxisSlave  => resizeFIFOToFIRSlave);
+            mAxisSlave  => resizeFIFOToFIRSlave
+            );
 
         dut : fir_compiler_0
           port map (
-            aclk                            => axiClk,
+            aclk                            => delayedAxiClk,
             s_axis_data_tvalid              => resizeFIFOToFIRMaster.tValid,
             s_axis_data_tready              => resizeFIFOToFIRSlave.tReady,
             s_axis_data_tdata               => resizeFIFOToFIRMaster.tData(7 downto 0),
