@@ -49,9 +49,9 @@ end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
-   constant NUM_MASTERS_G      : positive := 2;
+   constant NUM_AXIS_MASTERS_G      : positive := 2;
 
-   constant NUM_AXIL_MASTERS_C : natural  := NUM_MASTERS_G+2;
+   constant NUM_AXIL_MASTERS_C : natural  := NUM_AXIS_MASTERS_G+2;
 
    constant EVENT_INDEX_C      : natural  := 0;
    constant FEX_INDEX_C        : natural  := 1;
@@ -128,7 +128,7 @@ begin
    U_AxiStreamRepeater : entity work.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
-         NUM_MASTERS_G => NUM_MASTERS_G)
+         NUM_MASTERS_G => NUM_AXIS_MASTERS_G)
       port map (
          -- Clock and reset
          axisClk      => axilClk,
@@ -274,7 +274,7 @@ begin
    U_EventBuilder : entity work.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G         => TPD_G,
-         NUM_SLAVES_G  => NUM_MASTERS_G+1,
+         NUM_SLAVES_G  => NUM_AXIS_MASTERS_G+1,
          AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- Clock and Reset
