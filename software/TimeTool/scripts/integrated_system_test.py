@@ -82,7 +82,7 @@ cl.Application.AppLane[0].ByPass.ByPass.set(0x1)
 
 cl.StartRun()
 
-IPython.embed()
+time.sleep(3)
 
 if(cl.dev[0]=='sim'):
     p =  np.array(cl._frameGen[0].make_byte_array())
@@ -123,11 +123,9 @@ for i in range(4):
             my_mask = np.append(my_mask,np.arange(len(p)-36,len(p)))
 
       #print(p[my_mask] == cl.TimeToolRx.parsed_data)
-      assert (not False in (p[my_mask] == cl.TimeToolRx.parsed_data))
+      #assert (not False in (p[my_mask] == cl.TimeToolRx.parsed_data))
       #print(p[my_mask])
       print("data_out = "+str(cl.TimeToolRx.parsed_data))
-
-      #my_results_list.append([len(cl.TimeToolRx.parsed_data),cl.TimeToolRx.parsed_data])
 
 time.sleep(1)
 
@@ -135,11 +133,3 @@ if(cl.dev[0]!='sim'):
     cl.Hardware.Timing.Triggering.LocalTrig[0].EnableTrig.set(False)
 
 cl.stop()
-
-#cl.ClinkFeb[0].UartPiranha4[0]._tx.sendString('ssf 7000')
-#cl.ClinkFeb[0].UartPiranha4[0]._tx.sendString('ssf 6000')
-#cl.ClinkFeb[0].ClinkTop.Channel[0].DropCount.get()
-#cl.Application.AppLane[0].Prescale.DialInPreScaling.set(254)
-#cl.Application.AppLane[0].Prescale.DialInPreScaling.set(124)
-#cl.Application.AppLane[0].Prescale.DialInPreScaling.set(125)
-#cl.ClinkFeb[0].ClinkTop.Channel[0].DropCount.get()
