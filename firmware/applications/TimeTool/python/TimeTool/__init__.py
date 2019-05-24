@@ -3,3 +3,4 @@
 from TimeTool._Application import *
 from TimeTool._Fex         import *
 from TimeTool._Prescale    import *
+from TimeTool._ByPass      import *

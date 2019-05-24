@@ -33,7 +33,7 @@ echo $(pwd -P)
 source setup_env_template.sh
 echo "Sourced setup_enstuff_template.sh"
 
-python scripts/integrated_system_test.py
+python scripts/integrated_system_test.py --dev sim
 echo "ran python script"
 
 pkill simv
