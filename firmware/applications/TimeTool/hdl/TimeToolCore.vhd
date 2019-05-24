@@ -49,9 +49,9 @@ end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
-   constant NUM_AXIS_MASTERS_G      : positive := 2;
+   constant NUM_AXIS_MASTERS_G      : positive := 3; -- Number of AXIS streams
 
-   constant NUM_AXIL_MASTERS_C : natural  := NUM_AXIS_MASTERS_G+2;
+   constant NUM_AXIL_MASTERS_C : natural  := NUM_AXIS_MASTERS_G+1; -- Number of AXI-Lite buses = Number of AXIS streams + event builder
 
    constant EVENT_INDEX_C      : natural  := 0;
    constant FEX_INDEX_C        : natural  := 1;
@@ -67,7 +67,7 @@ architecture mapping of TimeToolCore is
    signal axilReadMasters             : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
    signal axilReadSlaves              : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
 
-   subtype DSP_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-2 downto 1;
+   subtype DSP_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 1;
 
    signal dataInMasters               : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
    signal dataInSlaves                : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
@@ -86,8 +86,6 @@ architecture mapping of TimeToolCore is
 
    signal timeToolToByPassMaster      : AxiStreamMasterType;
    signal timeToolToByPassSlave       : AxiStreamSlaveType;
-
-
 
 begin
 
@@ -120,7 +118,6 @@ begin
          axilReadSlave        => axilReadSlaves(BYPASS_INDEX_C),
          axilWriteMaster      => axilWriteMasters(BYPASS_INDEX_C),
          axilWriteSlave       => axilWriteSlaves(BYPASS_INDEX_C));
-
 
    ----------------------
    -- AXI Stream Repeater
@@ -274,7 +271,7 @@ begin
    U_EventBuilder : entity work.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G         => TPD_G,
-         NUM_SLAVES_G  => NUM_AXIS_MASTERS_G+1,
+         NUM_SLAVES_G  => NUM_AXIS_MASTERS_G+1, -- DSP AXI stream and +1 for trigger AXI stream
          AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- Clock and Reset
