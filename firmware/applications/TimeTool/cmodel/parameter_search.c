@@ -154,6 +154,26 @@ void print_array_mpz_complex(const xip_array_mpz_complex* x)
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+int create_step(xip_array_real* x) {
+  int path;
+  int chan;
+  int i;
+  for (path = 0; path < x->dim[0];path++) {
+    for (chan = 0; chan < x->dim[1];chan++) {
+       //xip_fir_v7_2_xip_array_real_set_chan(x,(double)((path+1)*(chan+1)),path,chan,0,P_BASIC);
+       xip_fir_v7_2_xip_array_real_set_chan(x,(double)(-1),path,chan,0,P_BASIC);
+       for (i = 1; i < int(x->dim[2]/2);i++) {
+         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(-1),path,chan,i,P_BASIC);
+       }
+      for (i = int(x->dim[2]/2); i < x->dim[2];i++) {
+         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(1),path,chan,i,P_BASIC);
+       }
+    }
+  }
+  return 0;
+}
+
 // Fill data array with a scaled impulse. Assumes 3-D array.
 int create_impulse(xip_array_real* x) {
   int path;
@@ -276,7 +296,7 @@ int main () {
 
   // Populate data in with an impulse
   printf("Create impulse\n");
-  create_impulse(din);
+  create_step(din);
 
   // Send input data and filter
   if ( xip_fir_v7_2_data_send(fir_default,din)== XIP_STATUS_OK) {
