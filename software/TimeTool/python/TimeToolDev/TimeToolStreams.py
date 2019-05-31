@@ -4,6 +4,8 @@ import pyrogue as pr
 import rogue.interfaces.stream
 
 import numpy as np
+
+import IPython
 # import h5py
 
 #####################################################################        
@@ -19,7 +21,7 @@ class TimeToolTxEmulation(rogue.interfaces.stream.Master):
         self._maxSize = 2048
 
     # Method for generating a frame
-    def myFrameGen(self):
+    def myFrameGen(self,*args):
         # First request an empty from from the primary slave
         # The first arg is the size, the second arg is a boolean
         # indicating if we can allow zero copy buffers, usually set to true
@@ -27,7 +29,11 @@ class TimeToolTxEmulation(rogue.interfaces.stream.Master):
 
         # Create a 2048 byte array with an incrementing value
         #ba = bytearray([(i&0xFF) for i in range(self._maxSize)])
-        ba = self.make_byte_array()
+        #IPython.embed()
+        if(0==len(args)):
+              ba = self.make_byte_array()
+        else:
+              ba=args[0]
         #print(self.make_byte_array())
 
         # Write the data to the frame at offset 0

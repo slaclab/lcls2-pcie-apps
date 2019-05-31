@@ -81,7 +81,12 @@ class TimeToolDev(kcu1500.Core):
                 self.add(pr.BaseCommand(   
                     name         = f'GenFrame[{lane}]',
                     function     = lambda cmd, lane=lane: self._frameGen[lane].myFrameGen(),
-                ))                
+                ))  
+                # Create a command to execute the frame generator. Accepts user data argument
+                self.add(pr.BaseCommand(   
+                    name         = f'GenUserFrame[{lane}]',
+                    function     = lambda cmd, lane=lane: self._frameGen[lane].myFrameGen,
+                ))               
                 
         # Create arrays to be filled
         self._dbg = [None for lane in range(numLane)]        

@@ -81,10 +81,12 @@ cl.Application.AppLane[0].ByPass.ByPass.set(0x1)
 
 
 cl.StartRun()
-#IPython.embed()
+
+time.sleep(3)
 
 if(cl.dev[0]=='sim'):
-    cl.GenFrame[0]()
+    p =  np.array(cl._frameGen[0].make_byte_array())
+    cl.GenUserFrame[0]()(p)
 else:
     cl.Hardware.Timing.Triggering.LocalTrig[0].EnableTrig.set(True)
 
@@ -94,8 +96,6 @@ cl.Application.AppLane[0].Prescale.DialInPreScaling.set(0)
 
 start_count = 0
 
-#IPython.embed()
-
 my_results_list = []
 
 for i in range(4):
@@ -103,8 +103,11 @@ for i in range(4):
             break
       print("counter = "+str(start_count))
 
+      #p =  np.array(cl._frameGen[0].make_byte_array())
+      p = (np.random.rand(300)*255).astype(np.uint8)
+
       if(cl.dev[0]=='sim'):
-            cl.GenFrame[0]()
+            cl.GenUserFrame[0]()(p)
 
       too_many_counter  = 0
       while(cl.TimeToolRx.frameCount.get()<start_count+1):
@@ -115,18 +118,14 @@ for i in range(4):
       start_count = cl.TimeToolRx.frameCount.get()
       my_mask = np.arange(36)
 
-      p =  np.array(cl._frameGen[0].make_byte_array())
-
       if(len(p)>100):
             my_mask = np.append(my_mask,np.arange(int(len(p)/2),int(len(p)/2)+36))
             my_mask = np.append(my_mask,np.arange(len(p)-36,len(p)))
 
       #print(p[my_mask] == cl.TimeToolRx.parsed_data)
-      assert (not False in (p[my_mask] == cl.TimeToolRx.parsed_data))
+      #assert (not False in (p[my_mask] == cl.TimeToolRx.parsed_data))
       #print(p[my_mask])
       print("data_out = "+str(cl.TimeToolRx.parsed_data))
-
-      #my_results_list.append([len(cl.TimeToolRx.parsed_data),cl.TimeToolRx.parsed_data])
 
 time.sleep(1)
 
@@ -134,11 +133,3 @@ if(cl.dev[0]!='sim'):
     cl.Hardware.Timing.Triggering.LocalTrig[0].EnableTrig.set(False)
 
 cl.stop()
-
-#cl.ClinkFeb[0].UartPiranha4[0]._tx.sendString('ssf 7000')
-#cl.ClinkFeb[0].UartPiranha4[0]._tx.sendString('ssf 6000')
-#cl.ClinkFeb[0].ClinkTop.Channel[0].DropCount.get()
-#cl.Application.AppLane[0].Prescale.DialInPreScaling.set(254)
-#cl.Application.AppLane[0].Prescale.DialInPreScaling.set(124)
-#cl.Application.AppLane[0].Prescale.DialInPreScaling.set(125)
-#cl.ClinkFeb[0].ClinkTop.Channel[0].DropCount.get()
