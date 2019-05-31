@@ -162,12 +162,12 @@ int create_step(xip_array_real* x) {
   for (path = 0; path < x->dim[0];path++) {
     for (chan = 0; chan < x->dim[1];chan++) {
        //xip_fir_v7_2_xip_array_real_set_chan(x,(double)((path+1)*(chan+1)),path,chan,0,P_BASIC);
-       xip_fir_v7_2_xip_array_real_set_chan(x,(double)(-1),path,chan,0,P_BASIC);
+       xip_fir_v7_2_xip_array_real_set_chan(x,(double)(-32),path,chan,0,P_BASIC);
        for (i = 1; i < int(x->dim[2]/2);i++) {
-         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(-1),path,chan,i,P_BASIC);
+         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(-32),path,chan,i,P_BASIC);
        }
       for (i = int(x->dim[2]/2); i < x->dim[2];i++) {
-         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(1),path,chan,i,P_BASIC);
+         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(32),path,chan,i,P_BASIC);
        }
     }
   }
@@ -236,11 +236,12 @@ int main () {
   xip_fir_v7_2_config fir_default_cnfg;
   xip_fir_v7_2_default_config(&fir_default_cnfg);
 
-  const int fir_coeffs_size                  = 6;
-  int output_width                           = 13;
-  const double fir_coeffs[fir_coeffs_size]   = {1,2,3,4,5,6};
+  const int fir_num_coeffs                   = 32;
+  int output_width                           = 8;
+  const double fir_coeffs[fir_num_coeffs]  = {0, 0,   0,   0,   0,   0,   1,   2,   4,   6,   8,  10,  10,9,   6,   2,  -2,  -6,  -9, -10, -10,  -8,  -6,  -4,  -2,  -1,0,   0,   0,   0,   0};
+  //const double fir_coeffs[fir_num_coeffs]    = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0};
   fir_default_cnfg.coeff                     = &fir_coeffs[0];
-  fir_default_cnfg.num_coeffs                = fir_coeffs_size;
+  fir_default_cnfg.num_coeffs                = fir_num_coeffs;
   fir_default_cnfg.data_width                = 8;
   fir_default_cnfg.coeff_width               = 8;
   fir_default_cnfg.output_width              = output_width;
@@ -267,7 +268,8 @@ int main () {
   din->dim_size = 3; // 3D array
   din->dim[0] = fir_default_cnfg.num_paths;
   din->dim[1] = fir_default_cnfg.num_channels;
-  din->dim[2] = fir_default_cnfg.num_coeffs; // vectors in a single packet
+  //din->dim[2] = fir_default_cnfg.num_coeffs; // vectors in a single packet
+  din->dim[2] = 512;
   din->data_size = din->dim[0] * din->dim[1] * din->dim[2];
   if (xip_array_real_reserve_data(din,din->data_size) == XIP_STATUS_OK) {
     printf("Reserved data\n");
@@ -315,100 +317,11 @@ int main () {
     printf("Error getting data\n");
     return -1;
   }
-
-  printf("\nTest reset....\n");
-
-  // Send the same data but only fetch first half of the output, reset and then repeat but fetch all the data
-
-  if ( xip_fir_v7_2_data_send(fir_default,din)== XIP_STATUS_OK) {
-    printf("Sent data     : ");
-    print_array_real(din);
-  } else {
-    printf("Error sending data\n");
-    return -1;
-  }
-
-  // Create a new output data packet
-  xip_array_real* fir_default_out2 = xip_array_real_create();
-  xip_array_real_reserve_dim(fir_default_out2,3);
-  fir_default_out2->dim_size = 3; // 3D array
-  if(xip_fir_v7_2_calc_size(fir_default,din,fir_default_out2,0)== XIP_STATUS_OK) {
-    printf("Calculated output data size\n");
-    // Reduce output packet to only read half the generated data
-    fir_default_out2->dim[2]    = fir_default_out2->dim[2] / 2;
-    fir_default_out2->data_size = fir_default_out2->dim[1] * fir_default_out2->dim[1] * fir_default_out2->dim[2];
-    if (xip_array_real_reserve_data(fir_default_out2,fir_default_out2->data_size) == XIP_STATUS_OK) {
-      printf("Reserved data\n");
-    } else {
-      printf("Unable to reserve data!\n");
-      return -1;
-    }
-  } else {
-    printf("Unable to calculate output date size\n");
-    return -1;
-  }
-
-  // Get reduced output data packet
-  if ( xip_fir_v7_2_data_get(fir_default,fir_default_out2,0)== XIP_STATUS_OK) {
-    printf("Fetched result: ");
-    print_array_real(fir_default_out2);
-  } else {
-    printf("Error getting data\n");
-    return -1;
-  }
-
-  // Apply reset to model
-  printf("Apply reset\n");
-  if ( xip_fir_v7_2_reset(fir_default) != XIP_STATUS_OK) {
-    printf("Error applying reset\n");
-    return -1;
-  }
-
-  // Try fetching some data
-  if ( xip_fir_v7_2_data_get(fir_default,fir_default_out2,0)== XIP_STATUS_OK) {
-    if ( fir_default_out2->dim[2] == 0 ) {
-      printf("Zero data fetched\n");
-    } else {
-      printf("Error, fetched result: ");
-      print_array_real(fir_default_out2);
-      return -1;
-    }
-  } else {
-    printf("Error getting data\n");
-    return -1;
-  }
-
-  // Send input data again and read output
-  if ( xip_fir_v7_2_data_send(fir_default,din)== XIP_STATUS_OK) {
-    printf("Sent data     : ");
-  } else {
-    printf("Error sending data\n");
-    return -1;
-  }
-  print_array_real(din);
-
-  // Read full output packet size
-  fir_default_out2->dim[2]    = fir_default_cnfg.num_coeffs;
-  fir_default_out2->data_size = fir_default_out2->dim[1] * fir_default_out2->dim[1] * fir_default_out2->dim[2];
-  if (xip_array_real_reserve_data(fir_default_out2,fir_default_out2->data_size) == XIP_STATUS_OK) {
-    printf("Reserved data\n");
-  } else {
-    printf("Unable to reserve data!\n");
-    return -1;
-  }
-
-  if ( xip_fir_v7_2_data_get(fir_default,fir_default_out2,0)== XIP_STATUS_OK) {
-    printf("Fetched result: ");
-  } else {
-    printf("Error getting data\n");
-    return -1;
-  }
-  print_array_real(fir_default_out2);
+  
 
   //De-allocate data
   xip_array_real_destroy(din);
   xip_array_real_destroy(fir_default_out);
-  xip_array_real_destroy(fir_default_out2);
 
   //De-allocate fir instances
   xip_fir_v7_2_destroy(fir_default);
