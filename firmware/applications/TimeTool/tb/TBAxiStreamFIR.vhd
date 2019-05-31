@@ -53,26 +53,19 @@ architecture testbed of TBAxiStreamFIR is
 
    constant CLK_PERIOD_G : time := 10 ns;
 
-   constant SRC_CONFIG_C : AxiStreamConfigType := (
-      TSTRB_EN_C    => false,
-      TDATA_BYTES_C => 4, -- 128 bits
-      TDEST_BITS_C  => 0,
-      TID_BITS_C    => 0,
-      TKEEP_MODE_C  => TKEEP_COMP_C,
-      TUSER_BITS_C  => 2,
-      TUSER_MODE_C  => TUSER_FIRST_LAST_C);
+   signal appInMaster                 : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
+   signal appInMaster_pix_rev         : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
+   signal appInSlave                  : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
-   signal appInMaster                 : AxiStreamMasterType :=    AXI_STREAM_MASTER_INIT_C;
-   signal appInSlave                  : AxiStreamSlaveType  :=    AXI_STREAM_SLAVE_INIT_C;
+   signal appOutMaster                : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
+   signal appOutMaster_pix_rev         : AxiStreamMasterType :=    AXI_STREAM_MASTER_INIT_C;        
+   signal appOutSlave                 : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
-   signal appOutMaster                : AxiStreamMasterType :=    AXI_STREAM_MASTER_INIT_C;
-   signal appOutSlave                 : AxiStreamSlaveType  :=    AXI_STREAM_SLAVE_INIT_C;
+   signal resizeFIFOToFIRMaster       : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
+   signal resizeFIFOToFIRSlave        : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
-   signal resizeFIFOToFIRMaster       : AxiStreamMasterType :=    AXI_STREAM_MASTER_INIT_C;
-   signal resizeFIFOToFIRSlave        : AxiStreamSlaveType  :=    AXI_STREAM_SLAVE_INIT_C;
-
-   signal FIRToResizeFIFOMaster       : AxiStreamMasterType :=    AXI_STREAM_MASTER_INIT_C;
-   signal FIRToResizeFIFOSlave        : AxiStreamSlaveType  :=    AXI_STREAM_SLAVE_INIT_C;
+   signal FIRToResizeFIFOMaster       : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
+   signal FIRToResizeFIFOSlave        : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
    signal axiClk                      : sl;
    signal axiRst                      : sl;
@@ -92,6 +85,25 @@ architecture testbed of TBAxiStreamFIR is
    end component;
 
 begin
+
+   appInMaster_pix_rev.tValid <= appInMaster.tValid;
+   appInMaster_pix_rev.tLast  <= appInMaster.tLast;
+   
+   APP_IN_PIXEL_SWAP: for i in 0 to DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 generate
+
+        appInMaster_pix_rev.tData(i*8+7 downto i*8) <= appInMaster.tData(( (DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8+7) downto ((DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8));
+
+   end generate APP_IN_PIXEL_SWAP;
+   --
+   --
+   appOutMaster_pix_rev.tValid <= appOutMaster.tValid;
+   appOutMaster_pix_rev.tLast  <= appOutMaster.tLast;
+   
+   APP_OUT_PIXEL_SWAP: for i in 0 to DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 generate
+
+        appOutMaster_pix_rev.tData(i*8+7 downto i*8) <= appOutMaster.tData(( (DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8+7) downto ((DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8));
+
+   end generate APP_OUT_PIXEL_SWAP;
 
    delayedAxiClk <= axiClk after CLK_PERIOD_G/8;
 
@@ -141,7 +153,7 @@ begin
             -- Slave Port
             sAxisClk    => axiClk,
             sAxisRst    => axiRst,
-            sAxisMaster => appInMaster,
+            sAxisMaster => appInMaster_pix_rev, --appInMaster,
             sAxisSlave  => appInSlave,
             -- Master Port
             mAxisClk    => axiClk,
@@ -199,7 +211,7 @@ begin
          port map (
             sysClk         => axiClk,
             sysRst         => axiRst,
-            dataInMaster   => appOutMaster,
+            dataInMaster   => appOutMaster_pix_rev,
             dataInSlave    => appOutSlave);
 
 end testbed;

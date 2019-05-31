@@ -162,12 +162,12 @@ int create_step(xip_array_real* x) {
   for (path = 0; path < x->dim[0];path++) {
     for (chan = 0; chan < x->dim[1];chan++) {
        //xip_fir_v7_2_xip_array_real_set_chan(x,(double)((path+1)*(chan+1)),path,chan,0,P_BASIC);
-       xip_fir_v7_2_xip_array_real_set_chan(x,(double)(-32),path,chan,0,P_BASIC);
+       xip_fir_v7_2_xip_array_real_set_chan(x,(double)(2048),path,chan,0,P_BASIC);
        for (i = 1; i < int(x->dim[2]/2);i++) {
-         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(-32),path,chan,i,P_BASIC);
+         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(2048),path,chan,i,P_BASIC);
        }
       for (i = int(x->dim[2]/2); i < x->dim[2];i++) {
-         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(32),path,chan,i,P_BASIC);
+         xip_fir_v7_2_xip_array_real_set_chan(x,(double)(0),path,chan,i,P_BASIC);
        }
     }
   }
@@ -236,17 +236,17 @@ int main () {
   xip_fir_v7_2_config fir_default_cnfg;
   xip_fir_v7_2_default_config(&fir_default_cnfg);
 
-  const int fir_num_coeffs                   = 32;
+  const int fir_num_coeffs                   = 14;
   int output_width                           = 8;
-  const double fir_coeffs[fir_num_coeffs]  = {0, 0,   0,   0,   0,   0,   1,   2,   4,   6,   8,  10,  10,9,   6,   2,  -2,  -6,  -9, -10, -10,  -8,  -6,  -4,  -2,  -1,0,   0,   0,   0,   0};
-  //const double fir_coeffs[fir_num_coeffs]    = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0};
+  const double fir_coeffs[fir_num_coeffs]  = {-1,-2,-3,-4,-3,-2,-1,1,2,3,4,3,2,1};
+  //const double fir_coeffs[fir_num_coeffs]    = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0};
   fir_default_cnfg.coeff                     = &fir_coeffs[0];
   fir_default_cnfg.num_coeffs                = fir_num_coeffs;
   fir_default_cnfg.data_width                = 8;
-  fir_default_cnfg.coeff_width               = 8;
+  fir_default_cnfg.coeff_width               = 4;
   fir_default_cnfg.output_width              = output_width;
-  fir_default_cnfg.output_rounding_mode      = XIP_FIR_TRUNCATE_LSBS;
-  
+  fir_default_cnfg.output_rounding_mode      = XIP_FIR_TRUNCATE_LSBS;//XIP_FIR_FULL_PRECISION ;//
+  fir_default_cnfg.quantization              = XIP_FIR_INTEGER_COEFF;
 
 
 
