@@ -2,7 +2,7 @@
 -- File       : DrpPgpIlv.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
--- Last update: 2019-03-11
+-- Last update: 2019-05-30
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -214,7 +214,7 @@ architecture top_level of DrpPgpIlv is
    signal pgpRxN     : Slv4Array(0 downto 0);
    signal pgpTxP     : Slv4Array(0 downto 0);
    signal pgpTxN     : Slv4Array(0 downto 0);
-
+   signal pgpRefClkMon : slv    (0 downto 0);   
    signal seqError   : slv      (0 downto 0);
    
 begin
@@ -296,7 +296,7 @@ begin
     axilClks(i) <= mmcmClkOut(i)(1);
     axilRsts(i) <= mmcmRstOut(i)(1);
     
-    irst200(i) <= mmcmRstOut(i)(0) or sysRsts(i);
+    irst200(i) <= sysRsts(i);
 
     U_URST : entity work.RstSync
       port map ( clk      => clk200 (i),
@@ -325,6 +325,7 @@ begin
     
     U_Hw : entity work.HardwareSemi
       generic map (
+        REFCLK_SELECT_G => "186M",
         AXIL_CLK_FREQ_G => 125.0E6,
         AXI_BASE_ADDR_G => AXIL0_CROSSBAR_MASTERS_CONFIG_C(HWSEM_INDEX_C).baseAddr )
       port map (
@@ -338,6 +339,7 @@ begin
         axilReadSlave   => pgpAxilReadSlaves  (i),
         axilWriteMaster => pgpAxilWriteMasters(i),
         axilWriteSlave  => pgpAxilWriteSlaves (i),
+        usrRst          => userReset          (i),
         -- DMA Interface (dmaClk domain)
         dmaClks         => hwClks        (4*i+3 downto 4*i),
         dmaRsts         => hwRsts        (4*i+3 downto 4*i),
@@ -353,7 +355,8 @@ begin
         qsfp0RxP        => pgpRxP    (i),
         qsfp0RxN        => pgpRxN    (i),
         qsfp0TxP        => pgpTxP    (i),
-        qsfp0TxN        => pgpTxN    (i) );
+        qsfp0TxN        => pgpTxN    (i),
+        qsfp0RefClkMon  => pgpRefClkMon(i) );
 
     U_HwDma : entity work.AppIlvToMigDma
       generic map ( LANES_G       => 4,
@@ -385,7 +388,7 @@ begin
        port map ( axiClk          => clk200(i),
                   axiRst          => rst200(i),
                   seqError        => seqError      (i),
---                  usrRst          => userReset(i),
+                  usrRst          => userReset(i),
                   axiReadMaster   => memReadMasters(i),
                   axiReadSlave    => memReadSlaves (i),
 --                  hwIbOflow       => hwIbOflow     (4*i+3 downto 4*i),
@@ -405,7 +408,7 @@ begin
                   monClk(0)       => axilClks       (i),
                   monClk(1)       => sysClks        (i),
                   monClk(2)       => clk200         (i),
-                  monClk(3)       => clk200         (i),
+                  monClk(3)       => pgpRefClkMon   (i),
                   migConfig       => migConfig      (i),
                   migStatus       => migStatus      (i) );
 

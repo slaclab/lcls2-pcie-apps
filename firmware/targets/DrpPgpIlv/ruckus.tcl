@@ -2,7 +2,19 @@
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
 # Load common and sub-module ruckus.tcl files
-loadRuckusTcl $::env(TOP_DIR)/submodules/surf
+#loadRuckusTcl $::env(TOP_DIR)/submodules/surf
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/axi
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/base
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/dsp
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/devices
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/ethernet
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/protocols/i2c
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/protocols/packetizer
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/protocols/spi
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/protocols/ssi
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/protocols/pgp/pgp3
+
+loadRuckusTcl $::env(TOP_DIR)/submodules/surf/xilinx
 loadRuckusTcl $::env(TOP_DIR)/submodules/axi-pcie-core/hardware/XilinxKcu1500
 loadRuckusTcl $::env(TOP_DIR)/submodules/axi-pcie-core/hardware/XilinxKcu1500/ddr
 #loadRuckusTcl $::env(TOP_DIR)/submodules/axi-pcie-core/hardware/XilinxKcu1500/pcie-extended

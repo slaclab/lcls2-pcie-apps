@@ -5,7 +5,9 @@ export OVERRIDE_SUBMODULE_LOCKS = 1
 #  PRJ_VERSION = 0x00000000 - original with XVC
 #  PRJ_VERSION = 0x00000001 - no XVC
 #  PRJ_VERSION = 0x00000002 - Fix Deinterleave. Propagate user bits through MIG.  Transmit opcodes on all lanes.
-export PRJ_VERSION = 0x00000002
+#  PRJ_VERSION = 0x00000003 - Dma engine fixed.  Connect userReset to axilRst..pgpRst
+#  PRJ_VERSION = 0x00000004 - Use programmable clock for PGP reference at 185.7 MHz
+export PRJ_VERSION = 0x00000004
 
 # Define the Hardware Type in the axi-pcie-core
 export PCIE_HW_TYPE = XilinxKcu1500
