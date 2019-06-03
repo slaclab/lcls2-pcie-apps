@@ -201,7 +201,7 @@ begin
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
-                        if(signed(v.master.tData(i*8+7 downto i*8)) > signed(v.max)) then
+                        if(signed(v.master.tData(i*8+7 downto i*8)) >= signed(v.max)) then
                                 v.max       := v.master.tData(i*8+7 downto i*8);
                                 v.max_pixel := std_logic_vector(to_unsigned(v.counter,CAMERA_PIXEL_NUMBER_BITS)+to_unsigned(i, CAMERA_PIXEL_NUMBER_BITS));
                         
