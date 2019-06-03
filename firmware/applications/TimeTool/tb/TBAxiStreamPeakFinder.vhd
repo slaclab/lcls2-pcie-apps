@@ -202,16 +202,37 @@ begin
             mAxisSlave  => appOutSlave);
 
 
-      U_FileInput : entity work.AxiStreamToFile
-         generic map (
-            TPD_G              => TPD_G,
-            BYTE_SIZE_C        => 2+1,
-            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
-            CLK_PERIOD_G       => 10 ns)
-         port map (
-            sysClk         => axiClk,
-            sysRst         => axiRst,
-            dataInMaster   => appOutMaster_pix_rev,
-            dataInSlave    => appOutSlave);
+     U_FramePeakFinder : entity work.FramePeakFinder
+      generic map (
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- System Clock and Reset
+         sysClk          => axiClk,
+         sysRst          => axiRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster    => appOutMaster_pix_rev,
+         dataInSlave     => appOutSlave,
+         --dataOutMaster   => appOutMaster,
+         --dataOutSlave    => appOutSlave,
+         -- AXI-Lite Interface (sysClk domain)
+         --axilReadMaster  => axilReadMasters(FRAME_IIR_INDEX_C),
+         --axilReadSlave   => axilReadSlaves(FRAME_IIR_INDEX_C),
+         --axilWriteMaster => axilWriteMasters(FRAME_IIR_INDEX_C),
+         --axilWriteSlave  => axilWriteSlaves(FRAME_IIR_INDEX_C)
+         );
+
+
+      --U_FileInput : entity work.AxiStreamToFile
+      --   generic map (
+      --      TPD_G              => TPD_G,
+      --      BYTE_SIZE_C        => 2+1,
+      --      DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
+      --      CLK_PERIOD_G       => 10 ns)
+      --   port map (
+      --      sysClk         => axiClk,
+      --      sysRst         => axiRst,
+      --      dataInMaster   => appOutMaster_pix_rev,
+      --      dataInSlave    => appOutSlave);
 
 end testbed;
