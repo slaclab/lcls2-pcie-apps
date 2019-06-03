@@ -17,6 +17,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
 
 use work.StdRtlPkg.all;
 use work.AxiPkg.all;
@@ -66,6 +67,22 @@ architecture testbed of TBAxiStreamPeakFinder is
 
    signal FIRToResizeFIFOMaster       : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
    signal FIRToResizeFIFOSlave        : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
+   
+
+   constant NUM_AXIL_MASTERS_C     : positive         := 3;
+   subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
+   constant AXIL_CONFIG_C  : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
+
+   signal axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
+   signal axilWriteSlave  : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
+   signal axilReadMaster  : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
+   signal axilReadSlave   : AxiLiteReadSlaveType   := AXI_LITE_READ_SLAVE_INIT_C;
+
+   signal axilWriteMasters : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
+
 
    signal axiClk                      : sl;
    signal axiRst                      : sl;
@@ -85,6 +102,9 @@ architecture testbed of TBAxiStreamPeakFinder is
    end component;
 
 begin
+
+   appOutSlave.tReady <= '1';
+
 
    appInMaster_pix_rev.tValid <= appInMaster.tValid;
    appInMaster_pix_rev.tLast  <= appInMaster.tLast;
@@ -150,12 +170,12 @@ begin
          dataInMaster    => appInMaster,
          dataInSlave     => appInSlave,
          --dataOutMaster   => appOutMaster,
-         --dataOutSlave    => appOutSlave,
+         dataOutSlave    => appOutSlave,
          -- AXI-Lite Interface (sysClk domain)
-         --axilReadMaster  => axilReadMasters(FRAME_IIR_INDEX_C),
-         --axilReadSlave   => axilReadSlaves(FRAME_IIR_INDEX_C),
-         --axilWriteMaster => axilWriteMasters(FRAME_IIR_INDEX_C),
-         --axilWriteSlave  => axilWriteSlaves(FRAME_IIR_INDEX_C)
+         axilReadMaster  => axilReadMasters(0),
+         axilReadSlave   => axilReadSlaves(0),
+         axilWriteMaster => axilWriteMasters(0),
+         axilWriteSlave  => axilWriteSlaves(0)
          );
 
 

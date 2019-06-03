@@ -80,7 +80,7 @@ architecture mapping of FramePeakFinder is
       axilReadSlave   : AxiLiteReadSlaveType;
       axilWriteSlave  : AxiLiteWriteSlaveType;
       max             : slv(7 downto 0);
-      max_pixel       : slv(CAMERA_PIXEL_NUMBER_BITS downto 0);
+      max_pixel       : slv(CAMERA_PIXEL_NUMBER_BITS-1 downto 0);
       counter         : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
       scratchPad      : slv(31 downto 0);
       timeConstant    : slv(7 downto 0);
@@ -203,7 +203,7 @@ begin
 
                         if(signed(v.master.tData(i*8+7 downto i*8)) > signed(v.max)) then
                                 v.max       := v.master.tData(i*8+7 downto i*8);
-                                v.max_pix   := v.counter+i;
+                                v.max_pixel := std_logic_vector(to_unsigned(v.counter,CAMERA_PIXEL_NUMBER_BITS)+to_unsigned(i, CAMERA_PIXEL_NUMBER_BITS));
                         
                         end if;
                         
@@ -215,7 +215,7 @@ begin
                   end loop;
 
                   v.master.tData                                       := (others => '0');
-                  v.master.tData(CAMERA_PIXEL_NUMBER_BITS -1 downto 0) := v.max_pix;
+                  v.master.tData(CAMERA_PIXEL_NUMBER_BITS -1 downto 0) := v.max_pixel;
 
                  
                   v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;
