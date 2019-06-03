@@ -37,6 +37,7 @@ for i in range(n_frames):
 
       if(i%dropped_shot_rate!=starting_drop):
             edge_position = int(pixels_per_frame/2+(jitter*np.random.rand()-0.5))
+            print("edge_position = {}".format(edge_position))
             my_frame_array[edge_position:] = my_frame_array[edge_position:] *0.2
 
       my_frame_array = np.convolve(np.ones(8)/8,my_frame_array,mode='same').astype(np.int)      
