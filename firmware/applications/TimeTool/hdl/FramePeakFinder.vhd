@@ -201,19 +201,21 @@ begin
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
-                        if(v.master.tData(i*8+7 downto i*8) > v.max) then
+                        if(signed(v.master.tData(i*8+7 downto i*8)) > signed(v.max)) then
                                 v.max       := v.master.tData(i*8+7 downto i*8);
                                 v.max_pix   := v.counter+i;
                         
                         end if;
-                        v.master.tData                                       := (others downto '0');
-                        v.master.tData(CAMERA_PIXEL_NUMBER_BITS -1 downto 0) := v.max_pix;
+                        
                        
                         --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed-1)+signed(inMaster.tdata(i*8+7 downto i*8)))/v.tConst_signed,8);
                         --v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
 
 
                   end loop;
+
+                  v.master.tData                                       := (others => '0');
+                  v.master.tData(CAMERA_PIXEL_NUMBER_BITS -1 downto 0) := v.max_pix;
 
                  
                   v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;

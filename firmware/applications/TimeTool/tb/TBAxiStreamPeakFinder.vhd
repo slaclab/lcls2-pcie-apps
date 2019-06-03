@@ -135,71 +135,7 @@ begin
             dataOutMaster  => appInMaster,
             dataOutSlave   => appInSlave);
 
-      U_down_size_test : entity work.AxiStreamFifoV2
-         generic map (
-            -- General Configurations
-            TPD_G               => TPD_G,
-            SLAVE_READY_EN_G    => true,
-            VALID_THOLD_G       => 1,
-            -- FIFO configurations
-            BRAM_EN_G           => true,
-            GEN_SYNC_FIFO_G     => true,
-            FIFO_ADDR_WIDTH_G   => 9,
-            FIFO_PAUSE_THRESH_G => 500,
-            -- AXI Stream Port Configurations
-            SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
-            MASTER_AXI_CONFIG_G => DMA_AXIS_DOWNSIZED_CONFIG_G)
-         port map (
-            -- Slave Port
-            sAxisClk    => axiClk,
-            sAxisRst    => axiRst,
-            sAxisMaster => appInMaster_pix_rev, --appInMaster,
-            sAxisSlave  => appInSlave,
-            -- Master Port
-            mAxisClk    => axiClk,
-            mAxisRst    => axiRst,
-            mAxisMaster => resizeFIFOToFIRMaster,
-            mAxisSlave  => resizeFIFOToFIRSlave
-            );
-
-        dut : fir_compiler_0
-          port map (
-            aclk                            => delayedAxiClk,
-            s_axis_data_tvalid              => resizeFIFOToFIRMaster.tValid,
-            s_axis_data_tready              => resizeFIFOToFIRSlave.tReady,
-            s_axis_data_tdata               => resizeFIFOToFIRMaster.tData(7 downto 0),
-            s_axis_data_tlast               => resizeFIFOToFIRMaster.tLast,
-            m_axis_data_tvalid              => FIRToResizeFIFOMaster.tValid,
-            m_axis_data_tready              => FIRToResizeFIFOSlave.tReady,
-            m_axis_data_tdata               => FIRToResizeFIFOMaster.tData(7 downto 0),
-            m_axis_data_tlast               => FIRToResizeFIFOMaster.tLast
-            );
-
-      U_up_size_test : entity work.AxiStreamFifoV2
-         generic map (
-            -- General Configurations
-            TPD_G               => TPD_G,
-            SLAVE_READY_EN_G    => true,
-            VALID_THOLD_G       => 1,
-            -- FIFO configurations
-            BRAM_EN_G           => true,
-            GEN_SYNC_FIFO_G     => true,
-            FIFO_ADDR_WIDTH_G   => 9,
-            FIFO_PAUSE_THRESH_G => 500,
-            -- AXI Stream Port Configurations
-            SLAVE_AXI_CONFIG_G  => DMA_AXIS_DOWNSIZED_CONFIG_G,
-            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
-         port map (
-            -- Slave Port
-            sAxisClk    => axiClk,
-            sAxisRst    => axiRst,
-            sAxisMaster => FIRToResizeFIFOMaster,
-            sAxisSlave  => FIRToResizeFIFOSlave,
-            -- Master Port
-            mAxisClk    => axiClk,
-            mAxisRst    => axiRst,
-            mAxisMaster => appOutMaster,
-            mAxisSlave  => appOutSlave);
+    
 
 
      U_FramePeakFinder : entity work.FramePeakFinder
@@ -211,8 +147,8 @@ begin
          sysClk          => axiClk,
          sysRst          => axiRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster    => appOutMaster_pix_rev,
-         dataInSlave     => appOutSlave,
+         dataInMaster    => appInMaster,
+         dataInSlave     => appInSlave,
          --dataOutMaster   => appOutMaster,
          --dataOutSlave    => appOutSlave,
          -- AXI-Lite Interface (sysClk domain)
