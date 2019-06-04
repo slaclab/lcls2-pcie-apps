@@ -86,6 +86,12 @@ architecture testbed of TBAxiStreamFIR is
 
 begin
 
+   ------------------------------------------------------------------------------------------------------------
+   ------------------------------------------------------------------------------------------------------------
+   --Component for reversing byte order.  Needed for making FIFO down size compatible with FIR IP Core---------
+   ------------------------------------------------------------------------------------------------------------
+   ------------------------------------------------------------------------------------------------------------
+
    appInMaster_pix_rev.tValid <= appInMaster.tValid;
    appInMaster_pix_rev.tLast  <= appInMaster.tLast;
    
@@ -104,6 +110,13 @@ begin
         appOutMaster_pix_rev.tData(i*8+7 downto i*8) <= appOutMaster.tData(( (DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8+7) downto ((DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8));
 
    end generate APP_OUT_PIXEL_SWAP;
+
+
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
 
    delayedAxiClk <= axiClk after CLK_PERIOD_G/8;
 
