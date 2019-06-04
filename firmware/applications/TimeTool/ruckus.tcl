@@ -6,6 +6,7 @@ loadSource      -dir "$::DIR_PATH/hdl"
 # loadIpCore -path "$::DIR_PATH/coregen/ila_1.xci"
 loadIpCore -path "$::DIR_PATH/coregen/fir_compiler_3.xci"
 loadIpCore -path "$::DIR_PATH/coregen/fir_compiler_0.xci"
+loadIpCore -path "$::DIR_PATH/coregen/fir_compiler_1.xci"
 
 # Load Simulation
 loadSource -sim_only -dir "$::DIR_PATH/tb"

@@ -239,8 +239,21 @@ int main () {
   xip_fir_v7_2_config fir_default_cnfg;
   xip_fir_v7_2_default_config(&fir_default_cnfg);
 
-  const int fir_num_coeffs                   = 14;
-  const double fir_coeffs[fir_num_coeffs]  = {0,0,0,0,0,0,0,64,0,0,0,0,0,0};
+  const int fir_num_coeffs                   = 256;
+  double fir_coeffs[fir_num_coeffs];
+  for(int i=0; i<fir_num_coeffs;i=i+1){
+       fir_coeffs[i] = 0;
+        }
+
+  fir_coeffs[fir_num_coeffs-3] = 1;
+  for(int i=10; i<20;i=i+1){
+       fir_coeffs[i] = 1;
+        }
+
+  for(int i=0; i<10;i=i+1){
+       fir_coeffs[i] = -1;
+        }
+  //double fir_coeffs[fir_num_coeffs]  = {0,0,0,0,0,0,0,64,0,0,0,0,0,0};
   //const double fir_coeffs[fir_num_coeffs]  = {-1,-2,-3,-4,-3,-2,-1,1,2,3,4,3,2,1};
 
   int output_width                           = 8;
