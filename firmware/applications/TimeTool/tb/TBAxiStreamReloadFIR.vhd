@@ -108,7 +108,7 @@ architecture testbed of TBAxiStreamReloadFIR is
             m_axis_data_tdata       : out std_logic_vector(7 downto 0);
             m_axis_data_tlast       : out std_logic;
             event_s_reload_tlast_missing    : out std_logic;
-            event_s_reload_tlast_unexpected : out std_logic;);
+            event_s_reload_tlast_unexpected : out std_logic);
    end component;
 
 
@@ -204,7 +204,7 @@ begin
             mAxisSlave  => resizeFIFOToFIRSlave
             );
 
-        dut : fir_compiler_0
+        dut : fir_compiler_1
           port map (
             aclk                            => delayedAxiClk,
             s_axis_data_tvalid              => resizeFIFOToFIRMaster.tValid,
@@ -227,28 +227,6 @@ begin
             );
 
 
-
-  dut : entity work.fir_compiler_1
-    port map (
-      aclk                            => aclk,
-      s_axis_data_tvalid              => s_axis_data_tvalid,
-      s_axis_data_tready              => s_axis_data_tready,
-      s_axis_data_tdata               => s_axis_data_tdata,
-      s_axis_data_tlast               => s_axis_data_tlast,
-      s_axis_config_tvalid            => s_axis_config_tvalid,
-      s_axis_config_tready            => s_axis_config_tready,
-      s_axis_config_tdata             => s_axis_config_tdata,
-      s_axis_reload_tvalid            => s_axis_reload_tvalid,
-      s_axis_reload_tready            => s_axis_reload_tready,
-      s_axis_reload_tdata             => s_axis_reload_tdata,
-      s_axis_reload_tlast             => s_axis_reload_tlast,
-      m_axis_data_tvalid              => m_axis_data_tvalid,
-      m_axis_data_tready              => m_axis_data_tready,
-      m_axis_data_tdata               => m_axis_data_tdata,
-      m_axis_data_tlast               => m_axis_data_tlast,
-      event_s_reload_tlast_missing    => event_s_reload_tlast_missing,
-      event_s_reload_tlast_unexpected => event_s_reload_tlast_unexpected
-      );
 
       U_up_size_test : entity work.AxiStreamFifoV2
          generic map (
