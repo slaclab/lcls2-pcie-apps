@@ -52,6 +52,8 @@ architecture testbed of TBAxiStreamReloadFIR is
    constant DMA_AXIS_DOWNSIZED_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(1, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
 
    constant CLK_PERIOD_G : time := 10 ns;
+   constant T_HOLD       : time := 100 ns;
+   
 
    signal appInMaster                 : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
    signal appInMaster_pix_rev         : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
@@ -161,6 +163,16 @@ begin
          clkP => axiClk,
          rst  => axiRst);
 
+
+
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
+
+ 
+
    --------------------
    -- Test data
    --------------------  
@@ -266,5 +278,46 @@ begin
             sysRst         => axiRst,
             dataInMaster   => appOutMaster_pix_rev,
             dataInSlave    => appOutSlave);
+
+
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
+   ------------------------------------------------
+
+   reload_coeffs : process is
+        begin
+           for coef in 0 to 31 loop
+              s_axis_reload_tvalid <= '1';
+              s_axis_reload_tdata <= (others => '0');  -- clear unused bits of TDATA
+              s_axis_reload_tdata(7 downto 0) <= "01111111";
+              if coef = 31 then
+                s_axis_reload_tlast <= '1';  -- signal last transaction in reload packet
+              else
+                s_axis_reload_tlast <= '0';
+              end if;
+              loop
+                wait until rising_edge(axiclk);
+                exit when s_axis_reload_tready = '1';
+              end loop;
+              wait for T_HOLD;
+            end loop;
+            s_axis_reload_tlast  <= '0';
+            s_axis_reload_tvalid <= '0';
+
+            -- A packet on the config slave channel signals that the new coefficients should now be used.
+            -- The config packet is required only for signalling: its data is irrelevant.
+            s_axis_config_tvalid <= '1';
+            s_axis_config_tdata  <= (others => '0');  -- don't care about TDATA - it is unused
+            loop
+              wait until rising_edge(axiClk);
+              exit when s_axis_config_tready = '1';
+            end loop;
+            wait for T_HOLD;
+
+        end process reload_coeffs;
+   
+
 
 end testbed;
