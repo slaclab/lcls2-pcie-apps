@@ -204,6 +204,7 @@ begin
             mAxisSlave  => resizeFIFOToFIRSlave
             );
 
+
         dut : fir_compiler_1
           port map (
             aclk                            => delayedAxiClk,
@@ -225,7 +226,6 @@ begin
             event_s_reload_tlast_missing    => event_s_reload_tlast_missing,
             event_s_reload_tlast_unexpected => event_s_reload_tlast_unexpected
             );
-
 
 
       U_up_size_test : entity work.AxiStreamFifoV2
