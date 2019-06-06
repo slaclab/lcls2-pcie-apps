@@ -34,7 +34,8 @@ use ieee.std_logic_textio.all;
 entity TBAxiStreamReloadFIR is end TBAxiStreamReloadFIR;
 
 architecture testbed of TBAxiStreamReloadFIR is
-
+  
+   constant FIR_COEF_FILE_NAME : string    := TEST_FILE_PATH & "/fir_coef.dat";
    constant TEST_OUTPUT_FILE_NAME : string := TEST_FILE_PATH & "/output_results.dat";
 
    constant AXI_BASE_ADDR_G   : slv(31 downto 0) := x"00C0_0000";
@@ -54,6 +55,7 @@ architecture testbed of TBAxiStreamReloadFIR is
    constant CLK_PERIOD_G : time := 10 ns;
    constant T_HOLD       : time := 100 ps;
    
+   file fir_coef_file    : text;
 
    signal appInMaster                 : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
    signal appInMaster_pix_rev         : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
@@ -287,26 +289,25 @@ begin
    ------------------------------------------------
 
    reload_coeffs : process is
+        variable v_ILINE      : line;
+        variable my_coef      : slv(7 downto 0);
         begin
-        
+
+           file_open(fir_coef_file,FIR_COEF_FILE_NAME ,read_mode);
+
+
            wait for 1 us;
 
 
            for coef in 0 to 31 loop
+
+              readline(fir_coef_file,v_ILINE);
+              read(v_ILINE,my_coef);
+
               s_axis_reload_tvalid <= '1';
               s_axis_reload_tdata <= (others => '0');  -- clear unused bits of TDATA
 
-              --s_axis_reload_tdata(7 downto 0) <= "01111111";
-
-              if coef >= 16 then
-                --s_axis_reload_tdata(7) <='0';
-                s_axis_reload_tdata(7 downto 0) <= "01010101";
-
-              else
-                --s_axis_reload_tdata(7) <='0';
-                s_axis_reload_tdata(7 downto 0) <= "01111110";
-              end if;
-
+              s_axis_reload_tdata(7 downto 0) <= my_coef;
 
 
               if coef = 31 then
@@ -314,8 +315,9 @@ begin
               else
                 s_axis_reload_tlast <= '0';
               end if;
+
               loop
-                wait until rising_edge(axiclk);
+                wait until rising_edge(delayedAxiClk);
                 exit when s_axis_reload_tready = '1';
               end loop;
               wait for T_HOLD;
@@ -328,10 +330,11 @@ begin
             s_axis_config_tvalid <= '1';
             s_axis_config_tdata  <= (others => '0');  -- don't care about TDATA - it is unused
             loop
-              wait until rising_edge(axiClk);
+              wait until rising_edge(delayedAxiClk);
               exit when s_axis_config_tready = '1';
             end loop;
             wait for T_HOLD;
+            wait for 10 ms;
 
         end process reload_coeffs;
    
