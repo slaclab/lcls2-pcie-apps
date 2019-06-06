@@ -52,7 +52,7 @@ architecture testbed of TBAxiStreamReloadFIR is
    constant DMA_AXIS_DOWNSIZED_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(1, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
 
    constant CLK_PERIOD_G : time := 10 ns;
-   constant T_HOLD       : time := 100 ns;
+   constant T_HOLD       : time := 100 ps;
    
 
    signal appInMaster                 : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
@@ -288,10 +288,27 @@ begin
 
    reload_coeffs : process is
         begin
+        
+           wait for 1 us;
+
+
            for coef in 0 to 31 loop
               s_axis_reload_tvalid <= '1';
               s_axis_reload_tdata <= (others => '0');  -- clear unused bits of TDATA
-              s_axis_reload_tdata(7 downto 0) <= "01111111";
+
+              --s_axis_reload_tdata(7 downto 0) <= "01111111";
+
+              if coef >= 16 then
+                --s_axis_reload_tdata(7) <='0';
+                s_axis_reload_tdata(7 downto 0) <= "01010101";
+
+              else
+                --s_axis_reload_tdata(7) <='0';
+                s_axis_reload_tdata(7 downto 0) <= "01111110";
+              end if;
+
+
+
               if coef = 31 then
                 s_axis_reload_tlast <= '1';  -- signal last transaction in reload packet
               else
