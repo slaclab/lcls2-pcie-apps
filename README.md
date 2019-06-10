@@ -86,7 +86,7 @@ $ sudo /sbin/insmod ./datadev.ko cfgSize=0x50000 cfgRxCount=256 cfgTxCount=16
 $ sudo chmod 666 /dev/data_dev*
 
 # Check for the loaded device
-$ cat /proc/data_dev0
+$ cat /proc/datadev_0
 
 ```
 Note: There is a bug (we think in the PCIe IP core) that bricks the DMA when using `rmmod` to unload the driver.
