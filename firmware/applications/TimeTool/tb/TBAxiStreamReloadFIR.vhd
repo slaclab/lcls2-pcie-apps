@@ -151,7 +151,7 @@ begin
    ------------------------------------------------
    ------------------------------------------------
 
-   delayedAxiClk <= axiClk after CLK_PERIOD_G/8;
+   delayedAxiClk <= axiClk ; --after CLK_PERIOD_G/8
 
    --------------------
    -- Clocks and Resets
