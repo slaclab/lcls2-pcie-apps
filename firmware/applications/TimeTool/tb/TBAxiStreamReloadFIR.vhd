@@ -57,13 +57,17 @@ architecture testbed of TBAxiStreamReloadFIR is
    
    file fir_coef_file    : text;
 
-   signal appInMaster                 : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
-   signal appInMaster_pix_rev         : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
+   signal appInMaster                 : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
    signal appInSlave                  : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
-   signal appOutMaster                : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
-   signal appOutMaster_pix_rev        : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
+   signal appOutMaster                : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
    signal appOutSlave                 : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
+
+   signal reloadInMaster              : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
+   signal reloadInSlave               : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
+
+   signal configInMaster              : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
+   signal configInSlave               : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
    signal resizeFIFOToFIRMaster       : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
    signal resizeFIFOToFIRSlave        : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
@@ -71,22 +75,9 @@ architecture testbed of TBAxiStreamReloadFIR is
    signal FIRToResizeFIFOMaster       : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
    signal FIRToResizeFIFOSlave        : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
-
-   -- Config slave channel signals
-   signal s_axis_config_tvalid            : std_logic := '0';  -- payload is valid
-   signal s_axis_config_tready            : std_logic := '1';  -- slave is ready
-   signal s_axis_config_tdata             : std_logic_vector(7 downto 0) := (others => '0');  -- data payload
-
-   -- Reload slave channel signals
-   signal s_axis_reload_tvalid            : std_logic := '0';  -- payload is valid
-   signal s_axis_reload_tready            : std_logic := '1';  -- slave is ready
-   signal s_axis_reload_tdata             : std_logic_vector(7 downto 0) := (others => '0');  -- data payload
-   signal s_axis_reload_tlast             : std_logic := '0';  -- indicates end of packet
-
-
    -- Event signals
-   signal event_s_reload_tlast_missing    : std_logic  :=  '0';  -- s_axis_reload_tlast low at end of reload packet
-   signal event_s_reload_tlast_unexpected : std_logic  :=  '0';  -- s_axis_reload_tlast high not at end of reload packet
+   signal event_s_reload_tlast_missing    : std_logic  :=  '0';  -- reloadInMaster.tLast low at end of reload packet
+   signal event_s_reload_tlast_unexpected : std_logic  :=  '0';  -- reloadInMaster.tLast high not at end of reload packet
 
    signal axiClk                      : sl;
    signal axiRst                      : sl;
@@ -94,64 +85,10 @@ architecture testbed of TBAxiStreamReloadFIR is
    signal delayedAxiClk               : sl                  :=   '0';
 
 
- component fir_compiler_1
-      port (aclk                    : std_logic;
-            s_axis_data_tvalid      : std_logic;
-            s_axis_data_tready      : out std_logic;
-            s_axis_data_tdata       : std_logic_vector(7 downto 0);
-            s_axis_data_tlast       : std_logic;
-            s_axis_config_tvalid    : std_logic;
-            s_axis_config_tready    : out std_logic;
-            s_axis_config_tdata     : std_logic_vector(7 downto 0);
-            s_axis_reload_tvalid    : std_logic;
-            s_axis_reload_tready    : out std_logic;
-            s_axis_reload_tdata     : std_logic_vector(7 downto 0);
-            s_axis_reload_tlast     : std_logic;
-            m_axis_data_tvalid      : out std_logic;
-            m_axis_data_tready      : std_logic;
-            m_axis_data_tdata       : out std_logic_vector(7 downto 0);
-            m_axis_data_tlast       : out std_logic;
-            event_s_reload_tlast_missing    : out std_logic;
-            event_s_reload_tlast_unexpected : out std_logic);
-   end component;
-
 
 
 begin
 
-   ------------------------------------------------------------------------------------------------------------
-   ------------------------------------------------------------------------------------------------------------
-   --Component for reversing byte order.  Needed for making FIFO down size compatible with FIR IP Core---------
-   ------------------------------------------------------------------------------------------------------------
-   ------------------------------------------------------------------------------------------------------------
-
-   appInMaster_pix_rev.tValid <= appInMaster.tValid;
-   appInMaster_pix_rev.tLast  <= appInMaster.tLast;
-   
-   APP_IN_PIXEL_SWAP: for i in 0 to DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 generate
-
-        appInMaster_pix_rev.tData(i*8+7 downto i*8) <= appInMaster.tData(( (DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8+7) downto ((DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8));
-
-   end generate APP_IN_PIXEL_SWAP;
-   --
-   --
-   appOutMaster_pix_rev.tValid <= appOutMaster.tValid;
-   appOutMaster_pix_rev.tLast  <= appOutMaster.tLast;
-   
-   APP_OUT_PIXEL_SWAP: for i in 0 to DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 generate
-
-        appOutMaster_pix_rev.tData(i*8+7 downto i*8) <= appOutMaster.tData(( (DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8+7) downto ((DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8));
-
-   end generate APP_OUT_PIXEL_SWAP;
-
-
-   ------------------------------------------------
-   ------------------------------------------------
-   ------------------------------------------------
-   ------------------------------------------------
-   ------------------------------------------------
-
-   delayedAxiClk <= axiClk ; --after CLK_PERIOD_G/8
 
    --------------------
    -- Clocks and Resets
@@ -163,17 +100,7 @@ begin
          RST_HOLD_TIME_G   => 50 ns)
       port map (
          clkP => axiClk,
-         rst  => axiRst);
-
-
-
-   ------------------------------------------------
-   ------------------------------------------------
-   ------------------------------------------------
-   ------------------------------------------------
-   ------------------------------------------------
-
- 
+         rst  => axiRst); 
 
    --------------------
    -- Test data
@@ -191,82 +118,33 @@ begin
             dataOutMaster  => appInMaster,
             dataOutSlave   => appInSlave);
 
-      U_down_size_test : entity work.AxiStreamFifoV2
-         generic map (
-            -- General Configurations
-            TPD_G               => TPD_G,
-            SLAVE_READY_EN_G    => true,
-            VALID_THOLD_G       => 1,
-            -- FIFO configurations
-            BRAM_EN_G           => true,
-            GEN_SYNC_FIFO_G     => true,
-            FIFO_ADDR_WIDTH_G   => 9,
-            FIFO_PAUSE_THRESH_G => 500,
-            -- AXI Stream Port Configurations
-            SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
-            MASTER_AXI_CONFIG_G => DMA_AXIS_DOWNSIZED_CONFIG_G)
-         port map (
-            -- Slave Port
-            sAxisClk    => axiClk,
-            sAxisRst    => axiRst,
-            sAxisMaster => appInMaster_pix_rev, --appInMaster,
-            sAxisSlave  => appInSlave,
-            -- Master Port
-            mAxisClk    => axiClk,
-            mAxisRst    => axiRst,
-            mAxisMaster => resizeFIFOToFIRMaster,
-            mAxisSlave  => resizeFIFOToFIRSlave
-            );
+   --------------------
+   -- Surf wrapped FIR filter
+   -------------------- 
 
 
-        dut : fir_compiler_1
-          port map (
-            aclk                            => delayedAxiClk,
-            s_axis_data_tvalid              => resizeFIFOToFIRMaster.tValid,
-            s_axis_data_tready              => resizeFIFOToFIRSlave.tReady,
-            s_axis_data_tdata               => resizeFIFOToFIRMaster.tData(7 downto 0),
-            s_axis_data_tlast               => resizeFIFOToFIRMaster.tLast,
-            s_axis_config_tvalid            => s_axis_config_tvalid,
-            s_axis_config_tready            => s_axis_config_tready,
-            s_axis_config_tdata             => s_axis_config_tdata,
-            s_axis_reload_tvalid            => s_axis_reload_tvalid,
-            s_axis_reload_tready            => s_axis_reload_tready,
-            s_axis_reload_tdata             => s_axis_reload_tdata,
-            s_axis_reload_tlast             => s_axis_reload_tlast,
-            m_axis_data_tvalid              => FIRToResizeFIFOMaster.tValid,
-            m_axis_data_tready              => FIRToResizeFIFOSlave.tReady,
-            m_axis_data_tdata               => FIRToResizeFIFOMaster.tData(7 downto 0),
-            m_axis_data_tlast               => FIRToResizeFIFOMaster.tLast,
-            event_s_reload_tlast_missing    => event_s_reload_tlast_missing,
-            event_s_reload_tlast_unexpected => event_s_reload_tlast_unexpected
-            );
+   edge_to_peak: entity work.FrameFIR
+   generic map(
+      TPD_G             => TPD_G,
+      DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+      DEBUG_G           => true )
+   port map(
+      -- System Interface
+      sysClk          => axiClk,
+      sysRst          => axiRst,
+      -- DMA Interfaces  (sysClk domain)
+      dataInMaster    => appInMaster,
+      dataInSlave     => appInSlave,
+      dataOutMaster   => appOutMaster,
+      dataOutSlave    => appOutSlave,
+      -- coefficient reload  (sysClk domain)
+      reloadInMaster  => reloadInMaster,
+      reloadInSlave   => reloadInSlave,
+      configInMaster  => configInMaster,
+      configInSlave   => configInSlave);
 
 
-      U_up_size_test : entity work.AxiStreamFifoV2
-         generic map (
-            -- General Configurations
-            TPD_G               => TPD_G,
-            SLAVE_READY_EN_G    => true,
-            VALID_THOLD_G       => 1,
-            -- FIFO configurations
-            BRAM_EN_G           => true,
-            GEN_SYNC_FIFO_G     => true,
-            FIFO_ADDR_WIDTH_G   => 9,
-            FIFO_PAUSE_THRESH_G => 500,
-            -- AXI Stream Port Configurations
-            SLAVE_AXI_CONFIG_G  => DMA_AXIS_DOWNSIZED_CONFIG_G,
-            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
-         port map (
-            -- Slave Port
-            sAxisClk    => axiClk,
-            sAxisRst    => axiRst,
-            sAxisMaster => FIRToResizeFIFOMaster,
-            sAxisSlave  => FIRToResizeFIFOSlave,
-            -- Master Port
-            mAxisClk    => axiClk,
-            mAxisRst    => axiRst,
-            mAxisMaster => appOutMaster,
-            mAxisSlave  => appOutSlave);
+
 
 
       U_FileInput : entity work.AxiStreamToFile
@@ -278,7 +156,7 @@ begin
          port map (
             sysClk         => axiClk,
             sysRst         => axiRst,
-            dataInMaster   => appOutMaster_pix_rev,
+            dataInMaster   => appOutMaster,
             dataInSlave    => appOutSlave);
 
 
@@ -304,34 +182,34 @@ begin
               readline(fir_coef_file,v_ILINE);
               read(v_ILINE,my_coef);
 
-              s_axis_reload_tvalid <= '1';
-              s_axis_reload_tdata <= (others => '0');  -- clear unused bits of TDATA
+              reloadInMaster.tValid <= '1';
+              reloadInMaster.tData <= (others => '0');  -- clear unused bits of TDATA
 
-              s_axis_reload_tdata(7 downto 0) <= my_coef;
+              reloadInMaster.tData(7 downto 0) <= my_coef;
 
 
               if coef = 31 then
-                s_axis_reload_tlast <= '1';  -- signal last transaction in reload packet
+                reloadInMaster.tLast <= '1';  -- signal last transaction in reload packet
               else
-                s_axis_reload_tlast <= '0';
+                reloadInMaster.tLast <= '0';
               end if;
 
               loop
                 wait until rising_edge(delayedAxiClk);
-                exit when s_axis_reload_tready = '1';
+                exit when reloadInSlave.tReady = '1';
               end loop;
               wait for T_HOLD;
             end loop;
-            s_axis_reload_tlast  <= '0';
-            s_axis_reload_tvalid <= '0';
+            reloadInMaster.tLast  <= '0';
+            reloadInMaster.tValid <= '0';
 
             -- A packet on the config slave channel signals that the new coefficients should now be used.
             -- The config packet is required only for signalling: its data is irrelevant.
-            s_axis_config_tvalid <= '1';
-            s_axis_config_tdata  <= (others => '0');  -- don't care about TDATA - it is unused
+            configInMaster.tValid <= '1';
+            configInMaster.tData  <= (others => '0');  -- don't care about TDATA - it is unused
             loop
               wait until rising_edge(delayedAxiClk);
-              exit when s_axis_config_tready = '1';
+              exit when configInSlave.tReady = '1';
             end loop;
             wait for T_HOLD;
             wait for 10 ms;
