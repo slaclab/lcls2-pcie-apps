@@ -84,7 +84,7 @@ architecture mapping of FramePeakFinder is
       scratchPad      : slv(31 downto 0);
       timeConstant    : slv(7 downto 0);
       axi_test        : slv(31 downto 0);
-      state           : StateType);
+      state           : StateType;
    end record RegType;
 
    constant REG_INIT_C : RegType := (
