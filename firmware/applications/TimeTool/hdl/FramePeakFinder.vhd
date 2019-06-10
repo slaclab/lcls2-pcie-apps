@@ -67,8 +67,7 @@ architecture mapping of FramePeakFinder is
    constant CAMERA_PIXEL_NUMBER_BITS      : positive            := 11;
    constant CAMERA_PIXEL_NUMBER           : positive            := 2**CAMERA_PIXEL_NUMBER_BITS;   --2048 pixels
 
-   --type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
-   type CameraFrameBuffer is array (natural range<>) of signed((CAMERA_RESOLUTION_BITS-1) downto 0);
+
 
    type StateType is (
       IDLE_S,
@@ -85,8 +84,7 @@ architecture mapping of FramePeakFinder is
       scratchPad      : slv(31 downto 0);
       timeConstant    : slv(7 downto 0);
       axi_test        : slv(31 downto 0);
-      state           : StateType;
-      rollingImage    : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
+      state           : StateType);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
