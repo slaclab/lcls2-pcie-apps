@@ -90,6 +90,7 @@ architecture mapping of FrameFIR is
 
  component fir_compiler_1
       port (aclk                    : std_logic;
+            aresetn                 : std_logic;
             s_axis_data_tvalid      : std_logic;
             s_axis_data_tready      : out std_logic;
             s_axis_data_tdata       : std_logic_vector(7 downto 0);
@@ -181,6 +182,7 @@ begin
        dut : fir_compiler_1
           port map (
             aclk                            => sysClk,
+            aresetn                         => not sysRst,
             s_axis_data_tvalid              => resizeFIFOToFIRMaster.tValid,
             s_axis_data_tready              => resizeFIFOToFIRSlave.tReady,
             s_axis_data_tdata               => resizeFIFOToFIRMaster.tData(7 downto 0),

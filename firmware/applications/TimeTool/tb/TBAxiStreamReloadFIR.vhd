@@ -69,12 +69,6 @@ architecture testbed of TBAxiStreamReloadFIR is
    signal configInMaster              : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
    signal configInSlave               : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
-   signal resizeFIFOToFIRMaster       : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
-   signal resizeFIFOToFIRSlave        : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
-
-   signal FIRToResizeFIFOMaster       : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
-   signal FIRToResizeFIFOSlave        : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
-
    -- Event signals
    signal event_s_reload_tlast_missing    : std_logic  :=  '0';  -- reloadInMaster.tLast low at end of reload packet
    signal event_s_reload_tlast_unexpected : std_logic  :=  '0';  -- reloadInMaster.tLast high not at end of reload packet
