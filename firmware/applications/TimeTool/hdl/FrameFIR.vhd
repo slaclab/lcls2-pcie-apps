@@ -116,7 +116,7 @@ begin
    dataInSlave   <= appInSlave;
 
    dataOutMaster <= appOutMaster_pix_rev;
-   appOutSlave   <= appOutSlave;
+   appOutSlave   <= dataOutSlave;
    
    --------------------------------
    --byte order change for input---
@@ -178,7 +178,7 @@ begin
             );
 
 
-        dut : fir_compiler_1
+       dut : fir_compiler_1
           port map (
             aclk                            => sysClk,
             s_axis_data_tvalid              => resizeFIFOToFIRMaster.tValid,
@@ -199,7 +199,6 @@ begin
             event_s_reload_tlast_missing    => event_s_reload_tlast_missing,
             event_s_reload_tlast_unexpected => event_s_reload_tlast_unexpected
             );
-
 
       U_up_size_test : entity work.AxiStreamFifoV2
          generic map (

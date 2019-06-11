@@ -82,8 +82,6 @@ architecture testbed of TBAxiStreamReloadFIR is
    signal axiClk                      : sl;
    signal axiRst                      : sl;
 
-   signal delayedAxiClk               : sl                  :=   '0';
-
 
 
 
@@ -195,7 +193,7 @@ begin
               end if;
 
               loop
-                wait until rising_edge(delayedAxiClk);
+                wait until rising_edge(axiClk);
                 exit when reloadInSlave.tReady = '1';
               end loop;
               wait for T_HOLD;
@@ -208,7 +206,7 @@ begin
             configInMaster.tValid <= '1';
             configInMaster.tData  <= (others => '0');  -- don't care about TDATA - it is unused
             loop
-              wait until rising_edge(delayedAxiClk);
+              wait until rising_edge(axiClk);
               exit when configInSlave.tReady = '1';
             end loop;
             wait for T_HOLD;
