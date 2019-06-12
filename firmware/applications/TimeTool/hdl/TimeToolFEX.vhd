@@ -27,20 +27,18 @@ use work.AppPkg.all;
 
 entity TimeToolFEX is
    generic (
-      TPD_G           : time             := 1 ns;
-      AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000");
+      TPD_G             : time                := 1 ns;
+      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"00C0_0000";
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2));
    port (
       -- Clock and Reset
       axilClk         : in  sl;
       axilRst         : in  sl;
-      -- Trigger Event streams (axilClk domain)
-      trigMaster      : in  AxiStreamMasterType;
-      trigSlave       : out AxiStreamSlaveType;
       -- DMA Interfaces (axilClk domain). One for data into server, two for reloadable coefficients and config from server, one for prescaled data?
       dataInMaster    : in  AxiStreamMasterArray(3 downto 0);  
       dataInSlave     : out AxiStreamSlaveArray(3 downto 0);
-      eventMaster     : out AxiStreamMasterArray(3 downto 0);
-      eventSlave      : in  AxiStreamSlaveArray(3 downto 0);
+      eventMaster     : out AxiStreamMasterType;
+      eventSlave      : in  AxiStreamSlaveType;
       -- AXI-Lite Interface (axilClk domain)
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
@@ -50,24 +48,22 @@ end TimeToolFEX;
 
 architecture mapping of TimeToolFEX is
 
-   constant NUM_AXIS_MASTERS_G : positive := 12;
-   constant NUM_AXIL_MASTERS_C : natural  := NUM_AXIS_MASTERS_G;
+   constant NUM_AXIS_MASTERS_G : positive := 11;
+   constant NUM_AXIL_MASTERS_C : natural  := 8;
    
 
    subtype  AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
    subtype  AXIS_INDEX_RANGE_C is integer range NUM_AXIS_MASTERS_G-1 downto 0;
 
 
-   constant EVCFILTER_L           : natural  := 0;
-   constant SUBTRACTOR_L          : natural  := 1;
-   constant NULLFILTER_L          : natural  := 3;
-   constant PRESCALER_L           : natural  := 4;
-   constant EVENTBUILDER_L        : natural  := 5;
-   constant NULLFILTER_L          : natural  := 6;
-   constant FRAMEIIR_L            : natural  := 7;
-   constant SUBTRACTOR_L          : natural  := 8;
-   constant FIR_L                 : natural  := 9;
-   constant PEAKFINDER_L          : natural  := 10;
+   constant EVENTBUILDER_L        : natural  := 0;
+   constant EVCFILTER_L           : natural  := 1;
+   constant FIR_L                 : natural  := 2;
+   constant FRAMEIIR_L            : natural  := 3;
+   constant NULLFILTER_L          : natural  := 4;
+   constant PEAKFINDER_L          : natural  := 5;
+   constant PRESCALER_L           : natural  := 6;
+   constant SUBTRACTOR_L          : natural  := 7;
 
 
    constant REPEATER1_2_EVCFILTER           : natural  := 0;
@@ -76,12 +72,11 @@ architecture mapping of TimeToolFEX is
    constant REPEATER2_2_NULLFILTER          : natural  := 3;
    constant REPEATER2_2_PRESCALER           : natural  := 4;
    constant PRESCALER_2_EVENTBUILDER        : natural  := 5;
-   constant REPEATER2_2_NULLFILTER          : natural  := 6;
-   constant NULLFILTER_2_FRAMEIIR           : natural  := 7;
-   constant FRAMEIIR_2_SUBTRACTOR           : natural  := 8;
-   constant SUBTRACTOR_2_FIR                : natural  := 9;
-   constant FIR_2_PEAKFINDER                : natural  := 10;
-   constant PEAKFINDER_2_EVENTBUILDER       : natural  := 11;
+   constant NULLFILTER_2_FRAMEIIR           : natural  := 6;
+   constant FRAMEIIR_2_SUBTRACTOR           : natural  := 7;
+   constant SUBTRACTOR_2_FIR                : natural  := 8;
+   constant FIR_2_PEAKFINDER                : natural  := 9;
+   constant PEAKFINDER_2_EVENTBUILDER       : natural  := 10;
    
 
    
@@ -127,7 +122,7 @@ begin
    ----------------------
    -- AXI Stream Repeater
    ----------------------
-   U_AxiStreamRepeater : entity work.AxiStreamRepeater
+   U_AxiStreamRepeater_1 : entity work.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
          NUM_MASTERS_G => 2)
@@ -151,7 +146,7 @@ begin
    EVCFILTER : entity work.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -170,7 +165,7 @@ begin
    ----------------------
    -- AXI Stream Repeater
    ----------------------
-   U_AxiStreamRepeater : entity work.AxiStreamRepeater
+   U_AxiStreamRepeater_2 : entity work.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
          NUM_MASTERS_G => 2)
@@ -194,7 +189,7 @@ begin
    PRESCALER : entity work.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -220,8 +215,8 @@ begin
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- System Clock and Reset
-         sysClk          => dmaClk,
-         sysRst          => dmaRst,
+         sysClk          => axilClk,
+         sysRst          => axilRst,
          -- DMA Interface (sysClk domain)
          dataInMaster    => axisMasters(REPEATER2_2_NULLFILTER),
          dataInSlave     => axisSlaves(REPEATER2_2_NULLFILTER),
@@ -240,8 +235,8 @@ begin
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- System Clock and Reset
-         sysClk          => dmaClk,
-         sysRst          => dmaRst,
+         sysClk          => axilClk,
+         sysRst          => axilRst,
          -- DMA Interface (sysClk domain)
          dataInMaster    => axisMasters(NULLFILTER_2_FRAMEIIR),
          dataInSlave     => axisSlaves(NULLFILTER_2_FRAMEIIR),
@@ -259,8 +254,8 @@ begin
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- System Clock and Reset
-         sysClk           => dmaClk,
-         sysRst           => dmaRst,
+         sysClk           => axilClk,
+         sysRst           => axilRst,
          -- DMA Interface (sysClk domain)
          dataInMaster     => axisMasters(REPEATER1_2_SUBTRACTOR),
          dataInSlave      => axisSlaves(REPEATER1_2_SUBTRACTOR),
@@ -287,8 +282,8 @@ begin
       DEBUG_G           => true )
    port map(
       -- System Interface
-      sysClk          => axiClk,
-      sysRst          => axiRst,
+      sysClk          => axilClk,
+      sysRst          => axilRst,
       -- DMA Interfaces  (sysClk domain)
       dataInMaster    => axisMasters(SUBTRACTOR_2_FIR),
       dataInSlave     => axisSlaves(SUBTRACTOR_2_FIR),
@@ -296,9 +291,9 @@ begin
       dataOutSlave    => axisSlaves(FIR_2_PEAKFINDER),
       -- coefficient reload  (sysClk domain)
       reloadInMaster  => dataInMaster(1),
-      reloadInSlave   => dataInSlaves(1),
+      reloadInSlave   => dataInSlave(1),
       configInMaster  => dataInMaster(2),
-      configInSlave   => dataInSlaves(2));
+      configInSlave   => dataInSlave(2));
 
 
   --------------------
@@ -311,8 +306,8 @@ begin
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- System Clock and Reset
-         sysClk          => axiClk,
-         sysRst          => axiRst,
+         sysClk          => axilClk,
+         sysRst          => axilRst,
          -- DMA Interface (sysClk domain)
          dataInMaster    => axisMasters(FIR_2_PEAKFINDER),
          dataInSlave     => axisSlaves(FIR_2_PEAKFINDER),
@@ -334,7 +329,7 @@ begin
       generic map (
          TPD_G         => TPD_G,
          NUM_SLAVES_G  => 2,
-         AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+         AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- Clock and Reset
          axisClk             => axilClk,

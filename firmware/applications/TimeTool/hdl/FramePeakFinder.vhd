@@ -98,8 +98,7 @@ architecture mapping of FramePeakFinder is
       scratchPad      => (others => '0'),
       timeConstant    => (others=>'0'),
       axi_test        => (others=>'0'),
-      state           => IDLE_S,
-      rollingImage    => (others => (others => '0') ) );
+      state           => IDLE_S);
 
 ---------------------------------------
 -------record intitial value-----------
@@ -205,10 +204,6 @@ begin
                         
                         end if;
                         
-                       
-                        --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed-1)+signed(inMaster.tdata(i*8+7 downto i*8)))/v.tConst_signed,8);
-                        --v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
-
 
                   end loop;
 
