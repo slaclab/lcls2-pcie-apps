@@ -34,9 +34,9 @@ entity TimeToolFEX is
       -- Clock and Reset
       axilClk         : in  sl;
       axilRst         : in  sl;
-      -- DMA Interfaces (axilClk domain). One for data into server, two for reloadable coefficients and config from server, one for prescaled data?
-      dataInMaster    : in  AxiStreamMasterArray(3 downto 0);  
-      dataInSlave     : out AxiStreamSlaveArray(3 downto 0);
+      -- DMA Interfaces (axilClk domain). One for data into server, two for reloadable coefficients and config from server, one trig master?
+      dataInMaster    : in  AxiStreamMasterArray(2 downto 0);  
+      dataInSlave     : out AxiStreamSlaveArray(2 downto 0);
       eventMaster     : out AxiStreamMasterType;
       eventSlave      : in  AxiStreamSlaveType;
       -- AXI-Lite Interface (axilClk domain)
@@ -81,7 +81,7 @@ architecture mapping of TimeToolFEX is
 
    
 
-   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 18, 14);
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 17, 13);
 
    signal axilWriteMasters            : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
    signal axilWriteSlaves             : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
@@ -135,8 +135,8 @@ begin
          sAxisSlave   => dataInSlave(0),
          -- Masters
          mAxisMasters(0)   => axisMasters(REPEATER1_2_EVCFILTER),
-         mAxisSlaves(0)    => axisSlaves(REPEATER1_2_EVCFILTER),
          mAxisMasters(1)   => axisMasters(REPEATER1_2_SUBTRACTOR),
+         mAxisSlaves(0)    => axisSlaves(REPEATER1_2_EVCFILTER),
          mAxisSlaves(1)    => axisSlaves(REPEATER1_2_SUBTRACTOR));
 
 
@@ -178,8 +178,8 @@ begin
          sAxisSlave   => axisSlaves(EVCFILTER_2_REPEATER2),
          -- Masters
          mAxisMasters(0) => axisMasters(REPEATER2_2_PRESCALER),
-         mAxisSlaves(0)  => axisSlaves(REPEATER2_2_PRESCALER),
          mAxisMasters(1) => axisMasters(REPEATER2_2_NULLFILTER),
+         mAxisSlaves(0)  => axisSlaves(REPEATER2_2_PRESCALER),
          mAxisSlaves(1)  => axisSlaves(REPEATER2_2_NULLFILTER));
 
 

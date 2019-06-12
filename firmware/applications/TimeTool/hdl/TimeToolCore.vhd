@@ -72,6 +72,12 @@ architecture mapping of TimeToolCore is
    signal dataInMasters               : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
    signal dataInSlaves                : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
+   signal FIRreloadMaster             : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
+   signal FIRreloadSlave              : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
+   signal FIRconfigMaster             : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
+   signal FIRconfigSlave              : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
+
+
    signal dataIbMasters               : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
    signal dataIbSlaves                : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
@@ -196,19 +202,23 @@ begin
    -------------
    -- FEX Module
    -------------
-   U_TimeToolFEX : entity work.TimeToolFEX_placeholder
+   U_TimeToolFEX : entity work.TimeToolFEX
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- System Clock and Reset
-         sysClk          => axilClk,
-         sysRst          => axilRst,
+         axilClk         => axilClk,
+         axilRst         => axilRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster    => dataIbMasters(FEX_INDEX_C),
-         dataInSlave     => dataIbSlaves(FEX_INDEX_C),
-         dataOutMaster   => dspObMasters(FEX_INDEX_C),
-         dataOutSlave    => dspObSlaves(FEX_INDEX_C),
+         dataInMaster(0)    => dataIbMasters(FEX_INDEX_C),
+         dataInMaster(1)    => FIRreloadMaster,
+         dataInMaster(2)    => FIRconfigMaster,
+         dataInSlave(0)     => dataIbSlaves(FEX_INDEX_C),
+         dataInSlave(1)     => FIRreloadSlave,
+         dataInSlave(2)     => FIRconfigSlave,
+         eventMaster        => dspObMasters(FEX_INDEX_C),
+         eventSlave         => dspObSlaves(FEX_INDEX_C),
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMasters(FEX_INDEX_C),
          axilReadSlave   => axilReadSlaves(FEX_INDEX_C),
