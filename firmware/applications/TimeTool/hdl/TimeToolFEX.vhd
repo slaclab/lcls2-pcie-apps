@@ -58,6 +58,18 @@ architecture mapping of TimeToolFEX is
    subtype  AXIS_INDEX_RANGE_C is integer range NUM_AXIS_MASTERS_G-1 downto 0;
 
 
+   constant EVCFILTER_L           : natural  := 0;
+   constant SUBTRACTOR_L          : natural  := 1;
+   constant NULLFILTER_L          : natural  := 3;
+   constant PRESCALER_L           : natural  := 4;
+   constant EVENTBUILDER_L        : natural  := 5;
+   constant NULLFILTER_L          : natural  := 6;
+   constant FRAMEIIR_L            : natural  := 7;
+   constant SUBTRACTOR_L          : natural  := 8;
+   constant FIR_L                 : natural  := 9;
+   constant PEAKFINDER_L          : natural  := 10;
+
+
    constant REPEATER1_2_EVCFILTER           : natural  := 0;
    constant REPEATER1_2_SUBTRACTOR          : natural  := 1;
    constant EVCFILTER_2_REPEATER2           : natural  := 2;
@@ -136,7 +148,7 @@ begin
    -------------------
    -- Prescaler Module. Place holder for event code based filter.
    -------------------
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   EVCFILTER : entity work.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
@@ -150,10 +162,10 @@ begin
          dataOutMaster   => axisMasters(EVCFILTER_2_REPEATER2),
          dataOutSlave    => axisSlaves(EVCFILTER_2_REPEATER2),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(PRESCALE_INDEX_C),
-         axilReadSlave   => axilReadSlaves(PRESCALE_INDEX_C),
-         axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
+         axilReadMaster  => axilReadMasters(EVCFILTER_L),
+         axilReadSlave   => axilReadSlaves(EVCFILTER_L),
+         axilWriteMaster => axilWriteMasters(EVCFILTER_L),
+         axilWriteSlave  => axilWriteSlaves(EVCFILTER_L));
 
    ----------------------
    -- AXI Stream Repeater
@@ -179,7 +191,7 @@ begin
    -------------------
    -- Prescaler Module
    -------------------
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   PRESCALER : entity work.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
@@ -193,10 +205,10 @@ begin
          dataOutMaster   => axisMasters(PRESCALER_2_EVENTBUILDER),
          dataOutSlave    => axisSlaves(PRESCALER_2_EVENTBUILDER),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(PRESCALE_INDEX_C),
-         axilReadSlave   => axilReadSlaves(PRESCALE_INDEX_C),
-         axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
+         axilReadMaster  => axilReadMasters(PRESCALER_L),
+         axilReadSlave   => axilReadSlaves(PRESCALER_L),
+         axilWriteMaster => axilWriteMasters(PRESCALER_L),
+         axilWriteSlave  => axilWriteSlaves(PRESCALER_L));
 
    -------------------
    -- background subtraction
@@ -216,10 +228,10 @@ begin
          dataOutMaster   => axisMasters(NULLFILTER_2_FRAMEIIR),
          dataOutSlave    => axisSlaves(NULLFILTER_2_FRAMEIIR),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(NULL_FILTER_INDEX_C),
-         axilReadSlave   => axilReadSlaves(NULL_FILTER_INDEX_C),
-         axilWriteMaster => axilWriteMasters(NULL_FILTER_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(NULL_FILTER_INDEX_C));
+         axilReadMaster  => axilReadMasters(NULLFILTER_L),
+         axilReadSlave   => axilReadSlaves(NULLFILTER_L),
+         axilWriteMaster => axilWriteMasters(NULLFILTER_L),
+         axilWriteSlave  => axilWriteSlaves(NULLFILTER_L));
 
 
    U_FrameIIR : entity work.FrameIIR
@@ -236,10 +248,10 @@ begin
          dataOutMaster   => axisMasters(FRAMEIIR_2_SUBTRACTOR),
          dataOutSlave    => axisSlaves(FRAMEIIR_2_SUBTRACTOR),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(FRAME_IIR_INDEX_C),
-         axilReadSlave   => axilReadSlaves(FRAME_IIR_INDEX_C),
-         axilWriteMaster => axilWriteMasters(FRAME_IIR_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(FRAME_IIR_INDEX_C));
+         axilReadMaster  => axilReadMasters(FRAMEIIR_L),
+         axilReadSlave   => axilReadSlaves(FRAMEIIR_L),
+         axilWriteMaster => axilWriteMasters(FRAMEIIR_L),
+         axilWriteSlave  => axilWriteSlaves(FRAMEIIR_L));
 
    U_FrameSubtractor : entity work.FrameSubtractor
       generic map (
@@ -258,10 +270,10 @@ begin
          pedestalInMaster =>  axisMasters(FRAMEIIR_2_SUBTRACTOR),
          pedestalInSlave  =>  axisSlaves(FRAMEIIR_2_SUBTRACTOR),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(FRAME_SUBTRACTOR_INDEX_C),
-         axilReadSlave   => axilReadSlaves(FRAME_SUBTRACTOR_INDEX_C),
-         axilWriteMaster => axilWriteMasters(FRAME_SUBTRACTOR_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(FRAME_SUBTRACTOR_INDEX_C));
+         axilReadMaster  => axilReadMasters(SUBTRACTOR_L),
+         axilReadSlave   => axilReadSlaves(SUBTRACTOR_L),
+         axilWriteMaster => axilWriteMasters(SUBTRACTOR_L),
+         axilWriteSlave  => axilWriteSlaves(SUBTRACTOR_L));
 
    --------------------
    -- Surf wrapped FIR filter
@@ -307,10 +319,10 @@ begin
          dataOutMaster   => axisMasters(PEAKFINDER_2_EVENTBUILDER),
          dataOutSlave    => axisSlaves(PEAKFINDER_2_EVENTBUILDER),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(0),
-         axilReadSlave   => axilReadSlaves(0),
-         axilWriteMaster => axilWriteMasters(0),
-         axilWriteSlave  => axilWriteSlaves(0)
+         axilReadMaster  => axilReadMasters(PEAKFINDER_L),
+         axilReadSlave   => axilReadSlaves(PEAKFINDER_L),
+         axilWriteMaster => axilWriteMasters(PEAKFINDER_L),
+         axilWriteSlave  => axilWriteSlaves(PEAKFINDER_L)
          );
 
 
@@ -328,10 +340,10 @@ begin
          axisClk             => axilClk,
          axisRst             => axilRst,
          -- AXI-Lite Interface (axisClk domain)
-         axilReadMaster      => axilReadMasters(EVENT_INDEX_C),
-         axilReadSlave       => axilReadSlaves(EVENT_INDEX_C),
-         axilWriteMaster     => axilWriteMasters(EVENT_INDEX_C),
-         axilWriteSlave      => axilWriteSlaves(EVENT_INDEX_C),
+         axilReadMaster      => axilReadMasters(EVENTBUILDER_L),
+         axilReadSlave       => axilReadSlaves(EVENTBUILDER_L),
+         axilWriteMaster     => axilWriteMasters(EVENTBUILDER_L),
+         axilWriteSlave      => axilWriteSlaves(EVENTBUILDER_L),
          -- Inbound Master AXIS Interfaces
          sAxisMasters(0)     => axisMasters(PEAKFINDER_2_EVENTBUILDER),
          sAxisMasters(1)     => axisMasters(PRESCALER_2_EVENTBUILDER),
