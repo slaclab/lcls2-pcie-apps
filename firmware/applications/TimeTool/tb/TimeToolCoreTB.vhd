@@ -207,9 +207,13 @@ begin
       wait until axiRst = '0';
 
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"5", true);  --prescaler
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0004", x"3", true);  --fex add value
+      --axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0004", x"3", true);  --fex add value
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0fd0", x"1", true);  --event builder bypass
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C3_0004", x"0", true);  --time tool core by pass
+
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_3004", x"3", true);  --iir filter
+
+       
 
    end process test;
 

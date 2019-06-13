@@ -28,7 +28,7 @@ use work.AppPkg.all;
 entity TimeToolFEX is
    generic (
       TPD_G             : time                := 1 ns;
-      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"00C0_0000";
+      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"00C1_0000";
       DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2));
    port (
       -- Clock and Reset
@@ -81,7 +81,7 @@ architecture mapping of TimeToolFEX is
 
    
 
-   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 17, 13);
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 16, 12);
 
    signal axilWriteMasters            : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
    signal axilWriteSlaves             : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);

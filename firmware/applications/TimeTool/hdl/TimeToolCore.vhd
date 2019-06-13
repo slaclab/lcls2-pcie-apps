@@ -204,8 +204,9 @@ begin
    -------------
    U_TimeToolFEX : entity work.TimeToolFEX
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+         TPD_G               => TPD_G,
+         AXI_BASE_ADDR_G     => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr,
+         DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_C)
       port map (
          -- System Clock and Reset
          axilClk         => axilClk,

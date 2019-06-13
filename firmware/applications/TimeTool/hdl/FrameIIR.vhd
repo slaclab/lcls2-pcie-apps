@@ -94,7 +94,7 @@ architecture mapping of FrameIIR is
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter         => 0,
       scratchPad     => (others => '0'),
-      timeConstant    => (others=>'0'),
+      timeConstant    => (0=>'1',others=>'0'),
       tConst_signed   => to_signed(1,8),
       axi_test        => (others=>'0'),
       state           => IDLE_S,
@@ -155,8 +155,8 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
-      axiSlaveRegister (axilEp, x"0004", 0, v.timeConstant(7 downto 0));
+      axiSlaveRegister (axilEp, x"000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"004", 0, v.timeConstant(7 downto 0));
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
@@ -199,7 +199,7 @@ begin
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
                        
-                        v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed-1)+signed(inMaster.tdata(i*8+7 downto i*8)))/v.tConst_signed,8);
+                        v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed)+signed(inMaster.tdata(i*8+7 downto i*8)))/(v.tConst_signed+1),8);
                         v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
 
 
