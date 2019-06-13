@@ -47,28 +47,6 @@ architecture testbed of TimeToolCoreTB is
 
    constant NUM_MASTERS_G              : positive           := 3;
 
-   ----------------------------
-   ----------------------------
-   ----------------------------
-   constant NUM_AXIL_MASTERS_C         : natural            := 4;
-
-   constant PRESCALE_INDEX_C           : natural            := 0;
-   constant NULL_FILTER_INDEX_C        : natural            := 1;
-   constant FRAME_IIR_INDEX_C          : natural            := 2;
-   constant FRAME_SUBTRACTOR_INDEX_C   : natural            := 3;
-   constant NUM_REPEATER_OUTS          : natural            := 2;
-
-
-   subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
-
-   constant AXIL_CONFIG_C  : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
-
- 
-   ----------------------------
-   ----------------------------
-   ----------------------------
-
-
    constant DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
 
 
@@ -103,11 +81,6 @@ architecture testbed of TimeToolCoreTB is
 
    signal configInMaster  : AxiStreamMasterType    :=  AXI_STREAM_MASTER_INIT_C;        
    signal configInSlave   : AxiStreamSlaveType     :=  AXI_STREAM_SLAVE_INIT_C;
-
-   subtype REPEATER_INDEX_RANGE_C is integer range NUM_REPEATER_OUTS-1 downto 0;
-
-   signal dataIbMasters : AxiStreamMasterArray(REPEATER_INDEX_RANGE_C);
-   signal dataIbSlaves  : AxiStreamSlaveArray(REPEATER_INDEX_RANGE_C);
 
    signal axiClk        : sl;
    signal axiRst        : sl;
@@ -207,11 +180,16 @@ begin
       wait until axiRst = '0';
 
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"5", true);  --prescaler
-      --axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0004", x"3", true);  --fex add value
+      --axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0004", x"3", true);  --fex placehold add value commented out. will be deleted once fex_placeholder is replaced by actual fex
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0fd0", x"1", true);  --event builder bypass
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C3_0004", x"0", true);  --time tool core by pass
+   
 
+      --actual fex axi write data
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_1004", x"5", true);  --event code filter that is being simulated by a prescaler
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_3004", x"3", true);  --iir filter
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0fd0", x"0", true);  --event builder inside fex. don't bypass anything since no tpm is being used.
+
 
        
 

@@ -56,14 +56,14 @@ architecture mapping of TimeToolFEX is
    subtype  AXIS_INDEX_RANGE_C is integer range NUM_AXIS_MASTERS_G-1 downto 0;
 
 
-   constant EVENTBUILDER_L        : natural  := 0;
-   constant EVCFILTER_L           : natural  := 1;
-   constant FIR_L                 : natural  := 2;
-   constant FRAMEIIR_L            : natural  := 3;
-   constant NULLFILTER_L          : natural  := 4;
-   constant PEAKFINDER_L          : natural  := 5;
-   constant PRESCALER_L           : natural  := 6;
-   constant SUBTRACTOR_L          : natural  := 7;
+   constant EVENTBUILDER_L                  : natural  := 0;
+   constant EVCFILTER_L                     : natural  := 1;
+   constant FIR_L                           : natural  := 2;
+   constant FRAMEIIR_L                      : natural  := 3;
+   constant NULLFILTER_L                    : natural  := 4;
+   constant PEAKFINDER_L                    : natural  := 5;
+   constant PRESCALER_L                     : natural  := 6;
+   constant SUBTRACTOR_L                    : natural  := 7;
 
 
    constant REPEATER1_2_EVCFILTER           : natural  := 0;
