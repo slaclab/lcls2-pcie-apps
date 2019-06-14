@@ -240,7 +240,8 @@ begin
                                    
                   v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;
 
-                  if v.master.tLast = '1' then
+                  --the camera pixel number vs pedestal counter condition wasn't required in test bench.  worrisome and will need attention in future
+                  if v.master.tLast = '1' or v.counter >= CAMERA_PIXEL_NUMBER then
                         v.counter            := 0;
                         --v.slave.tReady       := '0';
                         --v.state              := IDLE_S;
@@ -304,7 +305,8 @@ begin
                  
                   v.pedestal_counter                  := v.pedestal_counter+INT_CONFIG_C.TDATA_BYTES_C;
 
-                  if v.pedestalMaster.tLast = '1' then
+                  --the camera pixel number vs pedestal counter condition wasn't required in test bench.  worrisome and will need attention in future
+                  if v.pedestalMaster.tLast = '1' or v.pedestal_counter >= CAMERA_PIXEL_NUMBER then 
                         v.pedestal_counter            := 0;
                         --v.pedestalSlave.tReady        := '0';
                         --v.state_pedestal              := IDLE_S;

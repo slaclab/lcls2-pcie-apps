@@ -124,20 +124,22 @@ begin
          clkP => axiClk,
          rst  => axiRst);
 
+
    --------------------
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStreamSim
+      U_CamOutput : entity work.FileToAxiStream
          generic map (
-            TPD_G         => TPD_G,
-            BYTE_SIZE_C   => 2+1,
-            AXIS_CONFIG_G => SRC_CONFIG_C)
+            TPD_G              => TPD_G,
+            BYTE_SIZE_C        => 2+1,
+            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
+            CLK_PERIOD_G       => 10 ns)
          port map (
-            axiClk      => axiClk,
-            axiRst      => axiRst,
-            mAxisMaster => appInMaster,
-            mAxisSlave  => appInSlave);
+            sysClk         => axiClk,
+            sysRst         => axiRst,
+            dataOutMaster  => appInMaster,
+            dataOutSlave   => appInSlave);
 
    -----------------
    -- Time Tool Core

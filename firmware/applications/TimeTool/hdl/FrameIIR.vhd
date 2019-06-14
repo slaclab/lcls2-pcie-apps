@@ -209,7 +209,8 @@ begin
                   v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;
                   v.state                    := UPDATE_AND_MOVE_S;                  
 
-                  if v.master.tLast = '1' then
+                  --the camera pixel number vs pedestal counter condition wasn't required in test bench.  worrisome and will need attention in future
+                  if v.master.tLast = '1' or v.counter >= CAMERA_PIXEL_NUMBER then
                         v.counter            := 0;
                         --v.state     := IDLE_S;
                   end if;
