@@ -72,7 +72,8 @@ architecture mapping of FramePeakFinder is
 
    type StateType is (
       IDLE_S,
-      UPDATE_AND_MOVE_S);
+      FIND_MAX,
+      MOVE_S);
 
    type RegType is record
       master          : AxiStreamMasterType;
@@ -86,7 +87,6 @@ architecture mapping of FramePeakFinder is
       timeConstant    : slv(7 downto 0);
       axi_test        : slv(31 downto 0);
       state           : StateType;
-      rollingImage    : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -100,8 +100,7 @@ architecture mapping of FramePeakFinder is
       scratchPad      => (others => '0'),
       timeConstant    => (others=>'0'),
       axi_test        => (others=>'0'),
-      state           => IDLE_S,
-      rollingImage    => (others => (others => '0') ) );
+      state           => IDLE_S);
 
 ---------------------------------------
 -------record intitial value-----------
@@ -164,40 +163,35 @@ begin
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
       ------------------------      
-      -- updating time constant
-      ------------------------       
-
-      ------------------------      
       -- Main Part of Code
       ------------------------ 
-
+      v.master          := inMaster;
       v.slave.tReady    := not outCtrl.pause;
-      v.master.tLast    := '0';
-      v.master.tValid   := '0';
 
       case r.state is
 
             when IDLE_S =>
-            ------------------------------
-            -- check which state
-            ------------------------------
-            if v.slave.tReady = '1' and inMaster.tValid = '1' then
-                        v.state          := UPDATE_AND_MOVE_S;
-                        v.slave.tReady   := '0';
 
-            else
-                  v.slave.tReady    :='0';
-                  v.state           := IDLE_S;
-            end if;
+                   if v.master.tValid = '1' then
+                        v.state          := FIND_MAX; 
+                        v.master.tValid  := '0';
+                        v.master.tLast   := '0';
 
-           
-            when UPDATE_AND_MOVE_S  => 
-            ------------------------------
-            -- update slv logic array
-            ------------------------------
 
-               if v.slave.tReady = '1' and inMaster.tValid = '1' then
-                  v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
+                    else
+                        v.state          := IDLE_S;
+                        v.master.tValid  := '0';
+                        v.master.tLast   := '0';
+
+                    end if;
+    
+            when FIND_MAX  => 
+
+               v.slave.tReady := '1';
+
+               if v.master.tValid = '1' then
+                  v.master.tValid := '0';
+                  
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
@@ -207,34 +201,33 @@ begin
                         
                         end if;
                         
-                       
-                        --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed-1)+signed(inMaster.tdata(i*8+7 downto i*8)))/v.tConst_signed,8);
-                        --v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
-
-
                   end loop;
 
-                  v.master.tData                                       := (others => '0');
-                  v.master.tData(CAMERA_PIXEL_NUMBER_BITS -1 downto 0) := v.max_pixel;
 
-                 
                   v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;
-                  v.state                    := UPDATE_AND_MOVE_S;                  
 
                   if v.master.tLast = '1' then
-                        v.counter            := 0;
+                        v.slave.tReady       := '0';
+                        v.counter            :=  0;
                         v.max                := (others =>'1');
+                        v.state              :=  MOVE_S;
                         
-                  end if;
-                  
-                  v.state     := UPDATE_AND_MOVE_S;
+                        
+                  end if;  
 
-               else
-                  v.master.tValid  := '0';   --message to downstream data processing that there's no valid data ready
-                  v.slave.tReady   := '0';   --message to upstream that we're not ready
-                  v.master.tLast   := '0';
-                  v.state          := IDLE_S;
-               end if;     
+              end if;                
+        
+              when MOVE_S =>
+                        
+                v.master.tValid := '1';
+                v.master.tLast  := '1';
+                v.master.tData                                       := (others => '0');
+                v.master.tData(CAMERA_PIXEL_NUMBER_BITS -1 downto 0) := v.max_pixel;
+                if v.slave.tReady = '1' then
+                        v.state          := IDLE_S;
+
+                end if;
+
 
       end case;
 

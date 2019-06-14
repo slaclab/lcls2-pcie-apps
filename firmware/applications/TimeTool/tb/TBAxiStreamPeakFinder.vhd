@@ -54,12 +54,10 @@ architecture testbed of TBAxiStreamPeakFinder is
 
    constant CLK_PERIOD_G : time := 10 ns;
 
-   signal appInMaster                 : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
-   signal appInMaster_pix_rev         : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;        
+   signal appInMaster                 : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;  
    signal appInSlave                  : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
-   signal appOutMaster                : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
-   signal appOutMaster_pix_rev         : AxiStreamMasterType :=    AXI_STREAM_MASTER_INIT_C;        
+   signal appOutMaster                : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;  
    signal appOutSlave                 : AxiStreamSlaveType   :=    AXI_STREAM_SLAVE_INIT_C;
 
    signal resizeFIFOToFIRMaster       : AxiStreamMasterType  :=    AXI_STREAM_MASTER_INIT_C;
@@ -87,45 +85,12 @@ architecture testbed of TBAxiStreamPeakFinder is
    signal axiClk                      : sl;
    signal axiRst                      : sl;
 
-   signal delayedAxiClk               : sl                  :=   '0';
 
-   component fir_compiler_0
-      port (aclk                    : std_logic;
-            s_axis_data_tvalid      : std_logic;
-            s_axis_data_tready      : out std_logic;
-            s_axis_data_tdata       : std_logic_vector(7 downto 0);
-            s_axis_data_tlast       : std_logic;
-            m_axis_data_tvalid      : out std_logic;
-            m_axis_data_tready      : std_logic;
-            m_axis_data_tdata       : out std_logic_vector(7 downto 0);
-            m_axis_data_tlast       : out std_logic);
-   end component;
 
 begin
 
    appOutSlave.tReady <= '1';
 
-
-   appInMaster_pix_rev.tValid <= appInMaster.tValid;
-   appInMaster_pix_rev.tLast  <= appInMaster.tLast;
-   
-   APP_IN_PIXEL_SWAP: for i in 0 to DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 generate
-
-        appInMaster_pix_rev.tData(i*8+7 downto i*8) <= appInMaster.tData(( (DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8+7) downto ((DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8));
-
-   end generate APP_IN_PIXEL_SWAP;
-   --
-   --
-   appOutMaster_pix_rev.tValid <= appOutMaster.tValid;
-   appOutMaster_pix_rev.tLast  <= appOutMaster.tLast;
-   
-   APP_OUT_PIXEL_SWAP: for i in 0 to DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1 generate
-
-        appOutMaster_pix_rev.tData(i*8+7 downto i*8) <= appOutMaster.tData(( (DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8+7) downto ((DMA_AXIS_CONFIG_G.TDATA_BYTES_C-1-i)*8));
-
-   end generate APP_OUT_PIXEL_SWAP;
-
-   delayedAxiClk <= axiClk after CLK_PERIOD_G/8;
 
    --------------------
    -- Clocks and Resets
