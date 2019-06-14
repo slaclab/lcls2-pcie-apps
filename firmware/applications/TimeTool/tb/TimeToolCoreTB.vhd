@@ -188,7 +188,8 @@ begin
       --actual fex axi write data
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_1004", x"5", true);  --event code filter that is being simulated by a prescaler
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_3004", x"3", true);  --iir filter
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0fd0", x"0", true);  --event builder inside fex. don't bypass anything since no tpm is being used.
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0fd0", x"0", true);  --event builder inside fex. only being used for batching purposes, not for time stamping.
+                                                                                               --don't bypass anything since no tpm is being used.
 
 
        
