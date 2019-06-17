@@ -104,11 +104,6 @@ architecture mapping of TimeToolPrescaler is
    signal inSlave  : AxiStreamSlaveType;
    signal outCtrl  : AxiStreamCtrlType;
 
-   component ila_1
-      port (clk    : sl;
-            probe0 : slv(127 downto 0));
-   end component;
-
 begin
 
    ---------------------------------
@@ -135,23 +130,6 @@ begin
 
 
    ---------------------------------
-   -- Xilinx debug integrated logic analyzer.
-   ---------------------------------
-   GEN_DEBUG : if DEBUG_G generate
-      U_ILA : ila_1
-         port map (clk                   => sysClk,
-                   probe0(31 downto 0)   => r.prescalingRate,
-                   probe0(63 downto 32)  => r.scratchPad,
-                   probe0(95 downto 64)  => r.counter,
-                   probe0(96)            => r.master.tLast,
-                   --probe0(671 downto 608)                   => r.master.tKeep,
-                   --probe0(607 downto 96)                    => r.master.tData,
-                   probe0(127 downto 97) => (others => '0'));
-   end generate;
-
-
-
-   ---------------------------------
    -- Application
    ---------------------------------
    comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, r,
@@ -170,8 +148,8 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
-      axiSlaveRegister (axilEp, x"0004", 0, v.prescalingRate);
+      axiSlaveRegister (axilEp, x"000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"004", 0, v.prescalingRate);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
