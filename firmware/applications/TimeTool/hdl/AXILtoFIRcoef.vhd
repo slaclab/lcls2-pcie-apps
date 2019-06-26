@@ -18,8 +18,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 --use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
-use ieee.std_logic_signed.all;
+--use ieee.std_logic_unsigned.all;
+--use ieee.std_logic_signed.all;
 use ieee.numeric_std.ALL;
 
 use work.StdRtlPkg.all;
@@ -48,10 +48,10 @@ entity AXILtoFIRcoef is
       sysClk            : in    sl;
       sysRst            : in    sl;
       -- DMA Interfaces  (sysClk domain)
-      dataOutMaster     : out   AxiStreamMasterType;
-      dataOutSlave      : in    AxiStreamSlaveType;
-      configOutMaster   : out   AxiStreamMasterType;
-      configOutSlave    : in    AxiStreamSlaveType;
+      dataOutMaster     : out   AxiStreamMasterType   := AXI_STREAM_MASTER_INIT_C;
+      dataOutSlave      : in    AxiStreamSlaveType    := AXI_STREAM_SLAVE_INIT_C;
+      configOutMaster   : out   AxiStreamMasterType   := AXI_STREAM_MASTER_INIT_C;
+      configOutSlave    : in    AxiStreamSlaveType    := AXI_STREAM_SLAVE_INIT_C;
 
       -- AXI-Lite Interface
       axilReadMaster    : in    AxiLiteReadMasterType;
@@ -62,16 +62,14 @@ end AXILtoFIRcoef;
 
 architecture mapping of AXILtoFIRcoef is
 
-   constant INT_CONFIG_C                  : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
-   constant PGP2BTXIN_LEN                 : integer             := 19;
-   constant CAMERA_RESOLUTION_BITS        : positive            := 8;
-   constant CAMERA_PIXEL_NUMBER           : positive            := 2048;
-   constant FIR_COEFFICIENT_LENGTH        : positive            := 32;
-   constant FIR_COEFFICIENT_BITS          : positive            := 8;
-   constant FIR_COEFFICIENTS_PER_TRANSFER : positive            := 1;
+   constant PGP2BTXIN_LEN                  : integer             := 19;
+   constant CAMERA_RESOLUTION_BITS         : positive            := 8;
+   constant CAMERA_PIXEL_NUMBER            : positive            := 2048;
+   constant FIR_COEFFICIENT_LENGTH         : positive            := 32;
 
-   --type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
-   type CameraFrameBuffer is array (natural range<>) of signed((FIR_COEFFICIENT_BITS-1) downto 0);
+   constant INT_CONFIG_C                   : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
+   constant FIR_COEFICIENT_OUTPUT_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(FIR_COEFFICIENT_LENGTH, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+   constant DMA_AXIS_DOWNSIZED_CONFIG_G    : AxiStreamConfigType := ssiAxiStreamConfig(1, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
 
    type StateType is (
       IDLE_S,
@@ -97,7 +95,7 @@ architecture mapping of AXILtoFIRcoef is
       configSlave     => AXI_STREAM_SLAVE_INIT_C,
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
-      scratchPad      => (others =>"0" ),
+      scratchPad      => (others =>'0' ),
       newCoefficients => '0',
       state           => IDLE_S);
 
@@ -120,7 +118,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (r, sysRst, axilReadMaster, axilWriteMaster, outCtrl) is
+   comb : process (r,rin, sysRst, axilReadMaster, axilWriteMaster, outCtrl,configOutCtrl) is
       variable v      : RegType := REG_INIT_C ;
       variable axilEp : AxiLiteEndpointType;
    begin
@@ -135,7 +133,15 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"000", 0, v.scratchPad(31 downto 0));
+      axiSlaveRegister (axilEp, x"004", 0, v.scratchPad(61 downto 32));
+      axiSlaveRegister (axilEp, x"008", 0, v.scratchPad(95 downto 64));
+      axiSlaveRegister (axilEp, x"00C", 0, v.scratchPad(127 downto 96));
+      axiSlaveRegister (axilEp, x"010", 0, v.scratchPad(159 downto 128));
+      axiSlaveRegister (axilEp, x"014", 0, v.scratchPad(191 downto 160));
+      axiSlaveRegister (axilEp, x"018", 0, v.scratchPad(223 downto 192));
+      axiSlaveRegister (axilEp, x"01C", 0, v.scratchPad(255 downto 224));
+
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
@@ -147,17 +153,21 @@ begin
       -- Main Part of Code
       ------------------------ 
 
-      v.slave.tReady                                      := not outCtrl.pause;
-      v.master.tLast                                      := '0';
-      v.master.tValid                                     := '0';
-      v.master.tData(FIR_COEFFICIENT_LENGTH -1 downto 0)  := v.scratchPad(FIR_COEFFICIENT_LENGTH -1 downto 0);
+      v.slave.tReady                                        := not outCtrl.pause;
+      v.master.tLast                                        := '0';
+      v.master.tValid                                       := '0';
+      v.master.tData(FIR_COEFFICIENT_LENGTH*8 -1 downto 0)  := v.scratchPad(FIR_COEFFICIENT_LENGTH*8 -1 downto 0);
 
-      v.configSlave.tReady                                := not configOutCtrl.pause;
-      v.configMaster.tLast                                := '0';
-      v.configMaster.tValid                               := '0';
-      --v.configMaster.tData                              := other=> '0'; -- not used
+      v.configSlave.tReady                                  := not configOutCtrl.pause;
+      v.configMaster.tLast                                  := '0';
+      v.configMaster.tValid                                 := '0';
+      --v.configMaster.tData                                := other=> '0'; -- not used
 
-      if (rin.scratchPad /= r.scratchPad) then
+      if (rin.scratchPad(FIR_COEFFICIENT_LENGTH*8 -1) = r.scratchPad(FIR_COEFFICIENT_LENGTH*8 -1)) then
+
+        v.master.tValid                                     := '0';
+
+      else
         v.newCoefficients := '1';
       end if;
 
@@ -240,12 +250,12 @@ begin
          GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 9,
          FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
+         SLAVE_AXI_CONFIG_G  => FIR_COEFICIENT_OUTPUT_CONFIG_G,
+         MASTER_AXI_CONFIG_G => DMA_AXIS_DOWNSIZED_CONFIG_G)
       port map (
          sAxisClk    => sysClk,
          sAxisRst    => sysRst,
-         sAxisMaster => r.Master,
+         sAxisMaster => r.master,
          sAxisCtrl   => outCtrl,
          mAxisClk    => sysClk,
          mAxisRst    => sysRst,
@@ -255,15 +265,15 @@ begin
    ---------------------------------
    -- Config Output FIFO
    ---------------------------------
-   U_OutFifo: entity work.AxiStreamFifoV2
+   U_OutFifo_2: entity work.AxiStreamFifoV2
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,
          GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 9,
          FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
+         SLAVE_AXI_CONFIG_G  => DMA_AXIS_DOWNSIZED_CONFIG_G,
+         MASTER_AXI_CONFIG_G => DMA_AXIS_DOWNSIZED_CONFIG_G)
       port map (
          sAxisClk    => sysClk,
          sAxisRst    => sysRst,
