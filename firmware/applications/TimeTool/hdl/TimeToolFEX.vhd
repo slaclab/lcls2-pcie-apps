@@ -48,7 +48,7 @@ end TimeToolFEX;
 
 architecture mapping of TimeToolFEX is
 
-   constant NUM_AXIS_MASTERS_G : positive := 11;
+   constant NUM_AXIS_MASTERS_G : positive := 13;
    constant NUM_AXIL_MASTERS_C : natural  := 8;
    
 
@@ -58,7 +58,7 @@ architecture mapping of TimeToolFEX is
 
    constant EVENTBUILDER_L                  : natural  := 0;
    constant EVCFILTER_L                     : natural  := 1;
-   constant FIR_L                           : natural  := 2;
+   constant FIR_COEF_L                      : natural  := 2;
    constant FRAMEIIR_L                      : natural  := 3;
    constant NULLFILTER_L                    : natural  := 4;
    constant PEAKFINDER_L                    : natural  := 5;
@@ -77,6 +77,10 @@ architecture mapping of TimeToolFEX is
    constant SUBTRACTOR_2_FIR                : natural  := 8;
    constant FIR_2_PEAKFINDER                : natural  := 9;
    constant PEAKFINDER_2_EVENTBUILDER       : natural  := 10;
+
+   constant AXIL_TO_FIR_COEF                : natural  := 11;
+   constant AXIL_TO_FIR_CONFIG              : natural  := 12;
+
    
 
    
@@ -270,6 +274,33 @@ begin
          axilWriteMaster => axilWriteMasters(SUBTRACTOR_L),
          axilWriteSlave  => axilWriteSlaves(SUBTRACTOR_L));
 
+
+   --------------------
+   -- Axi lite to fire coefficient module
+   -------------------- 
+
+
+   u_axilToFirCoef:entity work.AXILtoFIRcoef
+   generic map(
+      TPD_G             => TPD_G,
+      DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+      DEBUG_G           => true )
+   port map(
+          -- System Interface
+          sysClk           =>   axilClk,
+          sysRst           =>   axilRst,
+          -- DMA Interfaces  (sysClk domain)
+          dataOutMaster     => axisMasters(AXIL_TO_FIR_COEF),
+          dataOutSlave      => axisSlaves(AXIL_TO_FIR_COEF),
+          configOutMaster   => axisMasters(AXIL_TO_FIR_CONFIG),
+          configOutSlave    => axisSlaves(AXIL_TO_FIR_CONFIG),
+
+          -- AXI-Lite Interface
+         axilReadMaster  => axilReadMasters(FIR_COEF_L),
+         axilReadSlave   => axilReadSlaves(FIR_COEF_L),
+         axilWriteMaster => axilWriteMasters(FIR_COEF_L),
+         axilWriteSlave  => axilWriteSlaves(FIR_COEF_L));
+
    --------------------
    -- Surf wrapped FIR filter
    -------------------- 
@@ -290,13 +321,33 @@ begin
       dataOutMaster   => axisMasters(FIR_2_PEAKFINDER),
       dataOutSlave    => axisSlaves(FIR_2_PEAKFINDER),
       -- coefficient reload  (sysClk domain)
-      reloadInMaster  => dataInMaster(1),
-      reloadInSlave   => dataInSlave(1),
-      configInMaster  => dataInMaster(2),
-      configInSlave   => dataInSlave(2));
+      reloadInMaster  => axisMasters(AXIL_TO_FIR_COEF),
+      reloadInSlave   => axisSlaves(AXIL_TO_FIR_COEF),
+      configInMaster  => axisMasters(AXIL_TO_FIR_CONFIG),
+      configInSlave   => axisSlaves(AXIL_TO_FIR_CONFIG));
+      --reloadInMaster  => dataInMaster(1),
+      --reloadInSlave   => dataInSlave(1),
+      --configInMaster  => dataInMaster(2),
+      --configInSlave   => dataInSlave(2));
+
+    --------------------
+    -- File write sim debug
+    -------------------- 
 
 
-  --------------------
+      U_FileInput : entity work.AxiStreamToFile
+         generic map (
+            TPD_G              => TPD_G,
+            BYTE_SIZE_C        => 2+1,
+            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
+            CLK_PERIOD_G       => 10 ns)
+         port map (
+            sysClk         => axilClk,
+            sysRst         => axilRst,
+            dataInMaster   => axisMasters(FIR_2_PEAKFINDER));
+            --dataInSlave    => appOutSlave);
+
+   --------------------
    -- Peak finder
    -------------------- 
 

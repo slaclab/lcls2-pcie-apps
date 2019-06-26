@@ -68,7 +68,7 @@ architecture mapping of AXILtoFIRcoef is
    constant FIR_COEFFICIENT_LENGTH         : positive            := 32;
 
    constant INT_CONFIG_C                   : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes=>16,tDestBits=>0);
-   constant FIR_COEFICIENT_OUTPUT_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(FIR_COEFFICIENT_LENGTH, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+   constant FIR_COEFICIENT_OUTPUT_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(FIR_COEFFICIENT_LENGTH, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
    constant DMA_AXIS_DOWNSIZED_CONFIG_G    : AxiStreamConfigType := ssiAxiStreamConfig(1, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);
 
    type StateType is (
@@ -83,9 +83,10 @@ architecture mapping of AXILtoFIRcoef is
       configSlave     : AxiStreamSlaveType;
       axilReadSlave   : AxiLiteReadSlaveType;
       axilWriteSlave  : AxiLiteWriteSlaveType;
-      scratchPad      : slv(255 downto 0);
+      scratchPad      : slv(31 downto 0);
       newCoefficients : sl;
       state           : StateType;
+      counter         : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -97,7 +98,8 @@ architecture mapping of AXILtoFIRcoef is
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
       scratchPad      => (others =>'0' ),
       newCoefficients => '0',
-      state           => IDLE_S);
+      state           => IDLE_S,
+      counter         => 0);
 
 
 ---------------------------------------
@@ -133,14 +135,15 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"000", 0, v.scratchPad(31 downto 0));
-      axiSlaveRegister (axilEp, x"004", 0, v.scratchPad(61 downto 32));
-      axiSlaveRegister (axilEp, x"008", 0, v.scratchPad(95 downto 64));
-      axiSlaveRegister (axilEp, x"00C", 0, v.scratchPad(127 downto 96));
-      axiSlaveRegister (axilEp, x"010", 0, v.scratchPad(159 downto 128));
-      axiSlaveRegister (axilEp, x"014", 0, v.scratchPad(191 downto 160));
-      axiSlaveRegister (axilEp, x"018", 0, v.scratchPad(223 downto 192));
-      axiSlaveRegister (axilEp, x"01C", 0, v.scratchPad(255 downto 224));
+      axiSlaveRegister (axilEp, x"000", 0, v.master.tData(31 downto 0));
+      axiSlaveRegister (axilEp, x"004", 0, v.master.tData(61 downto 32));
+      axiSlaveRegister (axilEp, x"008", 0, v.master.tData(95 downto 64));
+      axiSlaveRegister (axilEp, x"00C", 0, v.master.tData(127 downto 96));
+      axiSlaveRegister (axilEp, x"010", 0, v.master.tData(159 downto 128));
+      axiSlaveRegister (axilEp, x"014", 0, v.master.tData(191 downto 160));
+      axiSlaveRegister (axilEp, x"018", 0, v.master.tData(223 downto 192));
+      axiSlaveRegister (axilEp, x"01C", 0, v.master.tData(255 downto 224));
+      axiSlaveRegister (axilEp, x"020", 0, v.scratchpad);
 
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
@@ -156,35 +159,26 @@ begin
       v.slave.tReady                                        := not outCtrl.pause;
       v.master.tLast                                        := '0';
       v.master.tValid                                       := '0';
-      v.master.tData(FIR_COEFFICIENT_LENGTH*8 -1 downto 0)  := v.scratchPad(FIR_COEFFICIENT_LENGTH*8 -1 downto 0);
+      --v.master.tData(FIR_COEFFICIENT_LENGTH*8 -1 downto 0)  := v.scratchPad(FIR_COEFFICIENT_LENGTH*8 -1 downto 0);
 
       v.configSlave.tReady                                  := not configOutCtrl.pause;
       v.configMaster.tLast                                  := '0';
       v.configMaster.tValid                                 := '0';
-      --v.configMaster.tData                                := other=> '0'; -- not used
-
-      if (rin.scratchPad(FIR_COEFFICIENT_LENGTH*8 -1) = r.scratchPad(FIR_COEFFICIENT_LENGTH*8 -1)) then
-
-        v.master.tValid                                     := '0';
-
-      else
-        v.newCoefficients := '1';
-      end if;
-
 
       case r.state is
 
             when IDLE_S =>
-               if v.slave.tReady = '1' and v.newCoefficients = '1' then
+               if v.slave.tReady = '1' and v.scratchpad(0) = '1' then
                    v.state := MOVE_S;
                end if;
         
 
             when MOVE_S  => 
 
-               v.master.tLast    := '1';
+               v.scratchpad(0) := '0';
+               
                v.master.tValid   := '1';
-
+               v.master.tLast    := '1';
 
                if v.slave.tReady = '1' then
                 

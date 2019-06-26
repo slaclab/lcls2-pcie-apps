@@ -197,6 +197,16 @@ begin
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_0fd0", x"0", true);  --event builder inside fex. only being used for batching purposes, not for time stamping.
                                                                                                --don't bypass anything since no tpm is being used.
 
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_2000", x"7f7f7f7f", true); --axi lite to FIR coeffcients
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_2004", x"7f7f7f7f", true); --axi lite to FIR coeffcients
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_2008", x"7f7f7f7f", true); --axi lite to FIR coeffcients
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_200c", x"7f7f7f7f", true); --axi lite to FIR coeffcients
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_2010", x"81818181", true); --axi lite to FIR coeffcients
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_2014", x"81818181", true); --axi lite to FIR coeffcients
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_2018", x"81818181", true); --axi lite to FIR coeffcients
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_201c", x"81818181", true); --axi lite to FIR coeffcients
+
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_2020", x"1", true); --axi lite to FIR coeffcients
 
        
 
