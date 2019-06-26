@@ -84,7 +84,9 @@ architecture mapping of FrameFIR is
 
 
    signal event_s_reload_tlast_missing     : sl              :=    '0';
-   signal  event_s_reload_tlast_unexpected : sl              :=    '0';
+   signal event_s_reload_tlast_unexpected  : sl              :=    '0';
+
+   signal not_sysRst                       : sl              :=    '1';
 
 
 
@@ -112,6 +114,8 @@ architecture mapping of FrameFIR is
 
 
 begin
+
+   not_sysRst    <= not sysRst;
 
    appInMaster   <= dataInMaster;
    dataInSlave   <= appInSlave;
@@ -182,7 +186,7 @@ begin
        dut : fir_compiler_1
           port map (
             aclk                            => sysClk,
-            aresetn                         => not sysRst,
+            aresetn                         => not_sysRst,
             s_axis_data_tvalid              => resizeFIFOToFIRMaster.tValid,
             s_axis_data_tready              => resizeFIFOToFIRSlave.tReady,
             s_axis_data_tdata               => resizeFIFOToFIRMaster.tData(7 downto 0),

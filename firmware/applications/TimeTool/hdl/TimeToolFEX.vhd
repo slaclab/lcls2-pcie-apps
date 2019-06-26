@@ -326,22 +326,6 @@ begin
       configInMaster  => axisMasters(AXIL_TO_FIR_CONFIG),
       configInSlave   => axisSlaves(AXIL_TO_FIR_CONFIG));
 
-    --------------------
-    -- File write sim debug
-    -------------------- 
-
-
-      U_FileInput : entity work.AxiStreamToFile
-         generic map (
-            TPD_G              => TPD_G,
-            BYTE_SIZE_C        => 2+1,
-            DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
-            CLK_PERIOD_G       => 10 ns)
-         port map (
-            sysClk         => axilClk,
-            sysRst         => axilRst,
-            dataInMaster   => axisMasters(FIR_2_PEAKFINDER));
-            --dataInSlave    => appOutSlave);
 
    --------------------
    -- Peak finder
