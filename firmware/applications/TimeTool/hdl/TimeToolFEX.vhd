@@ -35,8 +35,8 @@ entity TimeToolFEX is
       axilClk         : in  sl;
       axilRst         : in  sl;
       -- DMA Interfaces (axilClk domain). One for data into server, two for reloadable coefficients and config from server, one trig master?
-      dataInMaster    : in  AxiStreamMasterArray(2 downto 0);  
-      dataInSlave     : out AxiStreamSlaveArray(2 downto 0);
+      dataInMaster    : in  AxiStreamMasterType ;
+      dataInSlave     : out AxiStreamSlaveType;
       eventMaster     : out AxiStreamMasterType;
       eventSlave      : in  AxiStreamSlaveType;
       -- AXI-Lite Interface (axilClk domain)
@@ -135,8 +135,8 @@ begin
          axisClk      => axilClk,
          axisRst      => axilRst,
          -- Slave
-         sAxisMaster  => dataInMaster(0),
-         sAxisSlave   => dataInSlave(0),
+         sAxisMaster  => dataInMaster,
+         sAxisSlave   => dataInSlave,
          -- Masters
          mAxisMasters(0)   => axisMasters(REPEATER1_2_EVCFILTER),
          mAxisMasters(1)   => axisMasters(REPEATER1_2_SUBTRACTOR),
@@ -276,7 +276,7 @@ begin
 
 
    --------------------
-   -- Axi lite to fire coefficient module
+   -- Axi lite to fir coefficient module
    -------------------- 
 
 
@@ -325,10 +325,6 @@ begin
       reloadInSlave   => axisSlaves(AXIL_TO_FIR_COEF),
       configInMaster  => axisMasters(AXIL_TO_FIR_CONFIG),
       configInSlave   => axisSlaves(AXIL_TO_FIR_CONFIG));
-      --reloadInMaster  => dataInMaster(1),
-      --reloadInSlave   => dataInSlave(1),
-      --configInMaster  => dataInMaster(2),
-      --configInSlave   => dataInSlave(2));
 
     --------------------
     -- File write sim debug

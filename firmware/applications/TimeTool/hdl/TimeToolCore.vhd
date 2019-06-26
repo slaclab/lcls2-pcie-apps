@@ -36,12 +36,6 @@ entity TimeToolCore is
       trigMaster      : in  AxiStreamMasterType;
       trigSlave       : out AxiStreamSlaveType;
       -- DMA Interfaces (axilClk domain)
-
-      FIRreloadMaster : in   AxiStreamMasterType    :=    AXI_STREAM_MASTER_INIT_C;
-      FIRreloadSlave  : out  AxiStreamSlaveType     :=    AXI_STREAM_SLAVE_INIT_C;
-      FIRconfigMaster : in   AxiStreamMasterType    :=    AXI_STREAM_MASTER_INIT_C;
-      FIRconfigSlave  : out  AxiStreamSlaveType     :=    AXI_STREAM_SLAVE_INIT_C;
-
       dataInMaster    : in  AxiStreamMasterType;
       dataInSlave     : out AxiStreamSlaveType;
       eventMaster     : out AxiStreamMasterType;
@@ -212,12 +206,8 @@ begin
          axilClk         => axilClk,
          axilRst         => axilRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster(0)    => dataIbMasters(FEX_INDEX_C),
-         dataInMaster(1)    => FIRreloadMaster,
-         dataInMaster(2)    => FIRconfigMaster,
-         dataInSlave(0)     => dataIbSlaves(FEX_INDEX_C),
-         dataInSlave(1)     => FIRreloadSlave,
-         dataInSlave(2)     => FIRconfigSlave,
+         dataInMaster       => dataIbMasters(FEX_INDEX_C),
+         dataInSlave        => dataIbSlaves(FEX_INDEX_C),
          eventMaster        => dspObMasters(FEX_INDEX_C),
          eventSlave         => dspObSlaves(FEX_INDEX_C),
          -- AXI-Lite Interface (sysClk domain)
