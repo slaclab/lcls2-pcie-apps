@@ -35,7 +35,7 @@ library unisim;
 use unisim.vcomponents.all;
 
 -------------------------------------------------------------------------------
--- This file performs the accumulation for the background subtraction
+-- This file wraps the xilinx FIR IP core.
 -------------------------------------------------------------------------------
 
 entity FrameFIR is
