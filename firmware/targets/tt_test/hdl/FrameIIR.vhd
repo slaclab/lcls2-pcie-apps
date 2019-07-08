@@ -61,9 +61,11 @@ architecture mapping of FrameIIR is
    constant PGP2BTXIN_LEN                 : integer             := 19;
    constant CAMERA_RESOLUTION_BITS        : positive            := 8;
    constant CAMERA_PIXEL_NUMBER           : positive            := 2048;
+   constant PIXEL_PER_TRANSFER            : positive            := 16;
 
-   --type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
-   type CameraFrameBuffer is array (natural range<>) of slv((CAMERA_RESOLUTION_BITS-1) downto 0);
+   type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
+   type CameraSignedBuffer is array (natural range<>) of signed(CAMERA_RESOLUTION_BITS-1 downto 0);
+
 
    type StateType is (
       IDLE_S,
@@ -80,7 +82,9 @@ architecture mapping of FrameIIR is
       tConst_signed   : signed(7 downto 0);
       axi_test        : slv(31 downto 0);
       state           : StateType;
-      rollingImage    : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
+	  signed_temp     : CameraSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
+	  signed_temp_temp : CameraSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
+      rollingImage    : CameraSignedBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -89,11 +93,13 @@ architecture mapping of FrameIIR is
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter         => 0,
-      scratchPad     => (others => '0'),
+      scratchPad      => (others => '0'),
       timeConstant    => (0=>'1',others=>'0'),
       tConst_signed   => to_signed(1,8),
       axi_test        => (others=>'0'),
       state           => IDLE_S,
+      signed_temp     => (others => (others => '0') ),
+	  signed_temp_temp => (others => (others => '0') ),
       rollingImage    => (others => (others => '0') ) );
 
 ---------------------------------------
@@ -199,15 +205,11 @@ begin
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
                        
---                        v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed)+signed(inMaster.tdata(i*8+7 downto i*8)))/(v.tConst_signed+1),8);
-                    --prod := signed(r.rollingImage(r.counter+i))*tConst_signed;
-                    
-                    --sum  := prod + signed(inMaster.tdata(i*8+7 downto i*8));
-                    --quot := std_logic_vector(RESIZE(sum/(tConst_signed+1),8));
-                    quot := inMaster.tdata(i*8+7 downto i*8);
-                                          
-                    v.rollingImage(r.counter + i)             := quot;
-                    v.master.tData(i*8+7 downto i*8)          := quot;
+                        --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed)+signed(inMaster.tdata(i*8+7 downto i*8)))/(v.tConst_signed+1),8);
+						v.signed_temp(i)                          := signed(inMaster.tdata(i*8+7 downto i*8));
+						v.signed_temp_temp(i)                     := RESIZE(r.rollingImage(r.counter + i)*r.tConst_signed+r.signed_temp(i),8);
+						v.rollingImage(r.counter + i)             := r.signed_temp_temp(i);
+                        v.master.tData(i*8+7 downto i*8)          := std_logic_vector(r.rollingImage(r.counter + i));                       --output 
 
                   end loop;
 
