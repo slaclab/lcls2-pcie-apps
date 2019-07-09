@@ -65,6 +65,7 @@ architecture mapping of FrameIIR is
 
    type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
    type CameraSignedBuffer is array (natural range<>) of signed(CAMERA_RESOLUTION_BITS-1 downto 0);
+   type CameraBigSignedBuffer is array (natural range<>) of signed(2*CAMERA_RESOLUTION_BITS-1 downto 0);
 
 
    type StateType is (
@@ -72,19 +73,19 @@ architecture mapping of FrameIIR is
       UPDATE_AND_MOVE_S);
 
    type RegType is record
-      master          : AxiStreamMasterType;
-      slave           : AxiStreamSlaveType;
-      axilReadSlave   : AxiLiteReadSlaveType;
-      axilWriteSlave  : AxiLiteWriteSlaveType;
-      counter         : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
-      scratchPad      : slv(31 downto 0);
-      timeConstant    : slv(7 downto 0);
-      tConst_signed   : signed(7 downto 0);
-      axi_test        : slv(31 downto 0);
-      state           : StateType;
-	  signed_temp     : CameraSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
-	  signed_temp_temp : CameraSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
-      rollingImage    : CameraSignedBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
+      master           : AxiStreamMasterType;
+      slave            : AxiStreamSlaveType;
+      axilReadSlave    : AxiLiteReadSlaveType;
+      axilWriteSlave   : AxiLiteWriteSlaveType;
+      counter          : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
+      scratchPad       : slv(31 downto 0);
+      timeConstant     : slv(7 downto 0);
+      tConst_signed    : signed(7 downto 0);
+      axi_test         : slv(31 downto 0);
+      state            : StateType;
+	  stage1           : CameraSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
+	  stage2           : CameraBigSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
+      rollingImage     : CameraSignedBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -98,8 +99,8 @@ architecture mapping of FrameIIR is
       tConst_signed   => to_signed(1,8),
       axi_test        => (others=>'0'),
       state           => IDLE_S,
-      signed_temp     => (others => (others => '0') ),
-	  signed_temp_temp => (others => (others => '0') ),
+      stage1          => (others => (others => '0') ),
+	  stage2          => (others => (others => '0') ),
       rollingImage    => (others => (others => '0') ) );
 
 ---------------------------------------
@@ -145,10 +146,6 @@ begin
    comb : process (r, sysRst, axilReadMaster, axilWriteMaster, inMaster, outCtrl) is
       variable v      : RegType := REG_INIT_C ;
       variable axilEp : AxiLiteEndpointType;
-      variable tConst_signed : signed(7 downto 0);
-      variable prod : signed(15 downto 0);
-      variable sum  : signed(15 downto 0);
-      variable quot : slv   ( 7 downto 0);
    begin
 
       -- Latch the current value
@@ -169,7 +166,7 @@ begin
       ------------------------      
       -- updating time constant
       ------------------------       
-      tConst_signed := signed(r.timeConstant);
+      v.tConst_signed := signed(r.timeConstant);
 
       ------------------------      
       -- Main Part of Code
@@ -206,10 +203,10 @@ begin
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
                        
                         --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed)+signed(inMaster.tdata(i*8+7 downto i*8)))/(v.tConst_signed+1),8);
-						v.signed_temp(i)                          := signed(inMaster.tdata(i*8+7 downto i*8));
-						v.signed_temp_temp(i)                     := RESIZE(r.rollingImage(r.counter + i)*r.tConst_signed+r.signed_temp(i),8);
-						v.rollingImage(r.counter + i)             := r.signed_temp_temp(i);
-                        v.master.tData(i*8+7 downto i*8)          := std_logic_vector(r.rollingImage(r.counter + i));                       --output 
+						v.stage1(i)                                 := signed(inMaster.tdata(i*8+7 downto i*8));
+						v.stage2(i)                                 := r.rollingImage(r.counter + i)*r.tConst_signed;
+						v.rollingImage(r.counter + i)               := RESIZE((r.stage2(i)+r.stage1(i))/(r.tConst_signed+1),8);
+                        v.master.tData(i*8+7 downto i*8)            := std_logic_vector(r.rollingImage(r.counter + i));                       --output 
 
                   end loop;
 

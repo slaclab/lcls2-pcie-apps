@@ -62,22 +62,46 @@ begin
   dataOutSlave <= AXI_STREAM_SLAVE_FORCE_C;
   axilReadData <= axilReadSlave.rdata;
 
-  U_DUT : entity work.FrameIIR
-    port map (
-        -- System Interface
-      sysClk          => sysClk,
-      sysRst          => sysRst,
+  --U_DUT : entity work.FrameIIR
+  --  port map (
+  --      -- System Interface
+  --    sysClk          => sysClk,
+  --    sysRst          => sysRst,
       -- DMA Interfaces  (sysClk domain)
-      dataInMaster    => dataInMaster,
-      dataInSlave     => dataInSlave,     
-      dataOutMaster   => dataOutMaster,   
-      dataOutSlave    => dataOutSlave,    
+  --    dataInMaster    => dataInMaster,
+  --    dataInSlave     => dataInSlave,     
+  --    dataOutMaster   => dataOutMaster,   
+  --    dataOutSlave    => dataOutSlave,    
       -- AXI-Lite Interface
-      axilReadMaster  => axilReadMaster,  
-      axilReadSlave   => axilReadSlave,   
-      axilWriteMaster => axilWriteMaster, 
-      axilWriteSlave  => axilWriteSlave 
-      );
+  --    axilReadMaster  => axilReadMaster,  
+  --    axilReadSlave   => axilReadSlave,   
+  --    axilWriteMaster => axilWriteMaster, 
+  --    axilWriteSlave  => axilWriteSlave 
+  --    );
+
+
+   U_FrameSubtractor : entity work.FrameSubtractor
+      generic map (
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- System Clock and Reset
+         sysClk           => sysClk,
+         sysRst           => sysRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster     => dataInMaster,
+         dataInSlave      => dataInSlave,
+         dataOutMaster    => dataOutMaster,
+         dataOutSlave     => dataOutSlave,
+         -- Pedestal DMA Interfaces  (sysClk domain)
+         pedestalInMaster =>  dataInMaster,
+         pedestalInSlave  =>  dataInSlave,
+         -- AXI-Lite Interface (sysClk domain)
+         axilReadMaster  => axilReadMaster,
+         axilReadSlave   => axilReadSlave,
+         axilWriteMaster => axilWriteSlave ,
+         axilWriteSlave  => axilWriteSlave);
+
   
   U_LiteMaster : entity work.AxiLiteMaster
     port map ( axilClk => sysClk,
