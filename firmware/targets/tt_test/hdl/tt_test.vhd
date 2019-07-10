@@ -81,9 +81,6 @@ begin
 
 
    U_FrameSubtractor : entity work.FrameSubtractor
-      generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- System Clock and Reset
          sysClk           => sysClk,
@@ -99,7 +96,7 @@ begin
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
-         axilWriteMaster => axilWriteSlave ,
+         axilWriteMaster => axilWriteMaster ,
          axilWriteSlave  => axilWriteSlave);
 
   

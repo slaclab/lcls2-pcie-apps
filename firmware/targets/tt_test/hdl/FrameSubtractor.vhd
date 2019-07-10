@@ -27,8 +27,6 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPkg.all;
 use work.SsiPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
 use work.Pgp2bPkg.all;
 
 library unisim;
@@ -231,14 +229,13 @@ begin
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
 
-                        v.aSingleFrame(v.counter + i)    := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i)/1),8);
-                        --v.aSingleFrame(v.counter + i)    := RESIZE(((signed(inMaster.tdata(i*8+7 downto i*8))-v.storedPedestalFrame(v.counter + i)/2)*64*v.storedPedestalFrame(v.counter + i))/(v.storedPedestalFrame(v.counter + i)*v.storedPedestalFrame(v.counter + i)+1),8);
-                        v.master.tData(i*8+7 downto i*8) := std_logic_vector(v.aSingleFrame(v.counter + i));                       --output 
+                        v.aSingleFrame(r.counter + i)    := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-r.storedPedestalFrame(r.counter + i)/1),8);
+                        v.master.tData(i*8+7 downto i*8) := std_logic_vector(r.aSingleFrame(r.counter + i));                       --output 
 
                   end loop;             
                
                                    
-                  v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;
+                  v.counter                  := r.counter+INT_CONFIG_C.TDATA_BYTES_C;
 
                   --the camera pixel number vs pedestal counter condition wasn't required in test bench.  worrisome and will need attention in future
                   if v.master.tLast = '1' or v.counter >= CAMERA_PIXEL_NUMBER then
@@ -297,13 +294,13 @@ begin
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
-                        v.storedPedestalFrame(v.pedestal_counter + i)        := RESIZE(signed(pedestalInMasterBuf.tdata(i*8+7 downto i*8)),8);
+                        v.storedPedestalFrame(r.pedestal_counter + i)        := RESIZE(signed(pedestalInMasterBuf.tdata(i*8+7 downto i*8)),8);
                         
 
                   end loop;
 
                  
-                  v.pedestal_counter                  := v.pedestal_counter+INT_CONFIG_C.TDATA_BYTES_C;
+                  v.pedestal_counter                  := r.pedestal_counter+INT_CONFIG_C.TDATA_BYTES_C;
 
                   --the camera pixel number vs pedestal counter condition wasn't required in test bench.  worrisome and will need attention in future
                   if v.pedestalMaster.tLast = '1' or v.pedestal_counter >= CAMERA_PIXEL_NUMBER then 
