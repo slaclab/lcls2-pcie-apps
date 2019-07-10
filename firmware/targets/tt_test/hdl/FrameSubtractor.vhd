@@ -66,6 +66,7 @@ architecture mapping of FrameSubtractor is
    constant PGP2BTXIN_LEN                 : integer             := 19;
    constant CAMERA_RESOLUTION_BITS        : positive            := 8;
    constant CAMERA_PIXEL_NUMBER           : positive            := 2048;
+   constant PIXELS_PER_TRANSFER           : positive            := 16;
 
    --type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
    type CameraFrameBuffer is array (natural range<>) of signed((CAMERA_RESOLUTION_BITS-1) downto 0);
@@ -89,7 +90,7 @@ architecture mapping of FrameSubtractor is
       axi_test              : slv(31 downto 0);
       state                 : StateType;
       state_pedestal        : StateType;
-      aSingleFrame          : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
+      aSingleFrame          : CameraFrameBuffer((PIXELS_PER_TRANSFER-1) downto 0);
       storedPedestalFrame   : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
    end record RegType;
 
@@ -229,8 +230,8 @@ begin
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
 
-                        v.aSingleFrame(r.counter + i)    := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-r.storedPedestalFrame(r.counter + i)/1),8);
-                        v.master.tData(i*8+7 downto i*8) := std_logic_vector(r.aSingleFrame(r.counter + i));                       --output 
+                        v.aSingleFrame(i)                := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-r.storedPedestalFrame(r.counter + i)/1),8);
+                        v.master.tData(i*8+7 downto i*8) := std_logic_vector(r.aSingleFrame(i));                       --output 
 
                   end loop;             
                
