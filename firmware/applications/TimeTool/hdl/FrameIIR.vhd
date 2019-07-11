@@ -62,6 +62,7 @@ architecture mapping of FrameIIR is
    constant CAMERA_RESOLUTION_BITS        : positive            := 8;
    constant CAMERA_PIXEL_NUMBER           : positive            := 2048;
    constant PIXEL_PER_TRANSFER            : positive            := 16;
+   constant ONE_SIGNED                    : signed(7 downto 0)  := (0 =>'1', others=> '0');
 
    type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
    type CameraSignedBuffer is array (natural range<>) of signed(CAMERA_RESOLUTION_BITS-1 downto 0);
@@ -80,7 +81,8 @@ architecture mapping of FrameIIR is
       counter          : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
       scratchPad       : slv(31 downto 0);
       timeConstant     : slv(7 downto 0);
-      tConst_signed    : signed(7 downto 0);
+      tConst_natural   : natural range 0 to 7;
+	  tConst_signed    : signed(7 downto 0);
       axi_test         : slv(31 downto 0);
       state            : StateType;
 	  stage1           : CameraSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
@@ -96,7 +98,8 @@ architecture mapping of FrameIIR is
       counter         => 0,
       scratchPad      => (others => '0'),
       timeConstant    => (0=>'1',others=>'0'),
-      tConst_signed   => to_signed(1,8),
+	  tConst_signed   => (others=>'0'),
+      tConst_natural  => 1,
       axi_test        => (others=>'0'),
       state           => IDLE_S,
       stage1          => (others => (others => '0') ),
@@ -166,8 +169,8 @@ begin
       ------------------------      
       -- updating time constant
       ------------------------       
-      v.tConst_signed := signed(r.timeConstant);
-
+      v.tConst_natural := to_integer(unsigned(r.timeConstant)+1);
+	  v.tConst_signed  := shift_left(ONE_SIGNED,r.tConst_natural);
       ------------------------      
       -- Main Part of Code
       ------------------------ 
@@ -202,10 +205,15 @@ begin
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
                        
+						--v.master.tData(i*8+7 downto i*8)          := inMaster.tData(i*8+7 downto i*8) + r.addValue;
                         --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed)+signed(inMaster.tdata(i*8+7 downto i*8)))/(v.tConst_signed+1),8);
+
 						v.stage1(i)                                 := signed(inMaster.tdata(i*8+7 downto i*8));
-						v.stage2(i)                                 := r.rollingImage(r.counter + i)*r.tConst_signed;
-						v.rollingImage(r.counter + i)               := RESIZE((r.stage2(i)+r.stage1(i))/(r.tConst_signed+1),8);
+
+						v.stage2(i)                                 := r.rollingImage(r.counter + i) * (r.tConst_signed-1);
+
+						v.rollingImage(r.counter + i)               := RESIZE(  shift_right(   (r.stage2(i)+r.stage1(i))    ,r.tConst_natural)                               ,  8  );
+
                         v.master.tData(i*8+7 downto i*8)            := std_logic_vector(r.rollingImage(r.counter + i));                       --output 
 
                   end loop;
