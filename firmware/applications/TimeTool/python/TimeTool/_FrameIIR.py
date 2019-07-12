@@ -11,17 +11,17 @@
 
 import pyrogue as pr
 
-class Prescale(pr.Device):
+class FrameIIR(pr.Device):
     def __init__(   self,       
-            name        = "Prescale",
-            description = "Prescale Container",
+            name        = "FrameIIR",
+            description = "Frame Infinite Impulse Response",
             **kwargs):
         super().__init__(name=name, description=description, **kwargs) 
         
         self.add(pr.RemoteVariable(   
             name         = 'ScratchPad',
             description  = 'Register to test reads and writes',
-            offset       = 0x000,
+            offset       = 0x0000,
             bitSize      = 32,
             bitOffset    = 0,
             mode         = 'RW',
@@ -29,9 +29,9 @@ class Prescale(pr.Device):
         ))        
 
         self.add(pr.RemoteVariable(    
-            name         = "DialInPreScaling",
-            description  = 'TBD',
-            offset       =  0x004,
+            name         = "TimeConstant",
+            description  = 'Measured in units of 2**x',
+            offset       =  0x0004,
             bitSize      =  32,
             bitOffset    =  0,
             mode         = "RW",

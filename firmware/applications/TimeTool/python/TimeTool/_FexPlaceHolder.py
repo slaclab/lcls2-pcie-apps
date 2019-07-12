@@ -11,28 +11,28 @@
 
 import pyrogue as pr
 
-class Prescale(pr.Device):
+class Fex(pr.Device):
     def __init__(   self,       
-            name        = "Prescale",
-            description = "Prescale Container",
+            name        = "Fex",
+            description = "Fex Container",
             **kwargs):
         super().__init__(name=name, description=description, **kwargs) 
-        
+
         self.add(pr.RemoteVariable(   
             name         = 'ScratchPad',
             description  = 'Register to test reads and writes',
-            offset       = 0x000,
+            offset       = 0x0000,
             bitSize      = 32,
             bitOffset    = 0,
             mode         = 'RW',
             disp         = '{:#08x}',
-        ))        
+        ))           
 
         self.add(pr.RemoteVariable(    
-            name         = "DialInPreScaling",
+            name         = "AddValue",
             description  = 'TBD',
-            offset       =  0x004,
-            bitSize      =  32,
+            offset       =  0x0004,
+            bitSize      =  8,
             bitOffset    =  0,
             mode         = "RW",
         ))

@@ -11,28 +11,20 @@
 
 import pyrogue as pr
 
-class Prescale(pr.Device):
+class FIR(pr.Device):
     def __init__(   self,       
-            name        = "Prescale",
-            description = "Prescale Container",
+            name        = "FIR",
+            description = "Finite Impulse Response",
             **kwargs):
         super().__init__(name=name, description=description, **kwargs) 
-        
-        self.add(pr.RemoteVariable(   
-            name         = 'ScratchPad',
-            description  = 'Register to test reads and writes',
-            offset       = 0x000,
-            bitSize      = 32,
-            bitOffset    = 0,
-            mode         = 'RW',
-            disp         = '{:#08x}',
-        ))        
 
-        self.add(pr.RemoteVariable(    
-            name         = "DialInPreScaling",
-            description  = 'TBD',
-            offset       =  0x004,
-            bitSize      =  32,
-            bitOffset    =  0,
-            mode         = "RW",
-        ))
+        for i in range(8):
+            self.add(pr.RemoteVariable(   
+                name         = 'CoefficientSet'+str(i),
+                description  = 'FIR coefficients',
+                offset       = i*4,
+                bitSize      = 32,
+                bitOffset    = 0,
+                mode         = 'RW',
+                disp         = '{:#08x}',
+            ))        
