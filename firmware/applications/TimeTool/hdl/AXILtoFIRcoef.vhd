@@ -136,7 +136,7 @@ begin
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
       axiSlaveRegister (axilEp, x"000", 0, v.master.tData(31 downto 0));
-      axiSlaveRegister (axilEp, x"004", 0, v.master.tData(61 downto 32));
+      axiSlaveRegister (axilEp, x"004", 0, v.master.tData(63 downto 32));
       axiSlaveRegister (axilEp, x"008", 0, v.master.tData(95 downto 64));
       axiSlaveRegister (axilEp, x"00C", 0, v.master.tData(127 downto 96));
       axiSlaveRegister (axilEp, x"010", 0, v.master.tData(159 downto 128));

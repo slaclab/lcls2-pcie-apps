@@ -31,7 +31,8 @@ class Fex(pr.Device):
         ))
             
 
-        self.add(tt.Prescale( 
+        self.add(tt.Prescale(
+            name   = 'EVC_placeholder',
             offset = 0x1000, 
         ))
 
@@ -41,6 +42,11 @@ class Fex(pr.Device):
 
         self.add(tt.FrameIIR( 
             offset = 0x3000, 
+        ))
+
+        self.add(tt.Prescale(
+            name   = 'background_prescaler', 
+            offset = 0x6000,
         ))
 
 
