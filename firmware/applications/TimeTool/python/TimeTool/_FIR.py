@@ -28,3 +28,13 @@ class FIR(pr.Device):
                 mode         = 'RW',
                 disp         = '{:#08x}',
             ))        
+        self.add(pr.RemoteVariable(   
+            name         = 'LoadCoefficients',
+            description  = 'LoadCoefficients',
+            offset       = 32,
+            bitSize      = 1,
+            bitOffset    = 0,
+            mode         = 'RW',
+            verify       = False, 
+            disp         = '{:#01x}',
+        ))        
