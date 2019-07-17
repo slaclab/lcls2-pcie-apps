@@ -65,6 +65,10 @@ architecture testbed of TBTimeToolPrescaler is
    signal appOutMaster : AxiStreamMasterType;
    signal appOutSlave  : AxiStreamSlaveType;
 
+   signal prescalerToPrescalerMaster   : AxiStreamMasterType;
+   signal prescalerToPrescalerSlave    : AxiStreamSlaveType;
+
+
 
    signal axilWriteMasters            : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
    signal axilWriteSlaves             : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
@@ -119,16 +123,28 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStreamSim
+      --U_CamOutput : entity work.FileToAxiStream
+      --   generic map (
+      --      TPD_G         => TPD_G,
+      --      BYTE_SIZE_C   => 2+1,
+      --      AXIS_CONFIG_G => SRC_CONFIG_C)
+      --   port map (
+      --      axiClk      => axiClk,
+      --      axiRst      => axiRst,
+      --      mAxisMaster => appInMaster,
+      --      mAxisSlave  => appInSlave);
+
+      U_CamOutput : entity work.FileToAxiStream
          generic map (
-            TPD_G         => TPD_G,
-            BYTE_SIZE_C   => 2+1,
-            AXIS_CONFIG_G => SRC_CONFIG_C)
+            TPD_G              => TPD_G,
+            BYTE_SIZE_C        => 2+1,
+            DMA_AXIS_CONFIG_G  => SRC_CONFIG_C,
+            CLK_PERIOD_G       => 10 ns)
          port map (
-            axiClk      => axiClk,
-            axiRst      => axiRst,
-            mAxisMaster => appInMaster,
-            mAxisSlave  => appInSlave);
+            sysClk         => axiClk,
+            sysRst         => axiRst,
+            dataOutMaster  => appInMaster,
+            dataOutSlave   => appInSlave);
 
    --------------------
    -- Modules to be tested
@@ -146,13 +162,32 @@ begin
          -- DMA Interface (sysClk domain)
          dataInMaster    => appInMaster,
          dataInSlave     => appInSlave,
-         dataOutMaster   => appOutMaster,
-         dataOutSlave    => appOutSlave,
+         dataOutMaster   => prescalerToPrescalerMaster,
+         dataOutSlave    => prescalerToPrescalerSlave,
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMasters(0),
          axilReadSlave   => axilReadSlaves(0),
          axilWriteMaster => axilWriteMasters(0),
          axilWriteSlave  => axilWriteSlaves(0));
+
+   U2_TimeToolPrescaler : entity work.TimeToolPrescaler
+      generic map (
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- System Clock and Reset
+         sysClk          => axiClk,
+         sysRst          => axiRst,
+         -- DMA Interface (sysClk domain)
+         dataInMaster    => prescalerToPrescalerMaster,
+         dataInSlave     => prescalerToPrescalerSlave,
+         dataOutMaster   => appOutMaster,
+         dataOutSlave    => appOutSlave,
+         -- AXI-Lite Interface (sysClk domain)
+         axilReadMaster  => axilReadMasters(1),
+         axilReadSlave   => axilReadSlaves(1),
+         axilWriteMaster => axilWriteMasters(1),
+         axilWriteSlave  => axilWriteSlaves(1));
 
   ---------------------------------
    -- AXI-Lite Register Transactions
@@ -167,7 +202,8 @@ begin
       wait until axiRst = '1';
       wait until axiRst = '0';
 
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"2", true);
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"4", true);
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_1004", x"5", true);
 
    end process test;
 
