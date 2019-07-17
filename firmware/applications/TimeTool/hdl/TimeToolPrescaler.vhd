@@ -181,6 +181,9 @@ begin
             ------------------------------
             -- send regular frame
             ------------------------------
+            
+            ssiSetUserEofe(DMA_AXIS_CONFIG_G, v.master, '0'); -- side band data to batcher to indicate that the frame contains data
+
             v.validate_state(0) := '1';     --debugging signal
             v.slave.tReady  := not outCtrl.pause;
             if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter = v.prescalingRate then
@@ -217,7 +220,7 @@ begin
             end if;
 
          when BLOWOFF_S =>
-            if inMaster.tValid = '1' and inMaster.tLast = '1' then
+            if (inMaster.tValid = '1' and inMaster.tLast = '1') or (ssiGetUserEofe(DMA_AXIS_CONFIG_G, inMaster)='1') then
                v.state := IDLE_S;
             else
                v.master.tValid := '0';
