@@ -16,10 +16,10 @@ TimeToolDev:
         UserReset: 0x0
       DmaIbAxisMon:
         enable: True
-        CntRst: 0x0
+        CntRst: 0x1
       DmaObAxisMon:
         enable: True
-        CntRst: 0x0
+        CntRst: 0x1
     PgpMon[0]:
       enable: True
       Loopback: 'No'
@@ -28,10 +28,10 @@ TimeToolDev:
       AutoStatus: False
     PgpTxAxisMon[0]:
       enable: True
-      CntRst: 0x0
+      CntRst: 0x1
     PgpRxAxisMon[0]:
       enable: True
-      CntRst: 0x0
+      CntRst: 0x1
     Timing:
       enable: True
       GthRxAlignCheck[0]:
@@ -46,7 +46,7 @@ TimeToolDev:
         enable: True
         Loopback: 'No'
         UseMiniTpg: True
-        CntRst: 0x0
+        CntRst: 0x1
       Triggering:
         enable: True
         Ch[0]:
@@ -56,7 +56,7 @@ TimeToolDev:
           DestSel: 0x20000
         LocalTrig[0]:
           enable: True
-          EnableTrig: False
+          EnableTrig: True
           Source: 0x0
           Polarity: Rising
           Delay: 0x0
@@ -148,7 +148,7 @@ TimeToolDev:
       enable: True
     BoardTemp:
       enable: True
-      AlertMaskWrite: False
+      AlertMaskWrite: True
       AlertMask: True
       StopWrite: False
       Stop: False
@@ -158,13 +158,13 @@ TimeToolDev:
       LcritMask: False
       FaultQueueWrite: False
       FaultQueue: False
-      ConvertRateWrite: 0x0
+      ConvertRateWrite: 0x8
       ConvertRate: '16'
-      LocalHighSetpointWrite: 0x0
+      LocalHighSetpointWrite: 0x46
       LocalHighSetpoint: 70
       LocalLowSetpointWrite: 0x0
       LocalLowSetpoint: 0
-      RemoteHighSetpointHighByteWrite: 0x0
+      RemoteHighSetpointHighByteWrite: 0x46
       RemoteHighSetpoint: 70
       RemoteLowSetpointHighByteWrite: 0x0
       RemoteLowSetpoint: 0
@@ -225,7 +225,7 @@ TimeToolDev:
           SSG: ''
           STG: ''
           STM: '1'
-          SVM: '1'
+          SVM: '0'
           USD: ''
           USL: ''
           USS: ''
@@ -474,7 +474,7 @@ TimeToolDev:
       TrigPulseWidthRaw: 0xfff
       TrigPulseWidth: 32.768
       TrigMask: 0x1
-      CntRst: 0x0
+      CntRst: 0x1
     TrigCtrl[1]:
       enable: True
       EnableTrig: False
@@ -483,23 +483,23 @@ TimeToolDev:
       TrigPulseWidthRaw: 0xfff
       TrigPulseWidth: 32.768
       TrigMask: 0x1
-      CntRst: 0x0
+      CntRst: 0x1
     PgpMon[0]:
       enable: True
     PgpTxAxisMon[0]:
       enable: True
-      CntRst: 0x0
+      CntRst: 0x1
     PgpRxAxisMon[0]:
       enable: True
-      CntRst: 0x0
+      CntRst: 0x1
     PgpMon[1]:
       enable: True
     PgpTxAxisMon[1]:
       enable: True
-      CntRst: 0x0
+      CntRst: 0x1
     PgpRxAxisMon[1]:
       enable: True
-      CntRst: 0x0
+      CntRst: 0x1
   TimeToolRx:
     enable: True
     frameLength: 2176
@@ -511,40 +511,41 @@ TimeToolDev:
         enable: True
         Bypass: 0x0
         Timeout: 0x0
-        Blowoff: True
+        Blowoff: False
       Fex:
         enable: True
         EventBuilder:
           enable: True
           Bypass: 0x0
           Timeout: 0x0
-          Blowoff: True
+          Blowoff: False
         EVC_placeholder:
           enable: True
           ScratchPad: 0x000000
-          DialInPreScaling: 0xfd
+          DialInPreScaling: 0x0
         FIR:
           enable: True
-          CoefficientSet0: 0x000000
-          CoefficientSet1: 0x000000
-          CoefficientSet2: 0x000000
-          CoefficientSet3: 0x000000
-          CoefficientSet4: 0x000005
-          CoefficientSet5: 0x000000
-          CoefficientSet6: 0x000000
-          CoefficientSet7: 0x000000
+          CoefficientSet0: 0x7f7f7f7f
+          CoefficientSet1: 0x7f7f7f7f
+          CoefficientSet2: 0x7f7f7f7f
+          CoefficientSet3: 0x7f7f7f7f
+          CoefficientSet4: 0x81818181
+          CoefficientSet5: 0x81818181
+          CoefficientSet6: 0x81818181
+          CoefficientSet7: 0x81818181
+          LoadCoefficients: 0x0
         FrameIIR:
           enable: True
           ScratchPad: 0x000000
-          TimeConstant: 0xfe
+          TimeConstant: 0x3
         background_prescaler:
           enable: True
           ScratchPad: 0x000000
-          DialInPreScaling: 0xf
+          DialInPreScaling: 0xff
       Prescale:
         enable: True
         ScratchPad: 0x000000
-        DialInPreScaling: 0xff
+        DialInPreScaling: 0xfe
       ByPass:
         enable: True
         ScratchPad: 0x000000
