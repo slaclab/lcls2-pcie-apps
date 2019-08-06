@@ -85,7 +85,8 @@ cl.StartRun()
 time.sleep(3)
 
 if(cl.dev[0]=='sim'):
-    p =  np.array(cl._frameGen[0].make_byte_array())
+    #p =  np.array(cl._frameGen[0].make_byte_array())
+    p = (np.random.rand(300)*255).astype(np.uint8)
     cl.GenUserFrame[0]()(p)
 else:
     cl.Hardware.Timing.Triggering.LocalTrig[0].EnableTrig.set(True)

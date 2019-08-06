@@ -2,7 +2,7 @@
 -- File       : FrameIIR.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2017-12-04
+-- Last update: 2019-07-02
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -25,11 +25,7 @@ use ieee.numeric_std.ALL;
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
-use work.AxiPkg.all;
 use work.SsiPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -65,26 +61,33 @@ architecture mapping of FrameIIR is
    constant PGP2BTXIN_LEN                 : integer             := 19;
    constant CAMERA_RESOLUTION_BITS        : positive            := 8;
    constant CAMERA_PIXEL_NUMBER           : positive            := 2048;
+   constant PIXEL_PER_TRANSFER            : positive            := 16;
+   constant ONE_SIGNED                    : signed(7 downto 0)  := (0 =>'1', others=> '0');
 
-   --type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
-   type CameraFrameBuffer is array (natural range<>) of signed((CAMERA_RESOLUTION_BITS-1) downto 0);
+   type CameraFrameBuffer is array (natural range<>) of slv(CAMERA_RESOLUTION_BITS-1 downto 0);
+   type CameraSignedBuffer is array (natural range<>) of signed(CAMERA_RESOLUTION_BITS-1 downto 0);
+   type CameraBigSignedBuffer is array (natural range<>) of signed(2*CAMERA_RESOLUTION_BITS-1 downto 0);
+
 
    type StateType is (
       IDLE_S,
       UPDATE_AND_MOVE_S);
 
    type RegType is record
-      master          : AxiStreamMasterType;
-      slave           : AxiStreamSlaveType;
-      axilReadSlave   : AxiLiteReadSlaveType;
-      axilWriteSlave  : AxiLiteWriteSlaveType;
-      counter         : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
-      scratchPad      : slv(31 downto 0);
-      timeConstant    : slv(7 downto 0);
-      tConst_signed   : signed(7 downto 0);
-      axi_test        : slv(31 downto 0);
-      state           : StateType;
-      rollingImage    : CameraFrameBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
+      master           : AxiStreamMasterType;
+      slave            : AxiStreamSlaveType;
+      axilReadSlave    : AxiLiteReadSlaveType;
+      axilWriteSlave   : AxiLiteWriteSlaveType;
+      counter          : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
+      scratchPad       : slv(31 downto 0);
+      timeConstant     : slv(7 downto 0);
+      tConst_natural   : natural range 0 to 7;
+	  tConst_signed    : signed(7 downto 0);
+      axi_test         : slv(31 downto 0);
+      state            : StateType;
+	  stage1           : CameraSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
+	  stage2           : CameraBigSignedBuffer((PIXEL_PER_TRANSFER-1) downto 0);
+      rollingImage     : CameraSignedBuffer((CAMERA_PIXEL_NUMBER-1) downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -93,11 +96,14 @@ architecture mapping of FrameIIR is
       axilReadSlave   => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave  => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter         => 0,
-      scratchPad     => (others => '0'),
-      timeConstant    => (others=>'0'),
-      tConst_signed   => to_signed(1,8),
+      scratchPad      => (others => '0'),
+      timeConstant    => (0=>'1',others=>'0'),
+	  tConst_signed   => (others=>'0'),
+      tConst_natural  => 1,
       axi_test        => (others=>'0'),
       state           => IDLE_S,
+      stage1          => (others => (others => '0') ),
+	  stage2          => (others => (others => '0') ),
       rollingImage    => (others => (others => '0') ) );
 
 ---------------------------------------
@@ -155,16 +161,16 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
-      axiSlaveRegister (axilEp, x"0004", 0, v.timeConstant(7 downto 0));
+      axiSlaveRegister (axilEp, x"000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"004", 0, v.timeConstant(7 downto 0));
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
       ------------------------      
       -- updating time constant
       ------------------------       
-      v.tConst_signed := signed(v.timeConstant);
-
+      v.tConst_natural := to_integer(unsigned(r.timeConstant)+1);
+	  v.tConst_signed  := shift_left(ONE_SIGNED,r.tConst_natural);
       ------------------------      
       -- Main Part of Code
       ------------------------ 
@@ -199,17 +205,25 @@ begin
 
                   for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
                        
-                        v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed-1)+signed(inMaster.tdata(i*8+7 downto i*8)))/v.tConst_signed,8);
-                        v.master.tData(i*8+7 downto i*8)          := std_logic_vector(v.rollingImage(v.counter + i));                       --output 
+						--v.master.tData(i*8+7 downto i*8)          := inMaster.tData(i*8+7 downto i*8) + r.addValue;
+                        --v.rollingImage(v.counter + i)             := RESIZE((v.rollingImage(v.counter + i)*(v.tConst_signed)+signed(inMaster.tdata(i*8+7 downto i*8)))/(v.tConst_signed+1),8);
 
+						v.stage1(i)                                 := signed(inMaster.tdata(i*8+7 downto i*8));
+
+						v.stage2(i)                                 := r.rollingImage(r.counter + i) * (r.tConst_signed-1);
+
+						v.rollingImage(r.counter + i)               := RESIZE(  shift_right(   (r.stage2(i)+r.stage1(i))    ,r.tConst_natural)                               ,  8  );
+
+                        v.master.tData(i*8+7 downto i*8)            := std_logic_vector(r.rollingImage(r.counter + i));                       --output 
 
                   end loop;
 
                  
-                  v.counter                  := v.counter+INT_CONFIG_C.TDATA_BYTES_C;
+                  v.counter                  := r.counter+INT_CONFIG_C.TDATA_BYTES_C;
                   v.state                    := UPDATE_AND_MOVE_S;                  
 
-                  if v.master.tLast = '1' then
+                  --the camera pixel number vs pedestal counter condition wasn't required in test bench.  worrisome and will need attention in future
+                  if v.master.tLast = '1' or v.counter >= CAMERA_PIXEL_NUMBER then
                         v.counter            := 0;
                         --v.state     := IDLE_S;
                   end if;

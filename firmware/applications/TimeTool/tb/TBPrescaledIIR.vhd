@@ -169,7 +169,6 @@ begin
    -- Test data
    --------------------  
 
-      --U_CamOutput : entity work.AxiStreamCameraOutput
       U_CamOutput : entity work.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,

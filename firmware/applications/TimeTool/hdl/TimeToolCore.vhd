@@ -196,19 +196,20 @@ begin
    -------------
    -- FEX Module
    -------------
-   U_TimeToolFEX : entity work.TimeToolFEX_placeholder
+   U_TimeToolFEX : entity work.TimeToolFEX
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+         TPD_G               => TPD_G,
+         AXI_BASE_ADDR_G     => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr,
+         DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_C)
       port map (
          -- System Clock and Reset
-         sysClk          => axilClk,
-         sysRst          => axilRst,
+         axilClk         => axilClk,
+         axilRst         => axilRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster    => dataIbMasters(FEX_INDEX_C),
-         dataInSlave     => dataIbSlaves(FEX_INDEX_C),
-         dataOutMaster   => dspObMasters(FEX_INDEX_C),
-         dataOutSlave    => dspObSlaves(FEX_INDEX_C),
+         dataInMaster       => dataIbMasters(FEX_INDEX_C),
+         dataInSlave        => dataIbSlaves(FEX_INDEX_C),
+         eventMaster        => dspObMasters(FEX_INDEX_C),
+         eventSlave         => dspObSlaves(FEX_INDEX_C),
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMasters(FEX_INDEX_C),
          axilReadSlave   => axilReadSlaves(FEX_INDEX_C),

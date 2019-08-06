@@ -5,9 +5,6 @@ TimeToolDev:
   Application:
     AppLane[:]:
       ###################
-      Fex:
-        AddValue: 0x0        
-      ###################
       Prescale:
         DialInPreScaling: 0x0
       ###################

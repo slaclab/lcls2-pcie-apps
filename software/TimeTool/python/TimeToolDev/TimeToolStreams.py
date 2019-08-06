@@ -103,6 +103,9 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
         to_print = np.array(p)[-1:] 
         #print(np.array(p)[:96],to_print) #comment out for long term test
+        if(len(p)==0):
+            return         
+    
         print(np.array(p)[my_mask])
         print("____________________________________________________")
         self.frameCount.set(self.frameCount.value() + 1,False)

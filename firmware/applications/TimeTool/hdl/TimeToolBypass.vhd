@@ -186,6 +186,8 @@ begin
       if(v.byPass(0) = '1') then
             v.Master                    := inMaster;
             v.slave.tReady              := not outCtrl.pause;
+
+            v.toTimeToolMaster.tValid   := '0';
           
       else
             v.toTimeToolMaster          := inMaster;

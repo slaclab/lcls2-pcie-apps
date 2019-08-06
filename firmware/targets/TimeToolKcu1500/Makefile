@@ -1,4 +1,5 @@
 export INCLUDE_PGP3_10G = 0
+#export REMOVE_UNUSED_CODE = 1
 
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000012

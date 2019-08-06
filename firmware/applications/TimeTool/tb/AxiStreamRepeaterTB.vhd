@@ -70,7 +70,7 @@ begin
 
    slaveRepeaterToFEXorPrescaler(0).tReady      <= '1';
    slaveRepeaterToFEXorPrescaler(1).tReady      <= '1';
-   appInSlave.tReady                            <= '1';     --this pin can only be driven once.  vivado simulation will compile but not run
+   --appInSlave.tReady                            <= '1';     --this pin can only be driven once.  vivado simulation will compile but not run
 
    --------------------
    -- Clocks and Resets
@@ -101,7 +101,6 @@ begin
    -- Test data
    --------------------  
 
-      --U_CamOutput : entity work.AxiStreamCameraOutput
       U_CamOutput : entity work.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,
@@ -134,7 +133,7 @@ begin
          axisRst      => dmaRst,
          -- Slave
          sAxisMaster  => appInMaster,
-         --sAxisSlave   => appInSlave,    --this pin can only be driven once.  vivado simulation will compile but not run
+         sAxisSlave   => appInSlave,    --this pin can only be driven once.  vivado simulation will compile but not run
          -- Masters
          mAxisMasters => masterRepeaterToFEXorPrescaler,
          mAxisSlaves  => slaveRepeaterToFEXorPrescaler);
