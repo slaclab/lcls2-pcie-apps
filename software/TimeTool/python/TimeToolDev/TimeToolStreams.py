@@ -5,10 +5,43 @@ import rogue.interfaces.stream
 
 import numpy as np
 
+import matplotlib
 import matplotlib.pyplot as plt
 
 import IPython
+
+#matplotlib.use("Qt5agg")
+plt.ion()
+
 # import h5py
+
+
+
+#####################################################################        
+#####################################################################        
+##################################################################### 
+
+# This class provides plotting capabiltiies
+class dsp_plotting():
+    def __init__(self):
+
+        self.fig, self.axis = plt.subplots(1)
+
+
+        plt.show()
+    
+    def plot(self,*args,**kwargs):
+        for line in self.axis.lines:
+            self.axis.lines.remove(line)
+            #self.lines.pop()
+
+        kwargs['color']='b'
+        plt.pause(0.05)
+        self.lines = self.axis.plot(*args,**kwargs)
+        self.fig.canvas.draw()
+        plt.pause(0.05)
+        
+        
 
 
 
@@ -90,6 +123,8 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
             mode        = 'RW', 
         )) 
 
+        self.dsp_plotting = dsp_plotting()
+
         self.to_save_to_h5 = []
         self.frameCounter = 0
 
@@ -121,6 +156,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
             print(len(p))
             print(np.array(p)[my_mask])
             print("____________________________________________________")
+            self.dsp_plotting.plot(np.array(p))
             self.frameCounter = 1
     
         ###################################################################
@@ -150,6 +186,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         #self.to_save_to_h5.append(np.array(p))
         for i in range(8):
             self.node('byteError{}'.format(i)).set(berr[i],False)
+
 
     def close_h5_file(self):
         print("the thing that is not a destructor is working")
