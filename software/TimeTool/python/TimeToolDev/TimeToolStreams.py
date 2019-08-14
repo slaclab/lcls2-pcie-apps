@@ -5,8 +5,12 @@ import rogue.interfaces.stream
 
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 import IPython
 # import h5py
+
+
 
 #####################################################################        
 #####################################################################        
@@ -87,15 +91,15 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         )) 
 
         self.to_save_to_h5 = []
+        self.frameCounter = 0
 
         for i in range(8):
             self.add(pr.LocalVariable( name='byteError{}'.format(i), disp='{:#x}', value=0, mode='RO', pollInterval=1))
 
     def _acceptFrame(self,frame):
-        print("TimeToolRx accepting frame ")
         p = bytearray(frame.getPayload())
         frame.read(p,0)
-        print(len(p))
+
         my_mask = np.arange(36)
         if(len(p)>100):
               my_mask = np.append(my_mask,np.arange(int(len(p)/2),int(len(p)/2)+36))
@@ -105,11 +109,26 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         #print(np.array(p)[:96],to_print) #comment out for long term test
         if(len(p)==0):
             return         
-    
-        print(np.array(p)[my_mask])
-        print("____________________________________________________")
-        self.frameCount.set(self.frameCount.value() + 1,False)
+        
+        ###################################################################
+        ###### DSP processing and display updating ########################
+        ###################################################################
 
+        #parse the output before displaying
+        
+
+        if(self.frameCounter % 120 == 0):
+            print(len(p))
+            print(np.array(p)[my_mask])
+            print("____________________________________________________")
+            self.frameCounter = 1
+    
+        ###################################################################
+        ###################################################################
+        ###################################################################
+
+        self.frameCount.set(self.frameCount.value() + 1,False)
+        self.frameCounter += 1
      
         berr = [0,0,0,0,0,0,0,0]
         frameLength = self.frameLength.get()
