@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 
 import IPython
 
+import random
+
 #matplotlib.use("Qt5agg")
 plt.ion()
 
@@ -17,29 +19,27 @@ plt.ion()
 
 
 
+
+
 #####################################################################        
 #####################################################################        
 ##################################################################### 
 
-# This class provides plotting capabiltiies
+# This class wraps matplotlib for pyrogue integration
 class dsp_plotting():
     def __init__(self):
 
         self.fig, self.axis = plt.subplots(1)
+        self.lines = self.axis.plot([],[])
+        self.axis.set_xlim(0,4500)
+        self.axis.set_ylim(0,256)
 
 
         plt.show()
     
     def plot(self,*args,**kwargs):
-        for line in self.axis.lines:
-            self.axis.lines.remove(line)
-            #self.lines.pop()
-
-        kwargs['color']='b'
-        plt.pause(0.05)
-        self.lines = self.axis.plot(*args,**kwargs)
-        self.fig.canvas.draw()
-        plt.pause(0.05)
+        self.lines[0].set_data(args[0],args[1])        
+        #plt.pause(0.05)
         
         
 
@@ -150,13 +150,12 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         ###################################################################
 
         #parse the output before displaying
-        
-
+    
         if(self.frameCounter % 120 == 0):
             print(len(p))
             print(np.array(p)[my_mask])
             print("____________________________________________________")
-            self.dsp_plotting.plot(np.array(p))
+            self.dsp_plotting.plot(np.arange(len(np.array(p))),np.array(p))
             self.frameCounter = 1
     
         ###################################################################
