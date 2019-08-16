@@ -29,23 +29,26 @@ plt.ion()
 class dsp_plotting():
     def __init__(self):
 
+        self.edge_position = np.array([])
 
-        self.fig, self.axes = plt.subplots(2)
+        self.fig, self.axes = plt.subplots(3)
         
         self.lines = [self.axes[i].plot([],[]) for i in range(len(self.axes))]
         for i in range(len(self.axes)):
             self.axes[i].set_xlim(0,4500)
             self.axes[i].set_ylim(0,256)
 
+        self.axes[2].set_ylim(0,2050)
 
         plt.show()
     
     def plot(self,*args,**kwargs):
-        for i in range(len(self.lines)):
+        for i in range(2):
             self.lines[i][0].set_data(args[0],args[1])        
             #plt.pause(0.05)
         
-        
+        #self.edge_position = np.append(self.edge_position,args[96]+args[97]*256)[:100]
+        self.lines[2][0].set_data(np.arange(len(self.edge_position)),self.edge_position)        
         
 
 
@@ -157,7 +160,12 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
         #parse the output before displaying
 
+        p_array = np.array(p)
+        #self.edge_position = np.append(self.edge_position,args[96]+args[97]*256)[:100]
+        self.dsp_plotting.edge_position = np.append(self.dsp_plotting.edge_position,p_array[96]+p_array[97]*256)[-1000:]
+
         if(self.frameCounter % 120 == 0):
+            print(self.dsp_plotting.edge_position[-10:])
             print(np.array(p)[:144])
             print("____________________________________________________")
             self.dsp_plotting.plot(np.arange(len(np.array(p))),np.array(p))
