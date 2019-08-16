@@ -12,7 +12,7 @@ import IPython
 
 import random
 
-#matplotlib.use("Qt5agg")
+matplotlib.use("Qt5agg")
 plt.ion()
 
 # import h5py
@@ -29,17 +29,22 @@ plt.ion()
 class dsp_plotting():
     def __init__(self):
 
-        self.fig, self.axis = plt.subplots(1)
-        self.lines = self.axis.plot([],[])
-        self.axis.set_xlim(0,4500)
-        self.axis.set_ylim(0,256)
+
+        self.fig, self.axes = plt.subplots(2)
+        
+        self.lines = [self.axes[i].plot([],[]) for i in range(len(self.axes))]
+        for i in range(len(self.axes)):
+            self.axes[i].set_xlim(0,4500)
+            self.axes[i].set_ylim(0,256)
 
 
         plt.show()
     
     def plot(self,*args,**kwargs):
-        self.lines[0].set_data(args[0],args[1])        
-        #plt.pause(0.05)
+        for i in range(len(self.lines)):
+            self.lines[i][0].set_data(args[0],args[1])        
+            #plt.pause(0.05)
+        
         
         
 
@@ -131,6 +136,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         for i in range(8):
             self.add(pr.LocalVariable( name='byteError{}'.format(i), disp='{:#x}', value=0, mode='RO', pollInterval=1))
 
+
     def _acceptFrame(self,frame):
         p = bytearray(frame.getPayload())
         frame.read(p,0)
@@ -150,10 +156,9 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         ###################################################################
 
         #parse the output before displaying
-    
+
         if(self.frameCounter % 120 == 0):
-            print(len(p))
-            print(np.array(p)[my_mask])
+            print(np.array(p)[:144])
             print("____________________________________________________")
             self.dsp_plotting.plot(np.arange(len(np.array(p))),np.array(p))
             self.frameCounter = 1
