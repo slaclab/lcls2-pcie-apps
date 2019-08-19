@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
+import scipy.signal
+
 import IPython
 
 import random
@@ -27,29 +29,89 @@ plt.ion()
 
 # This class wraps matplotlib for pyrogue integration
 class dsp_plotting():
+
+
     def __init__(self):
 
-        self.edge_position = np.array([])
+        #constants        
+        self.EDGE_IDX = 96
+        self.LOW_RATE = 120
 
-        self.fig, self.axes = plt.subplots(3)
+        #non constants
+        self.my_kernel               = np.append(np.ones(16),-np.ones(16))
+
+        self.edge_position           = np.array([])
+        self.edge_position_low_rate  = np.array([])
+        self.py_calc_edge_position   = np.array([])
         
-        self.lines = [self.axes[i].plot([],[]) for i in range(len(self.axes))]
+        self.counter = 0
+
+
+
+        self.fig, self.axes = plt.subplots(4)
+
+        markers = [None,None,None,'o']
+        linewidths = [1,1,1,0]
+        
+        self.lines = [self.axes[i].plot([],[],marker=markers[i],linewidth=linewidths[i]) for i in range(len(self.axes))]
         for i in range(len(self.axes)):
             self.axes[i].set_xlim(0,4500)
             self.axes[i].set_ylim(0,256)
 
-        self.axes[2].set_ylim(0,2050)
+        self.axes[2].set_ylim(0,2500)
+        
+        self.axes[3].set_ylim(0,2500)
+        self.axes[3].set_xlim(0,2500)
 
         plt.show()
+
+    def high_rate_processing(self, *args,**kwargs):
+    
+        p_array= args[0]
+
+        self.edge_position = np.append(self.edge_position,p_array[self.EDGE_IDX]+p_array[self.EDGE_IDX+1]*256)[-1000:]
+        self.counter += 1 
+
+
+        return
+
+    def low_rate_processing(self,*args,**kwargs):
+
+        if (self.counter % self.LOW_RATE ) == 0:
+
+
+            p_array= args[0]
+
+
+            print(self.edge_position[-10:])
+            print(p_array[:144])
+            print("____________________________________________________")
+
+
+            self.edge_position_low_rate  = np.append(self.edge_position_low_rate,  p_array[self.EDGE_IDX]+p_array[self.EDGE_IDX+1]*256)[-1000:]
+            self.py_calc_edge_position   = np.append(self.py_calc_edge_position ,  np.argmax(scipy.signal.convolve(p_array[144:],self.my_kernel)))[-1000:]
+
+
+            self.plot(*args,**kwargs)
+
+
+            self.counter = 1
+
+
+
+        return
     
     def plot(self,*args,**kwargs):
         for i in range(2):
-            self.lines[i][0].set_data(args[0],args[1])        
+            self.lines[i][0].set_data(np.arange(len(args[0])),args[0])        
             #plt.pause(0.05)
         
         #self.edge_position = np.append(self.edge_position,args[96]+args[97]*256)[:100]
-        self.lines[2][0].set_data(np.arange(len(self.edge_position)),self.edge_position)        
+        self.lines[2][0].set_data(np.arange(len(self.edge_position)),self.edge_position)
+
+        self.lines[3][0].set_data(self.py_calc_edge_position,self.edge_position_low_rate)
         
+        return        
 
 
 
@@ -59,7 +121,6 @@ class dsp_plotting():
 
 # This class emulates the Piranha4 Test Pattern
 class TimeToolTxEmulation(rogue.interfaces.stream.Master):
-
     # Init method must call the parent class init
     def __init__(self):
         super().__init__()
@@ -134,7 +195,6 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         self.dsp_plotting = dsp_plotting()
 
         self.to_save_to_h5 = []
-        self.frameCounter = 0
 
         for i in range(8):
             self.add(pr.LocalVariable( name='byteError{}'.format(i), disp='{:#x}', value=0, mode='RO', pollInterval=1))
@@ -161,22 +221,17 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
         #parse the output before displaying
 
         p_array = np.array(p)
-        #self.edge_position = np.append(self.edge_position,args[96]+args[97]*256)[:100]
-        self.dsp_plotting.edge_position = np.append(self.dsp_plotting.edge_position,p_array[96]+p_array[97]*256)[-1000:]
 
-        if(self.frameCounter % 120 == 0):
-            print(self.dsp_plotting.edge_position[-10:])
-            print(np.array(p)[:144])
-            print("____________________________________________________")
-            self.dsp_plotting.plot(np.arange(len(np.array(p))),np.array(p))
-            self.frameCounter = 1
+        self.dsp_plotting.high_rate_processing(p_array)
+        self.dsp_plotting.low_rate_processing(p_array)
+ 
+         
     
         ###################################################################
         ###################################################################
         ###################################################################
 
         self.frameCount.set(self.frameCount.value() + 1,False)
-        self.frameCounter += 1
      
         berr = [0,0,0,0,0,0,0,0]
         frameLength = self.frameLength.get()
