@@ -159,6 +159,8 @@ begin
 
       axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
       axiSlaveRegister (axilEp, x"0004", 0, v.timeConstant(7 downto 0));
+      --axiSlaveRegister (axilEp, x"0008", 0, v.max);
+      --axiSlaveRegister (axilEp, x"0012", 0, v.max_pixel);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 

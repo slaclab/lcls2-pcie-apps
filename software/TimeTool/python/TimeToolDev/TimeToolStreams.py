@@ -34,8 +34,11 @@ class dsp_plotting():
     def __init__(self):
 
         #constants        
-        self.EDGE_IDX = 96
-        self.LOW_RATE = 120
+        self.EDGE_IDX        = 96
+        self.LOW_RATE        = 120
+        self.IMAGE_START     = 144
+        self.IMAGE_SIZE      = 2048
+        self.EDGE_LIST_SIZE  = 30
 
         #non constants
         self.my_kernel               = np.append(np.ones(16),-np.ones(16))
@@ -50,6 +53,9 @@ class dsp_plotting():
 
         self.fig, self.axes = plt.subplots(4)
 
+        self.fig.set_figwidth(5)
+        self.fig.set_figheight(12)
+
         markers = [None,None,None,'o']
         linewidths = [1,1,1,0]
         
@@ -57,12 +63,28 @@ class dsp_plotting():
         for i in range(len(self.axes)):
             self.axes[i].set_xlim(0,4500)
             self.axes[i].set_ylim(0,256)
+            self.axes[i].set_title("camera image")
+            self.axes[i].set_xlabel("pixel")
+            self.axes[i].set_ylabel("intensity")
+            
 
+        self.axes[2].set_xlim(0,1000)
         self.axes[2].set_ylim(0,2500)
+        self.axes[2].set_title("edge")
+        self.axes[2].set_ylabel("position")
+        self.axes[2].set_xlabel("event #")
         
         self.axes[3].set_ylim(0,2500)
         self.axes[3].set_xlim(0,2500)
+        self.axes[3].set_title("edge position")
+        self.axes[3].set_ylabel("firmware")
+        self.axes[3].set_xlabel("software")
 
+        self.thismanager = plt.get_current_fig_manager()
+        
+        #self.thismanager.resize(500,1250)
+
+        plt.tight_layout()
         plt.show()
 
     def high_rate_processing(self, *args,**kwargs):
@@ -88,8 +110,9 @@ class dsp_plotting():
             print("____________________________________________________")
 
 
-            self.edge_position_low_rate  = np.append(self.edge_position_low_rate,  p_array[self.EDGE_IDX]+p_array[self.EDGE_IDX+1]*256)[-1000:]
-            self.py_calc_edge_position   = np.append(self.py_calc_edge_position ,  np.argmax(scipy.signal.convolve(p_array[144:],self.my_kernel)))[-1000:]
+            if p_array.shape[0]>=self.IMAGE_SIZE:
+                self.edge_position_low_rate  = np.append(self.edge_position_low_rate,  p_array[self.EDGE_IDX]+p_array[self.EDGE_IDX+1]*256)[-self.EDGE_LIST_SIZE:]            
+                self.py_calc_edge_position   = np.append(self.py_calc_edge_position ,  np.argmax(scipy.signal.convolve(p_array[self.IMAGE_START:self.IMAGE_START+self.IMAGE_SIZE],self.my_kernel)))[-self.EDGE_LIST_SIZE:]
 
 
             self.plot(*args,**kwargs)

@@ -85,8 +85,7 @@ architecture mapping of FrameSubtractor is
       counter               : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
       pedestal_counter      : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
       scratchPad            : slv(31 downto 0);
-      timeConstant          : slv(7 downto 0);
-      coef_signed           : signed(7 downto 0);
+      do_subtraction        : slv(7 downto 0);
       axi_test              : slv(31 downto 0);
       state                 : StateType;
       state_pedestal        : StateType;
@@ -104,8 +103,7 @@ architecture mapping of FrameSubtractor is
       counter               => 0,
       pedestal_counter      => 0,
       scratchPad            => (others => '0'),
-      timeConstant          => (others=>'0'),
-      coef_signed           => to_signed(1,8),
+      do_subtraction        => (others=>'0'),
       axi_test              => (others=>'0'),
       state                 => IDLE_S,
       state_pedestal        => IDLE_S,
@@ -178,14 +176,11 @@ begin
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
       axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
-      axiSlaveRegister (axilEp, x"0004", 0, v.timeConstant(7 downto 0));
+      axiSlaveRegister (axilEp, x"0004", 0, v.do_subtraction(7 downto 0));
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
-      ------------------------      
-      -- updating time constant
-      ------------------------       
-      v.coef_signed := signed(v.timeConstant);
+
 
       ------------------------      
       -- Main Part of Code
@@ -227,13 +222,18 @@ begin
                   v.master                   := inMaster;     --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
                                                               --tReady is propogated from downstream to upstream
 
-                  for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
+
+                  --if v.do_subtraction(0) = '1' then
+
+                      for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
 
-                        v.aSingleFrame(i)                := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-r.storedPedestalFrame(r.counter + i)/1),8);
-                        v.master.tData(i*8+7 downto i*8) := std_logic_vector(r.aSingleFrame(i));                       --output 
+                            v.aSingleFrame(i)                := RESIZE((signed(inMaster.tdata(i*8+7 downto i*8))-r.storedPedestalFrame(r.counter + i)),8);
+                            v.master.tData(i*8+7 downto i*8) := std_logic_vector(r.aSingleFrame(i));                       --output 
 
-                  end loop;             
+                      end loop;             
+
+                  --end if;
                
                                    
                   v.counter                  := r.counter+INT_CONFIG_C.TDATA_BYTES_C;
