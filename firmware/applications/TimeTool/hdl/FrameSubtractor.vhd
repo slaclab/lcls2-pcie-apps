@@ -85,7 +85,7 @@ architecture mapping of FrameSubtractor is
       counter               : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
       pedestal_counter      : natural range 0 to (CAMERA_PIXEL_NUMBER-1);
       scratchPad            : slv(31 downto 0);
-      do_subtraction        : slv(7 downto 0);
+      do_subtraction        : slv(31 downto 0);
       axi_test              : slv(31 downto 0);
       state                 : StateType;
       state_pedestal        : StateType;
@@ -175,8 +175,8 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
-      axiSlaveRegister (axilEp, x"0004", 0, v.do_subtraction(7 downto 0));
+      axiSlaveRegister (axilEp, x"000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"004", 0, v.do_subtraction);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
@@ -223,7 +223,9 @@ begin
                                                               --tReady is propogated from downstream to upstream
 
 
-                  --if v.do_subtraction(0) = '1' then
+                  if v.do_subtraction(0) = '1' then
+
+                      v.scratchPad(0) := '1';
 
                       for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
 
@@ -233,7 +235,7 @@ begin
 
                       end loop;             
 
-                  --end if;
+                  end if;
                
                                    
                   v.counter                  := r.counter+INT_CONFIG_C.TDATA_BYTES_C;

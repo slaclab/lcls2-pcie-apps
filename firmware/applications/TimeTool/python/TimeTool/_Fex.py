@@ -49,7 +49,7 @@ class Fex(pr.Device):
             offset = 0x6000,
         ))
 
-        #self.add(tt.FrameSubtractor( 
-        #    offset = 0x7000, 
-        #))
+        self.add(tt.FrameSubtractor( 
+            offset = 0x7000, 
+        ))
 
