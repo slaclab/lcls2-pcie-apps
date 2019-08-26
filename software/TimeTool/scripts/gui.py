@@ -13,6 +13,9 @@ parser = argparse.ArgumentParser()
 # Convert str to bool
 argBool = lambda s: s.lower() in ['true', 't', 'yes', '1']
 
+def auto_int(x):
+    return int (x,0)
+
 # Add arguments
 parser.add_argument(
     "--dev", 
@@ -52,7 +55,15 @@ parser.add_argument(
     required = False,
     default  = True,
     help     = "Enable TimeToolRx module",
-)  
+)
+parser.add_argument(
+    "--enVcMask", 
+    type     = auto_int,
+    required = False,
+    default  = 0xff,
+    help     = "mask for pgp read",
+)
+  
 
 # Get the arguments
 args = parser.parse_args()
@@ -65,6 +76,7 @@ cl = TimeToolDev.TimeToolDev(
     version3  = args.version3,
     pollEn    = args.pollEn,
     initRead  = args.initRead,
+    enVcMask  = args.enVcMask,
 )
 
 #################################################################

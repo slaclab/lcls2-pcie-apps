@@ -23,6 +23,7 @@ class TimeToolDev(kcu1500.Core):
             pollEn      = True,            # Enable automatic polling registers
             initRead    = True,            # Read all registers at start of the system
             numLane     = 1,               # Number of PGP lanes
+            enVcMask    = 0xff,             # channel to ignore for pgp read to work
             **kwargs
         ):
         super().__init__(
@@ -33,6 +34,7 @@ class TimeToolDev(kcu1500.Core):
             pollEn      = pollEn, 
             initRead    = initRead, 
             numLane     = numLane, 
+            enVcMask    = enVcMask,
             **kwargs
         )
         self.dev    = dev,
@@ -105,7 +107,7 @@ class TimeToolDev(kcu1500.Core):
                     self._dbg[lane] = streams.TimeToolRxVcs(expand=True)
                 
                 # Connect the streams
-                #pr.streamTap(self._dma[lane][1],self._dbg[lane])
+                pr.streamTap(self._dma[lane][1],self._dbg[lane])
                 
                 # Add stream device to root class
                 self.add(self._dbg)
