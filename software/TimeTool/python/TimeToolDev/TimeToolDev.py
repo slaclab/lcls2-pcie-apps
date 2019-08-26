@@ -105,7 +105,7 @@ class TimeToolDev(kcu1500.Core):
                     self._dbg[lane] = streams.TimeToolRxVcs(expand=True)
                 
                 # Connect the streams
-                pr.streamTap(self._dma[lane][1],self._dbg[lane])
+                #pr.streamTap(self._dma[lane][1],self._dbg[lane])
                 
                 # Add stream device to root class
                 self.add(self._dbg)

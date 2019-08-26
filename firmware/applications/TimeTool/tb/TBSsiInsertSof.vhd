@@ -198,7 +198,9 @@ begin
    U_HEADER_APPENDER : entity work.SsiInsertSof
       generic map (
          COMMON_CLK_G       => true,
-         INSERT_USER_HDR_G  => true)
+         INSERT_USER_HDR_G  => true,
+         SLAVE_FIFO_G       => false,
+         MASTER_FIFO_G      => false)
       port map (
          -- System Clock and Reset
          sAxisClk        => dmaClk,
