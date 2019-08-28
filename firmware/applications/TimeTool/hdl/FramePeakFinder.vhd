@@ -225,7 +225,7 @@ begin
                 v.master.tLast  := '1';
                 v.master.tData                                       := (others => '0');
                 v.master.tData(CAMERA_PIXEL_NUMBER_BITS -1 downto 0) := v.max_pixel;
-                v.master.tData(CAMERA_PIXEL_NUMBER_BITS + CAMERA_RESOLUTION_BITS -1 downto CAMERA_PIXEL_NUMBER_BITS) := v.max;
+                --v.master.tData(CAMERA_PIXEL_NUMBER_BITS + CAMERA_RESOLUTION_BITS -1 downto CAMERA_PIXEL_NUMBER_BITS) := v.max;
                 if v.slave.tReady = '1' then
                         v.state          := IDLE_S;
 
