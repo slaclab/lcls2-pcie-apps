@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class eventBuilderParser():
     def __init__(self):        
         return
@@ -30,8 +29,6 @@ class eventBuilderParser():
         return
     
     def print_info(self):
-        
-        print("______________\nmain frame")
         for i in self.__dict__:
             if i != "frame_list":
                 print(i," = ",self.__dict__[i])
@@ -55,16 +52,23 @@ class eventBuilderParser():
         self.frame_sizes_reversed         = [self.frames_to_position(frame_bytearray,-16)]
         self.frame_positions_reversed     = [[self.frame_bytes-16-self.frame_sizes_reversed[0],self.frame_bytes-16]] #[start, and]
         self.frame_list                   = [frame_bytearray[self.frame_positions_reversed[-1][0]:self.frame_positions_reversed[-1][1]]]
-
+        
+        self.tdest                        = [frame_bytearray[-12]]
+        
         
         parsed_frame_size = sum(self.frame_sizes_reversed) +(len(self.frame_sizes_reversed)+1)*self.HEADER_WIDTH
         #print("parsing")
         while(len(frame_bytearray)>parsed_frame_size):
             #print(len(frame_bytearray))
             self.frame_sizes_reversed.append(self.frames_to_position(frame_bytearray,self.frame_positions_reversed[-1][0]-16))
-            self.frame_positions_reversed.append([self.frame_positions_reversed[-1][0]-16-self.frame_sizes_reversed[-1],self.frame_positions_reversed[-1][0]-16]) #[start, and]            
-            self.frame_list.append(frame_bytearray[self.frame_positions_reversed[-1][0]:self.frame_positions_reversed[-1][1]])
             
+            self.frame_positions_reversed.append([self.frame_positions_reversed[-1][0]-16-self.frame_sizes_reversed[-1],self.frame_positions_reversed[-1][0]-16]) #[start, and]            
+            
+            self.frame_list.append(frame_bytearray[self.frame_positions_reversed[-1][0]:self.frame_positions_reversed[-1][1]])
+            self.tdest.append(frame_bytearray[self.frame_positions_reversed[-1][1]+4])
+            
+            
+          
             parsed_frame_size = sum(self.frame_sizes_reversed) +(len(self.frame_sizes_reversed)+1)*self.HEADER_WIDTH
         
         #self.sub_is_fullframe = [False]*len(self.frame_list)
