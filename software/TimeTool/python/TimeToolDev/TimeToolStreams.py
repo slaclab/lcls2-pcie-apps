@@ -14,6 +14,8 @@ import IPython
 
 import random
 
+import TimeToolDev.eventBuilderParser as eventBuilderParser
+
 matplotlib.use("Qt5agg")
 plt.ion()
 
@@ -89,9 +91,9 @@ class dsp_plotting():
 
     def high_rate_processing(self, *args,**kwargs):
     
-        p_array= args[0]
+        pframe= args[0]
 
-        self.edge_position = np.append(self.edge_position,p_array[self.EDGE_IDX]+p_array[self.EDGE_IDX+1]*256)[-1000:]
+        self.edge_position = np.append(self.edge_position,pframe.edge_position)[-1000:]
         self.counter += 1 
 
 
@@ -102,20 +104,20 @@ class dsp_plotting():
         if (self.counter % self.LOW_RATE ) == 0:
 
 
-            p_array= args[0]
+            pframe= args[0]
 
 
-            print(self.edge_position[-10:])
-            print(p_array[:144])
-            print("____________________________________________________")
+            #print(self.edge_position[-10:])
+            #print(p_array[:144])
+            #print("____________________________________________________")
 
 
-            if p_array.shape[0]>=self.IMAGE_SIZE:
-                self.edge_position_low_rate  = np.append(self.edge_position_low_rate,  p_array[self.EDGE_IDX]+p_array[self.EDGE_IDX+1]*256)[-self.EDGE_LIST_SIZE:]            
-                self.py_calc_edge_position   = np.append(self.py_calc_edge_position ,  np.argmax(scipy.signal.convolve(p_array[self.IMAGE_START:self.IMAGE_START+self.IMAGE_SIZE],self.my_kernel)))[-self.EDGE_LIST_SIZE:]
+            if pframe.prescaled_frame is not None:
+                self.edge_position_low_rate  = np.append(self.edge_position_low_rate,  pframe.edge_position)[-self.EDGE_LIST_SIZE:]            
+                self.py_calc_edge_position   = np.append(self.py_calc_edge_position ,  np.argmax(scipy.signal.convolve(pframe.prescaled_frame,self.my_kernel)))[-self.EDGE_LIST_SIZE:]
 
 
-            self.plot(*args,**kwargs)
+                self.plot(*args,**kwargs)
 
 
             self.counter = 1
@@ -125,9 +127,11 @@ class dsp_plotting():
         return
     
     def plot(self,*args,**kwargs):
-        for i in range(2):
-            self.lines[i][0].set_data(np.arange(len(args[0])),args[0])        
-            #plt.pause(0.05)
+        pframe  = args[0]
+        if(pframe.prescaled_frame is not None):
+            for i in range(2):
+                self.lines[i][0].set_data(np.arange(len(pframe.prescaled_frame)),pframe.prescaled_frame)        
+                #plt.pause(0.05)
         
         #self.edge_position = np.append(self.edge_position,args[96]+args[97]*256)[:100]
         self.lines[2][0].set_data(np.arange(len(self.edge_position)),self.edge_position)
@@ -224,6 +228,7 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
 
     def _acceptFrame(self,frame):
+        self.frame = frame
         p = bytearray(frame.getPayload())
         frame.read(p,0)
 
@@ -243,10 +248,17 @@ class TimeToolRx(pr.Device,rogue.interfaces.stream.Slave):
 
         #parse the output before displaying
 
-        p_array = np.array(p)
+        #p_array = np.array(p)
 
-        self.dsp_plotting.high_rate_processing(p_array)
-        self.dsp_plotting.low_rate_processing(p_array)
+        pframe = eventBuilderParser.timeToolParser()
+        pframe.parseData(p)
+        #print(pframe.edge_position)
+
+        
+        self.dsp_plotting.high_rate_processing(pframe)
+        self.dsp_plotting.low_rate_processing(pframe)
+
+        #full_frame.print_info()
  
          
     

@@ -30,7 +30,7 @@ class eventBuilderParser():
     
     def print_info(self):
         for i in self.__dict__:
-            if i != "frame_list":
+            if i != "frame_list" and type(self.__dict__[i]) is not bytearray:
                 print(i," = ",self.__dict__[i])
                 
         for i in range(len(self.sub_is_fullframe)):
@@ -46,6 +46,7 @@ class eventBuilderParser():
 
         self.version                = self.main_header[0] & int('00001111', 2)
         self.axi_stream_bit_width   = 8*2**((self.main_header[0] >> 4) + 1)
+        self.sequence_count         = self.main_header[1]
         self.HEADER_WIDTH           = int(self.axi_stream_bit_width/8)
         
         
@@ -80,23 +81,27 @@ class timeToolParser(eventBuilderParser):
     def parseData(self,frame_bytearray:bytearray):
         self.parseArray(frame_bytearray)
         
-        self.timing_bus      = frame_bytearray[16:32]
         
-        #self.fex_header      = frame_bytearray[80:96] #only when batcher isn't in bypass mode. should be dynamically determined
-        #self.edge_position   = self.frames_to_position(frame_bytearray[96:98],0)
+        timing_bus_idx           = [i[0] for i in enumerate(self.tdest) if i[1]==0][0] #timing bus always has tdest of 0
+        self.timing_bus          = self.frame_list[timing_bus_idx]  #frame_bytearray[16:32]
         
-        #print(len(self.sub_is_fullframe))
-        #print(len(self.sub_frames))
+        sub_frame_idx            = [i[0] for i in enumerate(self.tdest) if i[1]==1][0]
+        edge_pos_idx             = [i[0] for i in enumerate(self.sub_frames[sub_frame_idx].tdest) if i[1]==0][0]
+        self.edge_position       = self.sub_frames[sub_frame_idx].frame_list[edge_pos_idx][0] + self.sub_frames[sub_frame_idx].frame_list[edge_pos_idx][1]*256
         
-        for i in range(len(self.sub_is_fullframe)):
+        try:
+            bkg_frame_idx            = [i[0] for i in enumerate(self.sub_frames[sub_frame_idx].tdest) if i[1]==1][0]
+            self.background_frame    = self.sub_frames[sub_frame_idx].frame_list[bkg_frame_idx]
+        except IndexError:    
+            self.background_frame    = None
+
+        try:
+            prescaled_frame_idx      = [i[0] for i in enumerate(self.tdest) if i[1]==2][0]
+            self.prescaled_frame     = self.frame_list[prescaled_frame_idx] 
+        except IndexError:
+            self.prescaled_frame     = None
             
-            if(self.sub_is_fullframe[i]):
-                #self.edge_position   = self.sub_frames[i].frame_list[1][0]+ self.sub_frames[i].frame_list[1][1]*256
-                for j in range(len(self.sub_frames[i].frame_list)):
-                    if len(self.sub_frames[i].frame_list[j]) == 16:
-                        self.edge_position   = self.sub_frames[i].frame_list[j][0]+ self.sub_frames[i].frame_list[j][1]*256
-
-
+        
         
         
     
