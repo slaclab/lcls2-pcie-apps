@@ -101,10 +101,10 @@ class dsp_plotting():
 
     def low_rate_processing(self,*args,**kwargs):
 
-        if (self.counter % self.LOW_RATE ) == 0:
+        pframe = args[0]
 
-
-            pframe= args[0]
+        #if (self.counter % self.LOW_RATE ) == 0:
+        if (pframe.prescaled_frame is not None):
 
 
             #print(self.edge_position[-10:])

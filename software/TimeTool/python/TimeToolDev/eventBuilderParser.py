@@ -82,8 +82,11 @@ class timeToolParser(eventBuilderParser):
         self.parseArray(frame_bytearray)
         
         
-        timing_bus_idx           = [i[0] for i in enumerate(self.tdest) if i[1]==0][0] #timing bus always has tdest of 0
-        self.timing_bus          = self.frame_list[timing_bus_idx]  #frame_bytearray[16:32]
+        try:
+            timing_bus_idx           = [i[0] for i in enumerate(self.tdest) if i[1]==0][0] #timing bus always has tdest of 0
+            self.timing_bus          = self.frame_list[timing_bus_idx]  #frame_bytearray[16:32]
+        except IndexError:
+            self.timing_bus = None
         
         sub_frame_idx            = [i[0] for i in enumerate(self.tdest) if i[1]==1][0]
         edge_pos_idx             = [i[0] for i in enumerate(self.sub_frames[sub_frame_idx].tdest) if i[1]==0][0]
