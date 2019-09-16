@@ -182,14 +182,14 @@ class TimeToolDev(kcu1500.Core):
             for lane in range(numLane):
                 self.ClinkFeb[lane].ClinkTop.Ch[0].BaudRate.set(9600)
                 self.ClinkFeb[lane].ClinkTop.Ch[0].SerThrottle.set(10000)
-                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
+                #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
                 self.ClinkFeb[lane].ClinkTop.Ch[0].LinkMode.setDisp('Full')
                 self.ClinkFeb[lane].ClinkTop.Ch[0].DataMode.setDisp('8Bit')
                 self.ClinkFeb[lane].ClinkTop.Ch[0].FrameMode.setDisp('Line')
                 self.ClinkFeb[lane].ClinkTop.Ch[0].TapCount.set(8)                    
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SendEscape()
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SPF.setDisp('0')
-                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
+                #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
         else:
             # Disable the PGP PHY device (speed up the simulation)
             self.Hardware.enable.set(False)

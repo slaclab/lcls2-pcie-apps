@@ -40,3 +40,6 @@ build*
 *.mcs
 *.ltx
 *.gz
+
+# Python package files
+*.egg-info
