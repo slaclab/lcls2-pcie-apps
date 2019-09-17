@@ -6,9 +6,30 @@ import TimeToolDev
 #import gc
 #import IPython
 #import argparse
+#import yaml
+from psalg.configdb.typed_json import cdict
+import psalg.configdb.configdb as cdb
+#import os
+#import io
+
 
 
 def toggle_prescaling():
+
+    create = False
+    dbname = 'configDB'
+    instrument = 'TMO'
+    mycdb = cdb.configdb('mcbrowne:psana@psdb-dev:9306', instrument, create, dbname)
+    my_dict = mycdb.get_configuration("BEAM","tmotimetool")
+
+    top = cdict()
+    top.setInfo('timetool', 'tmotimetool', 'serial1234', 'No comment')
+    top.setAlg('timetoolConfig', [0,0,1])
+
+    
+
+    #print()
+
 
     #################################################################
     cl = TimeToolDev.TimeToolDev(
@@ -32,9 +53,9 @@ def toggle_prescaling():
     #time.sleep(x)
     #cl.StopRun()
 
-    prescaling = cl.Application.AppLane[0].Prescale.ScratchPad.get()
-    print("old prescaler = ",prescaling)
-    print("\n \n testing setup.py \n \n")
+    #prescaling = cl.Application.AppLane[0].Prescale.ScratchPad.get()
+    prescaling = my_dict['cl']['Application']['AppLane1']['Prescale']['ScratchPad']
+    print("database prescaler value = ",prescaling)
     if(prescaling == 2):
         prescaling = 6
     else:
@@ -43,8 +64,11 @@ def toggle_prescaling():
     
     cl.Application.AppLane[0].Prescale.ScratchPad.set(prescaling)
 
-    print("new prescaler = ",cl.Application.AppLane[0].Prescale.ScratchPad.get())
+    print("rogue prescaler value = ",cl.Application.AppLane[0].Prescale.ScratchPad.get())
+    
 
+    top.set("cl.Application.AppLane1.Prescale.ScratchPad",int(prescaling),'UINT32')
+    mycdb.modify_device('BEAM', top)
 
     cl.stop()
 
