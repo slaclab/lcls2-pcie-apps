@@ -9,7 +9,7 @@ pdirlist = ['firmware/submodules/surf/python',
             'software/TimeTool/python',
             'software/TimeTool/scripts']
 
-pnamelist = ['surf','axipcie','LclsTimingCore','lcls2_pgp_fw_lib','TimeTool','ClinkFeb','TimeToolDev','toggle_prescaling']
+pnamelist = ['surf','axipcie','LclsTimingCore','lcls2_pgp_fw_lib','TimeTool','ClinkFeb','TimeToolDev','scripts']
 
 for pname,pdir in zip(pnamelist,pdirlist):
     setup(
