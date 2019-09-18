@@ -7,10 +7,9 @@ pdirlist = ['firmware/submodules/surf/python',
             'firmware/applications/TimeTool/python',
             'firmware/submodules/clink-gateway-fw-lib/python',
             'software/TimeTool/python',
-            'software/TimeTool/scripts',
-            'software/TimeTool']
+            'software/TimeTool/scripts']
 
-pnamelist = ['surf','axipcie','LclsTimingCore','lcls2_pgp_fw_lib','TimeTool','ClinkFeb','TimeToolDev','scripts']
+pnamelist = ['surf','axipcie','LclsTimingCore','lcls2_pgp_fw_lib','TimeTool','ClinkFeb','TimeToolDev','toggle_prescaling']
 
 for pname,pdir in zip(pnamelist,pdirlist):
     setup(
