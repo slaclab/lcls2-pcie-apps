@@ -55,7 +55,7 @@ def toggle_prescaling():
 
     #prescaling = cl.Application.AppLane[0].Prescale.ScratchPad.get()
     prescaling = my_dict['cl']['Application']['AppLane1']['Prescale']['ScratchPad']
-    print("database prescaler value = ",prescaling)
+    print("old database prescaler value = ",prescaling)
     if(prescaling == 2):
         prescaling = 6
     else:
@@ -64,7 +64,7 @@ def toggle_prescaling():
     
     cl.Application.AppLane[0].Prescale.ScratchPad.set(prescaling)
 
-    print("rogue prescaler value = ",cl.Application.AppLane[0].Prescale.ScratchPad.get())
+    print("new rogue prescaler value = ",cl.Application.AppLane[0].Prescale.ScratchPad.get())
     
 
     top.set("cl.Application.AppLane1.Prescale.ScratchPad",int(prescaling),'UINT32')
