@@ -16,12 +16,19 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+-- SURF 
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.SsiPkg.all;
-use work.AxiPciePkg.all;
+
+-- axi-pcie-core 
+use work.AxiPciePkg.all;                -- KCU1500 version
+
+-- lcls-timing-core
 use work.TimingPkg.all;
+
+-- applications/TimeTool
 use work.AppPkg.all;
 
 entity TimeToolKcu1500 is
@@ -119,8 +126,9 @@ architecture top_level of TimeToolKcu1500 is
    signal pgpObMasters : AxiStreamQuadMasterArray(3 downto 0) := (others => (others => AXI_STREAM_MASTER_INIT_C));
    signal pgpObSlaves  : AxiStreamQuadSlaveArray(3 downto 0)  := (others => (others => AXI_STREAM_SLAVE_FORCE_C));
 
-   signal trigMasters : AxiStreamMasterArray(3 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-   signal trigSlaves  : AxiStreamSlaveArray(3 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal eventAxisMasters : AxiStreamMasterArray(3 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal eventAxisSlaves  : AxiStreamSlaveArray(3 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal eventAxisCtrl    : AxiStreamCtrlArray(3 downto 0)   := (others => AXI_STREAM_CTRL_INIT_C);
 
 begin
 
@@ -245,77 +253,87 @@ begin
          AXI_BASE_ADDR_G => AXIL_CONFIG_C(APP_INDEX_C).baseAddr)
       port map (
          -- AXI-Lite Interface (axilClk domain)
-         axilClk         => axilClk,
-         axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(APP_INDEX_C),
-         axilReadSlave   => axilReadSlaves(APP_INDEX_C),
-         axilWriteMaster => axilWriteMasters(APP_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(APP_INDEX_C),
+         axilClk          => axilClk,
+         axilRst          => axilRst,
+         axilReadMaster   => axilReadMasters(APP_INDEX_C),
+         axilReadSlave    => axilReadSlaves(APP_INDEX_C),
+         axilWriteMaster  => axilWriteMasters(APP_INDEX_C),
+         axilWriteSlave   => axilWriteSlaves(APP_INDEX_C),
          -- PGP Streams (axilClk domain)
-         pgpIbMasters    => pgpIbMasters,
-         pgpIbSlaves     => pgpIbSlaves,
-         pgpObMasters    => pgpObMasters,
-         pgpObSlaves     => pgpObSlaves,
+         pgpIbMasters     => pgpIbMasters,
+         pgpIbSlaves      => pgpIbSlaves,
+         pgpObMasters     => pgpObMasters,
+         pgpObSlaves      => pgpObSlaves,
          -- Trigger Event streams (axilClk domain)
-         trigMasters     => trigMasters,
-         trigSlaves      => trigSlaves,
+         eventAxisMasters => eventAxisMasters,  -- [out]
+         eventAxisSlaves  => eventAxisSlaves,   -- [in]
          -- DMA Interface (dmaClk domain)
-         dmaClk          => dmaClk,
-         dmaRst          => dmaRst,
-         dmaObMasters    => dmaObMasters,
-         dmaObSlaves     => dmaObSlaves,
-         dmaIbMasters    => dmaIbMasters,
-         dmaIbSlaves     => dmaIbSlaves);
+         dmaClk           => dmaClk,
+         dmaRst           => dmaRst,
+         dmaObMasters     => dmaObMasters,
+         dmaObSlaves      => dmaObSlaves,
+         dmaIbMasters     => dmaIbMasters,
+         dmaIbSlaves      => dmaIbSlaves);
 
    ------------------
    -- Hardware Module
    ------------------
    U_Hardware : entity work.Hardware
       generic map (
-         TPD_G             => TPD_G,
-         ROGUE_SIM_EN_G    => ROGUE_SIM_EN_G,
-         PGP_TYPE_G        => PGP_TYPE_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
-         AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_C,
-         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(HW_INDEX_C).baseAddr)
+         TPD_G                          => TPD_G,
+         ROGUE_SIM_EN_G                 => ROGUE_SIM_EN_G,
+         PGP_TYPE_G                     => PGP_TYPE_G,
+         DMA_AXIS_CONFIG_G              => DMA_AXIS_CONFIG_C,
+         AXIL_CLK_FREQ_G                => AXIL_CLK_FREQ_C,
+         AXI_BASE_ADDR_G                => AXIL_CONFIG_C(HW_INDEX_C).baseAddr,
+         L1_CLK_IS_TIMING_TX_CLK_G      => true,
+         TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
+         EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
       port map (
          ------------------------      
          --  Top Level Interfaces
          ------------------------    
          -- Reference Clock and Reset
-         userClk25       => userClk25,
-         userRst25       => userRst25,
+         userClk25           => userClk25,
+         userRst25           => userRst25,
          -- AXI-Lite Interface (axilClk domain)
-         axilClk         => axilClk,
-         axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(HW_INDEX_C),
-         axilReadSlave   => axilReadSlaves(HW_INDEX_C),
-         axilWriteMaster => axilWriteMasters(HW_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(HW_INDEX_C),
+         axilClk             => axilClk,
+         axilRst             => axilRst,
+         axilReadMaster      => axilReadMasters(HW_INDEX_C),
+         axilReadSlave       => axilReadSlaves(HW_INDEX_C),
+         axilWriteMaster     => axilWriteMasters(HW_INDEX_C),
+         axilWriteSlave      => axilWriteSlaves(HW_INDEX_C),
          -- PGP Streams (axilClk domain)
-         pgpIbMasters    => pgpIbMasters,
-         pgpIbSlaves     => pgpIbSlaves,
-         pgpObMasters    => pgpObMasters,
-         pgpObSlaves     => pgpObSlaves,
-         -- Trigger Event streams (axilClk domain)
-         trigMasters     => trigMasters,
-         trigSlaves      => trigSlaves,
+         pgpIbMasters        => pgpIbMasters,
+         pgpIbSlaves         => pgpIbSlaves,
+         pgpObMasters        => pgpObMasters,
+         pgpObSlaves         => pgpObSlaves,
+         -- Trigger / event interfaces
+         triggerClk          => axilClk,           -- [in]
+         triggerRst          => axilRst,           -- [in]
+         triggerData         => open,              -- [out]
+         eventClk            => axilClk,           -- [in]
+         eventRst            => axilRst,           -- [in]
+         eventTimingMessages => open,              -- [out]
+         eventAxisMasters    => eventAxisMasters,  -- [out]
+         eventAxisSlaves     => eventAxisSlaves,   -- [in]
+         eventAxisCtrl       => eventAxisCtrl,     -- [in]
          ------------------
          --  Hardware Ports
          ------------------       
          -- QSFP[0] Ports
-         qsfp0RefClkP    => qsfp0RefClkP,
-         qsfp0RefClkN    => qsfp0RefClkN,
-         qsfp0RxP        => qsfp0RxP,
-         qsfp0RxN        => qsfp0RxN,
-         qsfp0TxP        => qsfp0TxP,
-         qsfp0TxN        => qsfp0TxN,
+         qsfp0RefClkP        => qsfp0RefClkP,
+         qsfp0RefClkN        => qsfp0RefClkN,
+         qsfp0RxP            => qsfp0RxP,
+         qsfp0RxN            => qsfp0RxN,
+         qsfp0TxP            => qsfp0TxP,
+         qsfp0TxN            => qsfp0TxN,
          -- QSFP[1] Ports
-         qsfp1RefClkP    => qsfp1RefClkP,
-         qsfp1RefClkN    => qsfp1RefClkN,
-         qsfp1RxP        => qsfp1RxP,
-         qsfp1RxN        => qsfp1RxN,
-         qsfp1TxP        => qsfp1TxP,
-         qsfp1TxN        => qsfp1TxN);
+         qsfp1RefClkP        => qsfp1RefClkP,
+         qsfp1RefClkN        => qsfp1RefClkN,
+         qsfp1RxP            => qsfp1RxP,
+         qsfp1RxN            => qsfp1RxN,
+         qsfp1TxP            => qsfp1TxP,
+         qsfp1TxN            => qsfp1TxN);
 
 end top_level;

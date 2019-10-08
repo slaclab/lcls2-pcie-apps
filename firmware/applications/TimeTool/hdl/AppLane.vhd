@@ -40,8 +40,8 @@ entity AppLane is
       pgpObMasters    : in  AxiStreamQuadMasterType;
       pgpObSlaves     : out AxiStreamQuadSlaveType;
       -- Trigger Event streams (axilClk domain)
-      trigMaster      : in  AxiStreamMasterType;
-      trigSlave       : out AxiStreamSlaveType;
+      eventAxisMaster : in  AxiStreamMasterType;
+      eventAxisSlave  : out AxiStreamSlaveType;
       -- DMA Interface (dmaClk domain)
       dmaClk          : in  sl;
       dmaRst          : in  sl;
@@ -104,13 +104,13 @@ begin
          axilClk         => axilClk,
          axilRst         => axilRst,
          -- Trigger Event streams (axilClk domain)
-         trigMaster      => trigMaster,
-         trigSlave       => trigSlave,
+         eventAxisMaster => eventAxisMaster,  -- [in]
+         eventAxisSlave  => eventAxisSlave,   -- [out]
          -- DMA Interface (sysClk domain)
-         dataInMaster    => pgpObMasters(1),
-         dataInSlave     => pgpObSlaves(1),
-         eventMaster     => eventMaster,
-         eventSlave      => eventSlave,
+         dataInMaster    => pgpObMasters(1),  -- [in]
+         dataInSlave     => pgpObSlaves(1),   -- [out]
+         eventMaster     => eventMaster,      -- [out]
+         eventSlave      => eventSlave,       -- [in]
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
@@ -127,7 +127,7 @@ begin
          INT_PIPE_STAGES_G   => 1,
          PIPE_STAGES_G       => 1,
          SLAVE_READY_EN_G    => true,
-         VALID_THOLD_G       => 128,  -- Hold until enough to burst into the interleaving MUX
+         VALID_THOLD_G       => 128,    -- Hold until enough to burst into the interleaving MUX
          VALID_BURST_MODE_G  => true,
          -- FIFO configurations
          BRAM_EN_G           => true,

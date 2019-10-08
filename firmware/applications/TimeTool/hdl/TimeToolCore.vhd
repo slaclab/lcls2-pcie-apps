@@ -33,8 +33,8 @@ entity TimeToolCore is
       axilClk         : in  sl;
       axilRst         : in  sl;
       -- Trigger Event streams (axilClk domain)
-      trigMaster      : in  AxiStreamMasterType;
-      trigSlave       : out AxiStreamSlaveType;
+      eventAxisMaster : in  AxiStreamMasterType;
+      eventAxisSlave  : out AxiStreamSlaveType;
       -- DMA Interfaces (axilClk domain)
       dataInMaster    : in  AxiStreamMasterType;
       dataInSlave     : out AxiStreamSlaveType;
@@ -49,43 +49,43 @@ end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
-   constant NUM_AXIS_MASTERS_G      : positive := 2;
+   constant NUM_AXIS_MASTERS_G : positive := 2;
 
-   constant NUM_AXIL_MASTERS_C : natural  := NUM_AXIS_MASTERS_G+2;
+   constant NUM_AXIL_MASTERS_C : natural := NUM_AXIS_MASTERS_G+2;
 
-   constant EVENT_INDEX_C      : natural  := 0;
-   constant FEX_INDEX_C        : natural  := 1;
-   constant PRESCALE_INDEX_C   : natural  := 2;
-   constant BYPASS_INDEX_C     : natural  := 3;
+   constant EVENT_INDEX_C    : natural := 0;
+   constant FEX_INDEX_C      : natural := 1;
+   constant PRESCALE_INDEX_C : natural := 2;
+   constant BYPASS_INDEX_C   : natural := 3;
 
-   subtype  AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
+   subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
 
-   signal axilWriteMasters            : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilWriteSlaves             : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
-   signal axilReadMasters             : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilReadSlaves              : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteMasters : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
 
    subtype DSP_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-2 downto 1;
 
-   signal dataInMasters               : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
-   signal dataInSlaves                : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+   signal dataInMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dataInSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal dataIbMasters               : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
-   signal dataIbSlaves                : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+   signal dataIbMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dataIbSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal dspObMasters                : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
-   signal dspObSlaves                 : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+   signal dspObMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dspObSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal dspMasters                  : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
-   signal dspSlaves                   : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
+   signal dspMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
+   signal dspSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal byPassToTimeToolMaster      : AxiStreamMasterType;
-   signal byPassToTimeToolSlave       : AxiStreamSlaveType;
+   signal byPassToTimeToolMaster : AxiStreamMasterType;
+   signal byPassToTimeToolSlave  : AxiStreamSlaveType;
 
-   signal timeToolToByPassMaster      : AxiStreamMasterType;
-   signal timeToolToByPassSlave       : AxiStreamSlaveType;
+   signal timeToolToByPassMaster : AxiStreamMasterType;
+   signal timeToolToByPassSlave  : AxiStreamSlaveType;
 
 
 
@@ -96,30 +96,30 @@ begin
    -------------
    U_TimetoolBypass : entity work.TimetoolBypass
       generic map (
-         TPD_G                => TPD_G,
-         DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_C)
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- System Clock and Reset
-         sysClk               => axilClk,
-         sysRst               => axilRst,
+         sysClk        => axilClk,
+         sysRst        => axilRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster         => dataInMaster,
-         dataInSlave          => dataInSlave,
-         dataOutMaster        => eventMaster,
-         dataOutSlave         => eventSlave,
+         dataInMaster  => dataInMaster,
+         dataInSlave   => dataInSlave,
+         dataOutMaster => eventMaster,
+         dataOutSlave  => eventSlave,
 
-         fromTimeToolMaster   => timeToolToByPassMaster,
-         fromTimeToolSlave    => timeToolToByPassSlave,
+         fromTimeToolMaster => timeToolToByPassMaster,
+         fromTimeToolSlave  => timeToolToByPassSlave,
 
-         toTimeToolMaster     => byPassToTimeToolMaster,
-         toTimeToolSlave      => byPassToTimeToolSlave,
+         toTimeToolMaster => byPassToTimeToolMaster,
+         toTimeToolSlave  => byPassToTimeToolSlave,
 
 
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster       => axilReadMasters(BYPASS_INDEX_C),
-         axilReadSlave        => axilReadSlaves(BYPASS_INDEX_C),
-         axilWriteMaster      => axilWriteMasters(BYPASS_INDEX_C),
-         axilWriteSlave       => axilWriteSlaves(BYPASS_INDEX_C));
+         axilReadMaster  => axilReadMasters(BYPASS_INDEX_C),
+         axilReadSlave   => axilReadSlaves(BYPASS_INDEX_C),
+         axilWriteMaster => axilWriteMasters(BYPASS_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(BYPASS_INDEX_C));
 
 
    ----------------------
@@ -198,18 +198,18 @@ begin
    -------------
    U_TimeToolFEX : entity work.TimeToolFEX
       generic map (
-         TPD_G               => TPD_G,
-         AXI_BASE_ADDR_G     => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr,
-         DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_C)
+         TPD_G             => TPD_G,
+         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
          -- System Clock and Reset
          axilClk         => axilClk,
          axilRst         => axilRst,
          -- DMA Interface (sysClk domain)
-         dataInMaster       => dataIbMasters(FEX_INDEX_C),
-         dataInSlave        => dataIbSlaves(FEX_INDEX_C),
-         eventMaster        => dspObMasters(FEX_INDEX_C),
-         eventSlave         => dspObSlaves(FEX_INDEX_C),
+         dataInMaster    => dataIbMasters(FEX_INDEX_C),
+         dataInSlave     => dataIbSlaves(FEX_INDEX_C),
+         eventMaster     => dspObMasters(FEX_INDEX_C),
+         eventSlave      => dspObSlaves(FEX_INDEX_C),
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMasters(FEX_INDEX_C),
          axilReadSlave   => axilReadSlaves(FEX_INDEX_C),
@@ -287,10 +287,10 @@ begin
          axilWriteMaster                 => axilWriteMasters(EVENT_INDEX_C),
          axilWriteSlave                  => axilWriteSlaves(EVENT_INDEX_C),
          -- Inbound Master AXIS Interfaces
-         sAxisMasters(EVENT_INDEX_C)     => trigMaster,
+         sAxisMasters(EVENT_INDEX_C)     => eventAxisMaster,
          sAxisMasters(DSP_INDEX_RANGE_C) => dspMasters,
          -- Inbound Slave AXIS Interfaces
-         sAxisSlaves(EVENT_INDEX_C)      => trigSlave,
+         sAxisSlaves(EVENT_INDEX_C)      => eventAxisSlave,
          sAxisSlaves(DSP_INDEX_RANGE_C)  => dspSlaves,
          -- Outbound AXIS
          mAxisMaster                     => timeToolToByPassMaster,
