@@ -285,10 +285,7 @@ begin
          PGP_TYPE_G                     => PGP_TYPE_G,
          DMA_AXIS_CONFIG_G              => DMA_AXIS_CONFIG_C,
          AXIL_CLK_FREQ_G                => AXIL_CLK_FREQ_C,
-         AXI_BASE_ADDR_G                => AXIL_CONFIG_C(HW_INDEX_C).baseAddr,
-         L1_CLK_IS_TIMING_TX_CLK_G      => true,
-         TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
-         EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
+         AXI_BASE_ADDR_G                => AXIL_CONFIG_C(HW_INDEX_C).baseAddr)
       port map (
          ------------------------      
          --  Top Level Interfaces
