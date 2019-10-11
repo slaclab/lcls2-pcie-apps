@@ -2,7 +2,7 @@
 -- File       : FrameIIR.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-10
+-- Last update: 2019-10-11
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -133,17 +133,18 @@ begin
          mAxisSlave  => inSlave);
 
 
-   U_SimpleDualPortRam_1 : entity work.SimpleDualPortRam
+   U_SimpleDualPortRam_1 : entity work.DualPortRam
       generic map (
          TPD_G        => TPD_G,
          BRAM_EN_G    => false,
-         DOB_REG_G    => false,
+         REG_EN_G     => false,
          BYTE_WR_EN_G => false,
          DATA_WIDTH_G => 128,
          ADDR_WIDTH_G => 7)
       port map (
          clka  => sysClk,               -- [in]
-         wea   => r.ramWrEn,               -- [in]
+         wea   => r.ramWrEn,            -- [in]
+         rsta  => sysRst,               -- [in]
          addra => r.ramWrAddr,          -- [in]
          dina  => r.ramWrData,          -- [in]
          clkb  => sysClk,               -- [in]
@@ -202,7 +203,7 @@ begin
             v.master.tdata(i*8+7 downto i*8) := v.ramWrData(i*8+7 downto i*8);
          end loop;
 
-         v.ramWrEn := '1';
+         v.ramWrEn   := '1';
          v.ramWrAddr := r.ramRdAddr;
          v.ramRdAddr := slv(unsigned(r.ramRdAddr) + 1);
 
