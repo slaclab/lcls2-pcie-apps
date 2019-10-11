@@ -104,7 +104,9 @@ architecture mapping of FrameIIR is
 
    signal inMaster : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
    signal inSlave  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
-   signal outCtrl  : AxiStreamCtrlType   := AXI_STREAM_CTRL_INIT_C;
+
+   signal outMaster : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
+   signal outSlave  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
 
    signal ramRdData : slv(127 downto 0);
 
@@ -113,24 +115,17 @@ begin
    ---------------------------------
    -- Input FIFO
    ---------------------------------
-   U_InFifo : entity work.AxiStreamFifoV2
+   U_AxiStreamPipeline_IN : entity work.AxiStreamPipeline
       generic map (
-         TPD_G               => TPD_G,
-         SLAVE_READY_EN_G    => true,
-         GEN_SYNC_FIFO_G     => true,
-         FIFO_ADDR_WIDTH_G   => 9,
-         FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
-         MASTER_AXI_CONFIG_G => INT_CONFIG_C)
+         TPD_G         => TPD_G,
+         PIPE_STAGES_G => 1)
       port map (
-         sAxisClk    => sysClk,
-         sAxisRst    => sysRst,
-         sAxisMaster => dataInMaster,
-         sAxisSlave  => dataInSlave,
-         mAxisClk    => sysClk,
-         mAxisRst    => sysRst,
-         mAxisMaster => inMaster,
-         mAxisSlave  => inSlave);
+         axisClk     => sysClk,         -- [in]
+         axisRst     => sysRst,         -- [in]
+         sAxisMaster => dataInMaster,   -- [in]
+         sAxisSlave  => dataInSlave,    -- [out]
+         mAxisMaster => inMaster,       -- [out]
+         mAxisSlave  => inSlave);       -- [in]   
 
 
    U_SimpleDualPortRam_1 : entity work.DualPortRam
@@ -156,7 +151,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, r, ramRdData, sysRst) is
+   comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, outSlave, r, ramRdData, sysRst) is
       variable v      : RegType := REG_INIT_C;
       variable axilEp : AxiLiteEndpointType;
       variable stage1 : signed(7 downto 0);
@@ -192,12 +187,16 @@ begin
       v.master.tValid := '0';
       v.ramWrEn       := '0';
 
-      if v.slave.tReady = '1' and inMaster.tValid = '1' then
+      if outSlave.tready = '1' then
+         v.master.tValid := '0';
+      end if;
+
+      if v.master.tvalid = '0' and inMaster.tValid = '1' then
          v.master := inMaster;
 
          for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
             stage1 := signed(inMaster.tdata(i*8+7 downto i*8));
-            stage2 := signed(ramRdData(i*8+7 downto i*8)) * (signed(r.timeConstant)-1);
+            stage2 := signed(ramRdData(i*8+7 downto i*8)) * (signed(r.tConst_signed)-1);
 
             v.ramWrData(i*8+7 downto i*8)    := resize(slv(shift_right(stage2 + stage1, r.tConst_natural)), 8);
             v.master.tdata(i*8+7 downto i*8) := v.ramWrData(i*8+7 downto i*8);
@@ -229,6 +228,7 @@ begin
       -- Outputs 
       axilReadSlave  <= r.axilReadSlave;
       axilWriteSlave <= r.axilWriteSlave;
+      outMaster      <= r.master;
 
 
    end process comb;
@@ -241,25 +241,18 @@ begin
    end process seq;
 
    ---------------------------------
-   -- Output FIFO
+   -- Output Pipeline
    ---------------------------------
-   U_OutFifo : entity work.AxiStreamFifoV2
+   U_AxiStreamPipeline_OUT : entity work.AxiStreamPipeline
       generic map (
-         TPD_G               => TPD_G,
-         SLAVE_READY_EN_G    => false,
-         GEN_SYNC_FIFO_G     => true,
-         FIFO_ADDR_WIDTH_G   => 9,
-         FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G         => TPD_G,
+         PIPE_STAGES_G => 1)
       port map (
-         sAxisClk    => sysClk,
-         sAxisRst    => sysRst,
-         sAxisMaster => r.Master,
-         sAxisCtrl   => outCtrl,
-         mAxisClk    => sysClk,
-         mAxisRst    => sysRst,
-         mAxisMaster => dataOutMaster,
-         mAxisSlave  => dataOutSlave);
+         axisClk     => sysClk,         -- [in]
+         axisRst     => sysRst,         -- [in]
+         sAxisMaster => outMaster,      -- [in]
+         sAxisSlave  => outSlave,       -- [out]
+         mAxisMaster => dataOutMaster,  -- [out]
+         mAxisSlave  => dataOutSlave);  -- [in]
 
 end mapping;
