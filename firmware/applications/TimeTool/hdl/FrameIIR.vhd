@@ -151,7 +151,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, outSlave, r, ramRdData, sysRst) is
+   comb : process (axilReadMaster, axilWriteMaster, inMaster, outSlave, r, ramRdData, sysRst) is
       variable v      : RegType := REG_INIT_C;
       variable axilEp : AxiLiteEndpointType;
       variable stage1 : signed(7 downto 0);
