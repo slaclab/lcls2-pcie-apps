@@ -35,7 +35,7 @@ entity TimeToolFEX is
       axilClk         : in  sl;
       axilRst         : in  sl;
       -- DMA Interfaces (axilClk domain). One for data into server, two for reloadable coefficients and config from server, one trig master?
-      dataInMaster    : in  AxiStreamMasterType ;
+      dataInMaster    : in  AxiStreamMasterType;
       dataInSlave     : out AxiStreamSlaveType;
       eventMaster     : out AxiStreamMasterType;
       eventSlave      : in  AxiStreamSlaveType;
@@ -50,53 +50,47 @@ architecture mapping of TimeToolFEX is
 
    constant NUM_AXIS_MASTERS_G : positive := 13;
    constant NUM_AXIL_MASTERS_C : natural  := 8;
-   
-
-   subtype  AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
-   subtype  AXIS_INDEX_RANGE_C is integer range NUM_AXIS_MASTERS_G-1 downto 0;
 
 
-   constant EVENTBUILDER_L                  : natural  := 0;
-   constant EVCFILTER_L                     : natural  := 1;
-   constant FIR_COEF_L                      : natural  := 2;
-   constant FRAMEIIR_L                      : natural  := 3;
-   constant NULLFILTER_L                    : natural  := 4;
-   constant PEAKFINDER_L                    : natural  := 5;
-   constant PRESCALER_L                     : natural  := 6;
-   constant SUBTRACTOR_L                    : natural  := 7;
+   subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
+   subtype AXIS_INDEX_RANGE_C is integer range NUM_AXIS_MASTERS_G-1 downto 0;
 
 
-   constant REPEATER1_2_EVCFILTER           : natural  := 0;
-   constant REPEATER1_2_SUBTRACTOR          : natural  := 1;
-   constant EVCFILTER_2_REPEATER2           : natural  := 2;
-   constant REPEATER2_2_NULLFILTER          : natural  := 3;
-   constant REPEATER2_2_PRESCALER           : natural  := 4;
-   constant PRESCALER_2_EVENTBUILDER        : natural  := 5;
-   constant NULLFILTER_2_FRAMEIIR           : natural  := 6;
-   constant FRAMEIIR_2_SUBTRACTOR           : natural  := 7;
-   constant SUBTRACTOR_2_FIR                : natural  := 8;
-   constant FIR_2_PEAKFINDER                : natural  := 9;
-   constant PEAKFINDER_2_EVENTBUILDER       : natural  := 10;
+   constant EVENTBUILDER_L : natural := 0;
+   constant EVCFILTER_L    : natural := 1;
+   constant FIR_COEF_L     : natural := 2;
+   constant FRAMEIIR_L     : natural := 3;
+   constant NULLFILTER_L   : natural := 4;
+   constant PEAKFINDER_L   : natural := 5;
+   constant PRESCALER_L    : natural := 6;
+   constant SUBTRACTOR_L   : natural := 7;
 
-   constant AXIL_TO_FIR_COEF                : natural  := 11;
-   constant AXIL_TO_FIR_CONFIG              : natural  := 12;
 
-   
+   constant REPEATER1_2_EVCFILTER     : natural := 0;
+   constant REPEATER1_2_SUBTRACTOR    : natural := 1;
+   constant EVCFILTER_2_REPEATER2     : natural := 2;
+   constant REPEATER2_2_NULLFILTER    : natural := 3;
+   constant REPEATER2_2_PRESCALER     : natural := 4;
+   constant PRESCALER_2_EVENTBUILDER  : natural := 5;
+   constant NULLFILTER_2_FRAMEIIR     : natural := 6;
+   constant FRAMEIIR_2_SUBTRACTOR     : natural := 7;
+   constant SUBTRACTOR_2_FIR          : natural := 8;
+   constant FIR_2_PEAKFINDER          : natural := 9;
+   constant PEAKFINDER_2_EVENTBUILDER : natural := 10;
 
-   
+   constant AXIL_TO_FIR_COEF   : natural := 11;
+   constant AXIL_TO_FIR_CONFIG : natural := 12;
+
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 16, 12);
 
-   signal axilWriteMasters            : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilWriteSlaves             : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
-   signal axilReadMasters             : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
-   signal axilReadSlaves              : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteMasters : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
 
-   signal axisMasters                 : AxiStreamMasterArray(AXIS_INDEX_RANGE_C);
-   signal axisSlaves                  : AxiStreamSlaveArray(AXIS_INDEX_RANGE_C);
-
-
-
+   signal axisMasters : AxiStreamMasterArray(AXIS_INDEX_RANGE_C);
+   signal axisSlaves  : AxiStreamSlaveArray(AXIS_INDEX_RANGE_C);
 
 
 begin
@@ -132,16 +126,16 @@ begin
          NUM_MASTERS_G => 2)
       port map (
          -- Clock and reset
-         axisClk      => axilClk,
-         axisRst      => axilRst,
+         axisClk         => axilClk,
+         axisRst         => axilRst,
          -- Slave
-         sAxisMaster  => dataInMaster,
-         sAxisSlave   => dataInSlave,
+         sAxisMaster     => dataInMaster,
+         sAxisSlave      => dataInSlave,
          -- Masters
-         mAxisMasters(0)   => axisMasters(REPEATER1_2_EVCFILTER),
-         mAxisMasters(1)   => axisMasters(REPEATER1_2_SUBTRACTOR),
-         mAxisSlaves(0)    => axisSlaves(REPEATER1_2_EVCFILTER),
-         mAxisSlaves(1)    => axisSlaves(REPEATER1_2_SUBTRACTOR));
+         mAxisMasters(0) => axisMasters(REPEATER1_2_EVCFILTER),
+         mAxisMasters(1) => axisMasters(REPEATER1_2_SUBTRACTOR),
+         mAxisSlaves(0)  => axisSlaves(REPEATER1_2_EVCFILTER),
+         mAxisSlaves(1)  => axisSlaves(REPEATER1_2_SUBTRACTOR));
 
 
    -------------------
@@ -175,11 +169,11 @@ begin
          NUM_MASTERS_G => 2)
       port map (
          -- Clock and reset
-         axisClk      => axilClk,
-         axisRst      => axilRst,
+         axisClk         => axilClk,
+         axisRst         => axilRst,
          -- Slave
-         sAxisMaster  => axisMasters(EVCFILTER_2_REPEATER2),
-         sAxisSlave   => axisSlaves(EVCFILTER_2_REPEATER2),
+         sAxisMaster     => axisMasters(EVCFILTER_2_REPEATER2),
+         sAxisSlave      => axisSlaves(EVCFILTER_2_REPEATER2),
          -- Masters
          mAxisMasters(0) => axisMasters(REPEATER2_2_PRESCALER),
          mAxisMasters(1) => axisMasters(REPEATER2_2_NULLFILTER),
@@ -266,36 +260,34 @@ begin
          dataOutMaster    => axisMasters(SUBTRACTOR_2_FIR),
          dataOutSlave     => axisSlaves(SUBTRACTOR_2_FIR),
          -- Pedestal DMA Interfaces  (sysClk domain)
-         pedestalInMaster =>  axisMasters(FRAMEIIR_2_SUBTRACTOR),
-         pedestalInSlave  =>  axisSlaves(FRAMEIIR_2_SUBTRACTOR),
+         pedestalInMaster => axisMasters(FRAMEIIR_2_SUBTRACTOR),
+         pedestalInSlave  => axisSlaves(FRAMEIIR_2_SUBTRACTOR),
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(SUBTRACTOR_L),
-         axilReadSlave   => axilReadSlaves(SUBTRACTOR_L),
-         axilWriteMaster => axilWriteMasters(SUBTRACTOR_L),
-         axilWriteSlave  => axilWriteSlaves(SUBTRACTOR_L));
+         axilReadMaster   => axilReadMasters(SUBTRACTOR_L),
+         axilReadSlave    => axilReadSlaves(SUBTRACTOR_L),
+         axilWriteMaster  => axilWriteMasters(SUBTRACTOR_L),
+         axilWriteSlave   => axilWriteSlaves(SUBTRACTOR_L));
 
 
    --------------------
    -- Axi lite to fir coefficient module
    -------------------- 
+   u_axilToFirCoef : entity work.AXILtoFIRcoef
+      generic map(
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+         DEBUG_G           => true)
+      port map(
+         -- System Interface
+         sysClk          => axilClk,
+         sysRst          => axilRst,
+         -- DMA Interfaces  (sysClk domain)
+         dataOutMaster   => axisMasters(AXIL_TO_FIR_COEF),
+         dataOutSlave    => axisSlaves(AXIL_TO_FIR_COEF),
+         configOutMaster => axisMasters(AXIL_TO_FIR_CONFIG),
+         configOutSlave  => axisSlaves(AXIL_TO_FIR_CONFIG),
 
-
-   u_axilToFirCoef:entity work.AXILtoFIRcoef
-   generic map(
-      TPD_G             => TPD_G,
-      DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
-      DEBUG_G           => true )
-   port map(
-          -- System Interface
-          sysClk           =>   axilClk,
-          sysRst           =>   axilRst,
-          -- DMA Interfaces  (sysClk domain)
-          dataOutMaster     => axisMasters(AXIL_TO_FIR_COEF),
-          dataOutSlave      => axisSlaves(AXIL_TO_FIR_COEF),
-          configOutMaster   => axisMasters(AXIL_TO_FIR_CONFIG),
-          configOutSlave    => axisSlaves(AXIL_TO_FIR_CONFIG),
-
-          -- AXI-Lite Interface
+         -- AXI-Lite Interface
          axilReadMaster  => axilReadMasters(FIR_COEF_L),
          axilReadSlave   => axilReadSlaves(FIR_COEF_L),
          axilWriteMaster => axilWriteMasters(FIR_COEF_L),
@@ -304,46 +296,43 @@ begin
    --------------------
    -- Surf wrapped FIR filter
    -------------------- 
+   edge_to_peak : entity work.FrameFIR
+      generic map(
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+         DEBUG_G           => true)
+      port map(
+         -- System Interface
+         sysClk         => axilClk,
+         sysRst         => axilRst,
+         -- DMA Interfaces  (sysClk domain)
+         dataInMaster   => axisMasters(SUBTRACTOR_2_FIR),
+         dataInSlave    => axisSlaves(SUBTRACTOR_2_FIR),
+         dataOutMaster  => axisMasters(FIR_2_PEAKFINDER),
+         dataOutSlave   => axisSlaves(FIR_2_PEAKFINDER),
+         -- coefficient reload  (sysClk domain)
+         reloadInMaster => axisMasters(AXIL_TO_FIR_COEF),
+         reloadInSlave  => axisSlaves(AXIL_TO_FIR_COEF),
+         configInMaster => axisMasters(AXIL_TO_FIR_CONFIG),
+         configInSlave  => axisSlaves(AXIL_TO_FIR_CONFIG));
 
 
-   edge_to_peak: entity work.FrameFIR
-   generic map(
-      TPD_G             => TPD_G,
-      DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
-      DEBUG_G           => true )
-   port map(
-      -- System Interface
-      sysClk          => axilClk,
-      sysRst          => axilRst,
-      -- DMA Interfaces  (sysClk domain)
-      dataInMaster    => axisMasters(SUBTRACTOR_2_FIR),
-      dataInSlave     => axisSlaves(SUBTRACTOR_2_FIR),
-      dataOutMaster   => axisMasters(FIR_2_PEAKFINDER),
-      dataOutSlave    => axisSlaves(FIR_2_PEAKFINDER),
-      -- coefficient reload  (sysClk domain)
-      reloadInMaster  => axisMasters(AXIL_TO_FIR_COEF),
-      reloadInSlave   => axisSlaves(AXIL_TO_FIR_COEF),
-      configInMaster  => axisMasters(AXIL_TO_FIR_CONFIG),
-      configInSlave   => axisSlaves(AXIL_TO_FIR_CONFIG));
-
-
-     --U_FileInput : entity work.AxiStreamToFile
-     --    generic map (
-     --       TPD_G              => TPD_G,
-     --       BYTE_SIZE_C        => 2+1,
-     --      DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
-     --       CLK_PERIOD_G       => 10 ns)
-     --    port map (
-     --       sysClk         => axilClk,
-     --       sysRst         => axilRst,
-     --       dataInMaster   => axisMasters(FIR_2_PEAKFINDER));
-     --       --dataInSlave    => appOutSlave
+   --U_FileInput : entity work.AxiStreamToFile
+   --    generic map (
+   --       TPD_G              => TPD_G,
+   --       BYTE_SIZE_C        => 2+1,
+   --      DMA_AXIS_CONFIG_G  => DMA_AXIS_CONFIG_G,
+   --       CLK_PERIOD_G       => 10 ns)
+   --    port map (
+   --       sysClk         => axilClk,
+   --       sysRst         => axilRst,
+   --       dataInMaster   => axisMasters(FIR_2_PEAKFINDER));
+   --       --dataInSlave    => appOutSlave
 
    --------------------
    -- Peak finder
    -------------------- 
-
-     U_FramePeakFinder : entity work.FramePeakFinder
+   U_FramePeakFinder : entity work.FramePeakFinder
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -375,21 +364,21 @@ begin
          AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
       port map (
          -- Clock and Reset
-         axisClk             => axilClk,
-         axisRst             => axilRst,
+         axisClk         => axilClk,
+         axisRst         => axilRst,
          -- AXI-Lite Interface (axisClk domain)
-         axilReadMaster      => axilReadMasters(EVENTBUILDER_L),
-         axilReadSlave       => axilReadSlaves(EVENTBUILDER_L),
-         axilWriteMaster     => axilWriteMasters(EVENTBUILDER_L),
-         axilWriteSlave      => axilWriteSlaves(EVENTBUILDER_L),
+         axilReadMaster  => axilReadMasters(EVENTBUILDER_L),
+         axilReadSlave   => axilReadSlaves(EVENTBUILDER_L),
+         axilWriteMaster => axilWriteMasters(EVENTBUILDER_L),
+         axilWriteSlave  => axilWriteSlaves(EVENTBUILDER_L),
          -- Inbound Master AXIS Interfaces
-         sAxisMasters(0)     => axisMasters(PEAKFINDER_2_EVENTBUILDER),
-         sAxisMasters(1)     => axisMasters(PRESCALER_2_EVENTBUILDER),
+         sAxisMasters(0) => axisMasters(PEAKFINDER_2_EVENTBUILDER),
+         sAxisMasters(1) => axisMasters(PRESCALER_2_EVENTBUILDER),
          -- Inbound Slave AXIS Interfaces
-         sAxisSlaves(0)      => axisSlaves(PEAKFINDER_2_EVENTBUILDER),
-         sAxisSlaves(1)      => axisSlaves(PRESCALER_2_EVENTBUILDER),
+         sAxisSlaves(0)  => axisSlaves(PEAKFINDER_2_EVENTBUILDER),
+         sAxisSlaves(1)  => axisSlaves(PRESCALER_2_EVENTBUILDER),
          -- Outbound AXIS
-         mAxisMaster         => eventMaster,
-         mAxisSlave          => eventSlave);
+         mAxisMaster     => eventMaster,
+         mAxisSlave      => eventSlave);
 
 end mapping;
