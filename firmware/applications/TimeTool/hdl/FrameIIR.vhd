@@ -182,18 +182,26 @@ begin
       -- Main Part of Code
       ------------------------ 
 
-      v.slave.tReady  := not outCtrl.pause;
+      v.slave.tReady  := '0';
       v.master.tLast  := '0';
       v.master.tValid := '0';
       v.ramWrEn       := '0';
 
+      -- Clear tvalid when ack'd by tready
       if outSlave.tready = '1' then
          v.master.tValid := '0';
       end if;
 
       if v.master.tvalid = '0' and inMaster.tValid = '1' then
-         v.master := inMaster;
+         -- A new transaction has arrived and can be processed
 
+         -- Ack the input
+         v.slave.tready := '1';
+
+         -- Copy to output bus
+         v.master       := inMaster;
+
+         -- Override output tdata with IIR calculations
          for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
             stage1 := signed(inMaster.tdata(i*8+7 downto i*8));
             stage2 := signed(ramRdData(i*8+7 downto i*8)) * (signed(r.tConst_signed)-1);
@@ -202,11 +210,15 @@ begin
             v.master.tdata(i*8+7 downto i*8) := v.ramWrData(i*8+7 downto i*8);
          end loop;
 
+         -- Write updated IIR calculations to ram
          v.ramWrEn   := '1';
          v.ramWrAddr := r.ramRdAddr;
+
+         -- Advance rdAddr to read next 8 values from ram
          v.ramRdAddr := slv(unsigned(r.ramRdAddr) + 1);
 
          if (inMaster.tLast = '1') then
+            -- Reset to 0 for start of each frame
             v.ramRdAddr := (others => '0');
          end if;
       end if;
