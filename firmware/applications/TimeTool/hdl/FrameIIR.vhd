@@ -2,7 +2,7 @@
 -- File       : FrameIIR.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-11
+-- Last update: 2019-10-14
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -199,14 +199,14 @@ begin
          v.slave.tready := '1';
 
          -- Copy to output bus
-         v.master       := inMaster;
+         v.master := inMaster;
 
          -- Override output tdata with IIR calculations
          for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
-            stage1 := signed(inMaster.tdata(i*8+7 downto i*8));
-            stage2 := signed(ramRdData(i*8+7 downto i*8)) * (signed(r.tConst_signed)-1);
+            v.ramWrData(i*8+7 downto i*8) := slv(signed(ramRdData(i*8+7 downto i*8)) -
+                                                 shift_right(signed(ramRdData(i*8+7 downto i*8)), 3) +
+                                                 shift_right(signed(inMaster.tData(i*8+7 downto i*8)), 3));
 
-            v.ramWrData(i*8+7 downto i*8)    := resize(slv(shift_right(stage2 + stage1, r.tConst_natural)), 8);
             v.master.tdata(i*8+7 downto i*8) := v.ramWrData(i*8+7 downto i*8);
          end loop;
 
