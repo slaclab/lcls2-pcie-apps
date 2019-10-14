@@ -121,14 +121,14 @@ architecture top_level of TimeToolKcu1500 is
    signal dmaIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal dmaIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
 
-   signal pgpIbMasters : AxiStreamMasterArray(3 downto 0)     := (others => AXI_STREAM_MASTER_INIT_C);
-   signal pgpIbSlaves  : AxiStreamSlaveArray(3 downto 0)      := (others => AXI_STREAM_SLAVE_FORCE_C);
-   signal pgpObMasters : AxiStreamQuadMasterArray(3 downto 0) := (others => (others => AXI_STREAM_MASTER_INIT_C));
-   signal pgpObSlaves  : AxiStreamQuadSlaveArray(3 downto 0)  := (others => (others => AXI_STREAM_SLAVE_FORCE_C));
+   signal pgpIbMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0)     := (others => AXI_STREAM_MASTER_INIT_C);
+   signal pgpIbSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)      := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal pgpObMasters : AxiStreamQuadMasterArray(DMA_SIZE_C-1 downto 0) := (others => (others => AXI_STREAM_MASTER_INIT_C));
+   signal pgpObSlaves  : AxiStreamQuadSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => (others => AXI_STREAM_SLAVE_FORCE_C));
 
-   signal eventAxisMasters : AxiStreamMasterArray(3 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-   signal eventAxisSlaves  : AxiStreamSlaveArray(3 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
-   signal eventAxisCtrl    : AxiStreamCtrlArray(3 downto 0)   := (others => AXI_STREAM_CTRL_INIT_C);
+   signal eventAxisMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal eventAxisSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal eventAxisCtrl    : AxiStreamCtrlArray(DMA_SIZE_C-1 downto 0)   := (others => AXI_STREAM_CTRL_INIT_C);
 
 begin
 
@@ -280,12 +280,13 @@ begin
    ------------------
    U_Hardware : entity work.Hardware
       generic map (
-         TPD_G                          => TPD_G,
-         ROGUE_SIM_EN_G                 => ROGUE_SIM_EN_G,
-         PGP_TYPE_G                     => PGP_TYPE_G,
-         DMA_AXIS_CONFIG_G              => DMA_AXIS_CONFIG_C,
-         AXIL_CLK_FREQ_G                => AXIL_CLK_FREQ_C,
-         AXI_BASE_ADDR_G                => AXIL_CONFIG_C(HW_INDEX_C).baseAddr)
+         TPD_G             => TPD_G,
+         ROGUE_SIM_EN_G    => ROGUE_SIM_EN_G,
+         PGP_TYPE_G        => PGP_TYPE_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
+         NUM_PGP_LANES_G   => DMA_SIZE_C,
+         AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_C,
+         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(HW_INDEX_C).baseAddr)
       port map (
          ------------------------      
          --  Top Level Interfaces
@@ -318,7 +319,7 @@ begin
          ------------------
          --  Hardware Ports
          ------------------       
-         -- QSFP[0] Ports
+         -- QSFP[0] Ports,
          qsfp0RefClkP        => qsfp0RefClkP,
          qsfp0RefClkN        => qsfp0RefClkN,
          qsfp0RxP            => qsfp0RxP,

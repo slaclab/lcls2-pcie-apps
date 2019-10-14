@@ -37,13 +37,13 @@ entity Application is
       axilWriteMaster  : in  AxiLiteWriteMasterType;
       axilWriteSlave   : out AxiLiteWriteSlaveType;
       -- PGP Streams (axilClk domain)
-      pgpIbMasters     : out AxiStreamMasterArray(3 downto 0)    := (others => AXI_STREAM_MASTER_INIT_C);
-      pgpIbSlaves      : in  AxiStreamSlaveArray(3 downto 0);
-      pgpObMasters     : in  AxiStreamQuadMasterArray(3 downto 0);
-      pgpObSlaves      : out AxiStreamQuadSlaveArray(3 downto 0) := (others => (others => AXI_STREAM_SLAVE_FORCE_C));
+      pgpIbMasters     : out AxiStreamMasterArray(DMA_SIZE_C-1 downto 0)    := (others => AXI_STREAM_MASTER_INIT_C);
+      pgpIbSlaves      : in  AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
+      pgpObMasters     : in  AxiStreamQuadMasterArray(DMA_SIZE_C-1 downto 0);
+      pgpObSlaves      : out AxiStreamQuadSlaveArray(DMA_SIZE_C-1 downto 0) := (others => (others => AXI_STREAM_SLAVE_FORCE_C));
       -- Trigger Event streams (axilClk domain)
-      eventAxisMasters : in  AxiStreamMasterArray(3 downto 0);
-      eventAxisSlaves  : out AxiStreamSlaveArray(3 downto 0);
+      eventAxisMasters : in  AxiStreamMasterArray(DMA_SIZE_C-1 downto 0);
+      eventAxisSlaves  : out AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
       -- DMA Interface (dmaClk domain)
       dmaClk           : in  sl;
       dmaRst           : in  sl;
@@ -55,12 +55,12 @@ end Application;
 
 architecture mapping of Application is
 
-   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(3 downto 0) := genAxiLiteConfig(4, AXI_BASE_ADDR_G, 22, 20);
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(DMA_SIZE_C-1 downto 0) := genAxiLiteConfig(DMA_SIZE_C, AXI_BASE_ADDR_G, 22, 20);
 
-   signal axilWriteMasters : AxiLiteWriteMasterArray(3 downto 0);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(3 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_OK_C);
-   signal axilReadMasters  : AxiLiteReadMasterArray(3 downto 0);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(3 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_OK_C);
+   signal axilWriteMasters : AxiLiteWriteMasterArray(DMA_SIZE_C-1 downto 0);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(DMA_SIZE_C-1 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_OK_C);
+   signal axilReadMasters  : AxiLiteReadMasterArray(DMA_SIZE_C-1 downto 0);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_OK_C);
 
 begin
 
@@ -71,7 +71,7 @@ begin
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => 4,
+         NUM_MASTER_SLOTS_G => DMA_SIZE_C,
          MASTERS_CONFIG_G   => AXIL_CONFIG_C)
       port map (
          axiClk              => axilClk,
