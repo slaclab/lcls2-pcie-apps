@@ -2,7 +2,7 @@
 -- File       : FrameIIR.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-14
+-- Last update: 2019-10-15
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -17,15 +17,13 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
---use ieee.std_logic_arith.all;
---use ieee.std_logic_unsigned.all;
---use ieee.std_logic_signed.all;
 use ieee.numeric_std.all;
 
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
-use work.SsiPkg.all;
+
+use work.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -37,7 +35,6 @@ use unisim.vcomponents.all;
 entity FrameIIR is
    generic (
       TPD_G             : time                := 1 ns;
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
       DEBUG_G           : boolean             := true);
    port (
       -- System Interface
@@ -57,13 +54,9 @@ end FrameIIR;
 
 architecture mapping of FrameIIR is
 
-   constant INT_CONFIG_C           : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
-   constant PGP2BTXIN_LEN          : integer             := 19;
    constant CAMERA_RESOLUTION_BITS : positive            := 8;
    constant CAMERA_PIXEL_NUMBER    : positive            := 2048;
    constant PIXEL_PER_TRANSFER     : positive            := 16;
-   constant ONE_SIGNED             : signed(7 downto 0)  := (0                           => '1', others => '0');
-
 
    type RegType is record
       master         : AxiStreamMasterType;
@@ -76,12 +69,10 @@ architecture mapping of FrameIIR is
       ramWrData      : slv(127 downto 0);
       scratchPad     : slv(31 downto 0);
       timeConstant   : slv(7 downto 0);
-      tConst_natural : natural range 0 to 7;
-      tConst_signed  : signed(7 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
-      master         => AXI_STREAM_MASTER_INIT_C,
+      master         => axiStreamMasterInit(DSP_AXIS_CONFIG_C),
       slave          => AXI_STREAM_SLAVE_INIT_C,
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
@@ -90,10 +81,7 @@ architecture mapping of FrameIIR is
       ramWrAddr      => (others => '0'),
       ramWrData      => (others => '0'),
       scratchPad     => (others => '0'),
-      timeConstant   => (0 => '1', others => '0'),
-      tConst_signed  => (others => '0'),
-      tConst_natural => 1);
-
+      timeConstant   => (0 => '1', others => '0'));
 ---------------------------------------
 -------record intitial value-----------
 ---------------------------------------
@@ -154,8 +142,6 @@ begin
    comb : process (axilReadMaster, axilWriteMaster, inMaster, outSlave, r, ramRdData, sysRst) is
       variable v      : RegType := REG_INIT_C;
       variable axilEp : AxiLiteEndpointType;
-      variable stage1 : signed(7 downto 0);
-      variable stage2 : signed(15 downto 0);
    begin
 
       -- Latch the current value
@@ -174,22 +160,16 @@ begin
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
       ------------------------      
-      -- updating time constant
-      ------------------------       
-      v.tConst_natural := to_integer(unsigned(r.timeConstant)+1);
-      v.tConst_signed  := shift_left(ONE_SIGNED, r.tConst_natural);
-      ------------------------      
       -- Main Part of Code
       ------------------------ 
 
       v.slave.tReady  := '0';
-      v.master.tLast  := '0';
-      v.master.tValid := '0';
       v.ramWrEn       := '0';
 
       -- Clear tvalid when ack'd by tready
       if outSlave.tready = '1' then
          v.master.tValid := '0';
+         v.master.tLast := '0';
       end if;
 
       if v.master.tvalid = '0' and inMaster.tValid = '1' then
@@ -202,7 +182,7 @@ begin
          v.master := inMaster;
 
          -- Override output tdata with IIR calculations
-         for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
+         for i in 0 to DSP_AXIS_CONFIG_C.TDATA_BYTES_C-1 loop
             v.ramWrData(i*8+7 downto i*8) := slv(signed(ramRdData(i*8+7 downto i*8)) -
                                                  shift_right(signed(ramRdData(i*8+7 downto i*8)), 3) +
                                                  shift_right(signed(inMaster.tData(i*8+7 downto i*8)), 3));

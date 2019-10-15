@@ -2,7 +2,7 @@
 -- File       : FrameSubtractor.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-10
+-- Last update: 2019-10-15
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -17,17 +17,13 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
---use ieee.std_logic_arith.all;
---use ieee.std_logic_unsigned.all;
---use ieee.std_logic_signed.all;
 use ieee.numeric_std.all;
 
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
-use work.AxiPkg.all;
-use work.SsiPkg.all;
-use work.Pgp2bPkg.all;
+
+use work.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -39,7 +35,6 @@ use unisim.vcomponents.all;
 entity FrameSubtractor is
    generic (
       TPD_G             : time                := 1 ns;
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
       DEBUG_G           : boolean             := true);
    port (
       -- System Interface
@@ -62,8 +57,6 @@ end FrameSubtractor;
 
 architecture mapping of FrameSubtractor is
 
-   constant INT_CONFIG_C           : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
-   constant PGP2BTXIN_LEN          : integer             := 19;
    constant CAMERA_RESOLUTION_BITS : positive            := 8;
    constant CAMERA_PIXEL_NUMBER    : positive            := 2048;
    constant PIXELS_PER_TRANSFER    : positive            := 16;
@@ -79,7 +72,7 @@ architecture mapping of FrameSubtractor is
    end record RegType;
 
    constant REG_INIT_C : RegType := (
-      master         => AXI_STREAM_MASTER_INIT_C,
+      master         => axiStreamMasterInit(DSP_AXIS_CONFIG_C),
       slave          => AXI_STREAM_SLAVE_INIT_C,
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
@@ -94,7 +87,7 @@ architecture mapping of FrameSubtractor is
 
    signal inMaster : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
    signal inSlave  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
-   signal outCtrl  : AxiStreamCtrlType   := AXI_STREAM_CTRL_INIT_C;
+   signal outSlave  : AxiStreamSlaveType   := AXI_STREAM_SLAVE_INIT_C;
 
    signal pedestalInMasterBuf : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
    signal pedestalInSlaveBuf  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
@@ -109,26 +102,22 @@ begin
    pedestalInSlave     <= pedestalInSlaveBuf;  --may migrate to buffered input fifo 
 
    ---------------------------------
+   -- Input Pipeline
+   ---------------------------------
+   ---------------------------------
    -- Input FIFO
    ---------------------------------
-   U_InFifo : entity work.AxiStreamFifoV2
+   U_AxiStreamPipeline_IN : entity work.AxiStreamPipeline
       generic map (
-         TPD_G               => TPD_G,
-         SLAVE_READY_EN_G    => true,
-         GEN_SYNC_FIFO_G     => true,
-         FIFO_ADDR_WIDTH_G   => 9,
-         FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
-         MASTER_AXI_CONFIG_G => INT_CONFIG_C)
+         TPD_G         => TPD_G,
+         PIPE_STAGES_G => 1)
       port map (
-         sAxisClk    => sysClk,
-         sAxisRst    => sysRst,
-         sAxisMaster => dataInMaster,
-         sAxisSlave  => dataInSlave,
-         mAxisClk    => sysClk,
-         mAxisRst    => sysRst,
-         mAxisMaster => inMaster,
-         mAxisSlave  => inSlave);
+         axisClk     => sysClk,         -- [in]
+         axisRst     => sysRst,         -- [in]
+         sAxisMaster => dataInMaster,   -- [in]
+         sAxisSlave  => dataInSlave,    -- [out]
+         mAxisMaster => inMaster,       -- [out]
+         mAxisSlave  => inSlave);       -- [in]   
 
    U_SimpleDualPortRam_1 : entity work.SimpleDualPortRam
       generic map (
@@ -152,7 +141,7 @@ begin
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, pedestalInMaster, pedestalRamData, r, sysRst) is
+   comb : process (axilReadMaster, axilWriteMaster, inMaster, inSlave, pedestalInMaster, pedestalRamData, r, sysRst) is
       variable v      : RegType := REG_INIT_C;
       variable axilEp : AxiLiteEndpointType;
    begin
@@ -176,12 +165,16 @@ begin
       ------------------------ 
 
       -- Subtract incomming data against pedestals
-      v.slave.tReady  := not outCtrl.pause;
-      v.master.tValid := '0';
+      v.slave.tReady  := '0';
 
-      if v.slave.tReady = '1' and inMaster.tValid = '1' then
+      if (inSlave.tReady = '1') then
+         v.master.tValid := '0';
+      end if;
+
+
+      if v.master.tValid = '0' and inMaster.tValid = '1' then
          v.master := inMaster;
-         for i in 0 to INT_CONFIG_C.TDATA_BYTES_C-1 loop
+         for i in 0 to DSP_AXIS_CONFIG_C.TDATA_BYTES_C-1 loop
             v.master.tData(i*8+7 downto i*8) := slv(signed(inMaster.tdata(i*8+7 downto i*8))-signed(pedestalRamData(i*8+7 downto i*8)));
          end loop;
          v.pedestalRdAddr := slv(unsigned(r.pedestalRdAddr) + 1);
@@ -192,6 +185,7 @@ begin
 
 
       -- Write pedestals into ram
+      -- Pedastal txns are constantly accepted (tready=1)
       if (pedestalInMaster.tvalid = '1') then
          v.pedestalWrAddr := slv(unsigned(r.pedestalWrAddr) + 1);
          if (pedestalInMaster.tLast = '1') then
@@ -228,25 +222,20 @@ begin
    end process seq;
 
    ---------------------------------
-   -- Output FIFO
+   -- Output Pipeline
    ---------------------------------
-   U_OutFifo : entity work.AxiStreamFifoV2
+   U_AxiStreamPipeline_OUT : entity work.AxiStreamPipeline
       generic map (
-         TPD_G               => TPD_G,
-         SLAVE_READY_EN_G    => false,
-         GEN_SYNC_FIFO_G     => true,
-         FIFO_ADDR_WIDTH_G   => 9,
-         FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G         => TPD_G,
+         PIPE_STAGES_G => 1)
       port map (
-         sAxisClk    => sysClk,
-         sAxisRst    => sysRst,
-         sAxisMaster => r.Master,
-         sAxisCtrl   => outCtrl,
-         mAxisClk    => sysClk,
-         mAxisRst    => sysRst,
-         mAxisMaster => dataOutMaster,
-         mAxisSlave  => dataOutSlave);
+         axisClk     => sysClk,         -- [in]
+         axisRst     => sysRst,         -- [in]
+         sAxisMaster => r.master,      -- [in]
+         sAxisSlave  => outSlave,       -- [out]
+         mAxisMaster => dataOutMaster,  -- [out]
+         mAxisSlave  => dataOutSlave);  -- [in]
+   
+
 
 end mapping;

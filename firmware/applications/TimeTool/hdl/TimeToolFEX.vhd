@@ -22,14 +22,13 @@ use ieee.std_logic_unsigned.all;
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
-use work.SsiPkg.all;
+
 use work.AppPkg.all;
 
 entity TimeToolFEX is
    generic (
       TPD_G             : time                := 1 ns;
-      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"00C1_0000";
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2));
+      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"00C1_0000");
    port (
       -- Clock and Reset
       axilClk         : in  sl;
@@ -143,8 +142,7 @@ begin
    -------------------
    EVCFILTER : entity work.TimeToolPrescaler
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G             => TPD_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -186,8 +184,7 @@ begin
    -------------------
    PRESCALER : entity work.TimeToolPrescaler
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G             => TPD_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -209,8 +206,7 @@ begin
 
    U_NullPacketFilter : entity work.NullPacketFilter
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G             => TPD_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -229,8 +225,7 @@ begin
 
    U_FrameIIR : entity work.FrameIIR
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G             => TPD_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -248,8 +243,7 @@ begin
 
    U_FrameSubtractor : entity work.FrameSubtractor
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G             => TPD_G)
       port map (
          -- System Clock and Reset
          sysClk           => axilClk,
@@ -275,7 +269,6 @@ begin
    u_axilToFirCoef : entity work.AXILtoFIRcoef
       generic map(
          TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
          DEBUG_G           => true)
       port map(
          -- System Interface
@@ -299,7 +292,6 @@ begin
    edge_to_peak : entity work.FrameFIR
       generic map(
          TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
          DEBUG_G           => true)
       port map(
          -- System Interface
@@ -334,8 +326,7 @@ begin
    -------------------- 
    U_FramePeakFinder : entity work.FramePeakFinder
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G             => TPD_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -361,7 +352,7 @@ begin
       generic map (
          TPD_G         => TPD_G,
          NUM_SLAVES_G  => 2,
-         AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+         AXIS_CONFIG_G => DSP_AXIS_CONFIG_C)
       port map (
          -- Clock and Reset
          axisClk         => axilClk,

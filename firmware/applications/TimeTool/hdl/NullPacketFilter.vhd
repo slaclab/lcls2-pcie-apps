@@ -2,7 +2,7 @@
 -- File       : NullPacketFilter.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-03-22
+-- Last update: 2019-10-15
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -17,18 +17,15 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
---use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.all;
 
+--surf
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
-use work.AxiPkg.all;
 use work.SsiPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
+
+use work.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -40,7 +37,6 @@ use unisim.vcomponents.all;
 entity NullPacketFilter is
    generic (
       TPD_G             : time                := 1 ns;
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
       DEBUG_G           : boolean             := true);
    port (
       -- System Interface
@@ -60,12 +56,6 @@ end NullPacketFilter;
 
 architecture mapping of NullPacketFilter is
 
-   constant INT_CONFIG_C  : AxiStreamConfigType := ssiAxiStreamConfig(dataBytes => 16, tDestBits => 0);
-   constant PGP2BTXIN_LEN : integer             := 19;
-
-   type StateType is (
-      IDLE_S,
-      MOVE_S);
 
    type RegType is record
       master         : AxiStreamMasterType;
@@ -75,8 +65,6 @@ architecture mapping of NullPacketFilter is
       counter        : slv(31 downto 0);
       prescalingRate : slv(31 downto 0);
       scratchPad     : slv(31 downto 0);
-      state          : StateType;
-      validate_state : slv(2 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -86,9 +74,7 @@ architecture mapping of NullPacketFilter is
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter        => (others => '0'),
       prescalingRate => (others => '0'),
-      scratchPad     => (others => '0'),
-      state          => IDLE_S,
-      validate_state => (others => '0'));
+      scratchPad     => (others => '0'));
 
 ---------------------------------------
 -------record intitial value-----------
@@ -100,102 +86,68 @@ architecture mapping of NullPacketFilter is
 
    signal inMaster : AxiStreamMasterType;
    signal inSlave  : AxiStreamSlaveType;
-   signal outCtrl  : AxiStreamCtrlType;
+   signal outSlave  : AxiStreamSlaveType;
 
 begin
 
    ---------------------------------
-   -- Input FIFO
+   -- Input pipeline
    ---------------------------------
-   U_InFifo : entity work.AxiStreamFifoV2
+   U_AxiStreamPipeline_In : entity work.AxiStreamPipeline
       generic map (
-         TPD_G               => TPD_G,
-         SLAVE_READY_EN_G    => true,
-         GEN_SYNC_FIFO_G     => true,
-         FIFO_ADDR_WIDTH_G   => 9,
-         FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
-         MASTER_AXI_CONFIG_G => INT_CONFIG_C)
+         TPD_G         => TPD_G,
+         PIPE_STAGES_G => 1)
       port map (
-         sAxisClk    => sysClk,
-         sAxisRst    => sysRst,
-         sAxisMaster => dataInMaster,
-         sAxisSlave  => dataInSlave,
-         mAxisClk    => sysClk,
-         mAxisRst    => sysRst,
-         mAxisMaster => inMaster,
-         mAxisSlave  => inSlave);
-
-
-
+         axisClk     => sysClk,         -- [in]
+         axisRst     => sysRst,         -- [in]
+         sAxisMaster => dataInMaster,   -- [in]
+         sAxisSlave  => dataInSlave,    -- [out]
+         mAxisMaster => inMaster,       -- [out]
+         mAxisSlave  => inSlave);       -- [in]
+   
    ---------------------------------
    -- Application
    ---------------------------------
-   comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, r,sysRst) is
+   comb : process (axilReadMaster, axilWriteMaster, inMaster, outSlave, r, sysRst) is
       variable v      : RegType;
       variable axilEp : AxiLiteEndpointType;
    begin
 
       -- Latch the current value
       v := r;
-      v.scratchPad(0) := ssiGetUserEofe(DMA_AXIS_CONFIG_G, inMaster);
+      v.scratchPad(0) := ssiGetUserEofe(DSP_AXIS_CONFIG_C, inMaster);
 
       ------------------------      
       -- AXI-Lite Transactions
       ------------------------      
-
-      -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
       axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
-      --axiSlaveRegister (axilEp, x"0004", 0, v.prescalingRate);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
-      v.slave.tReady  := not outCtrl.pause;
-      v.master.tLast  := '0';
-      v.master.tValid := '0';
+      --------------------------------------------
+      -- Axi stream logic
+      --------------------------------------------
+      v.slave.tReady  := '0';
 
-      case r.state is
+      -- Clear tvalid when acked
+      if (outSlave.tready = '1') then
+         v.master.tvalid := '0';
+         v.master.tlast := '0';
+      end if;
 
-         when IDLE_S =>
-            ------------------------------
-            -- check which state
-            ------------------------------
-            --v.validate_state := (others => '0');  --debugging signal
-            if v.slave.tReady = '1' and inMaster.tValid = '1' and (ssiGetUserEofe(DMA_AXIS_CONFIG_G, inMaster) = '0') then
-                  v.state := MOVE_S;
-                  v.slave.tReady := '0';
-            else
-                  v.state := IDLE_S;
-            end if;
+      if (inMaster.tValid = '1' and v.master.tValid = '0') then
+         v.slave.tready := '1';
+         if (ssiGetUserEofe(DSP_AXIS_CONFIG_C, inMaster) = '0') then
+            -- Send data through if input isn't a null packet
+            -- Really should do a better null packet check but this is probably fine
+            v.master := inMaster;
+         end if;
+      end if;
 
-
-         when MOVE_S =>
-            ------------------------------
-            -- send regular frame
-            ------------------------------
-            --v.validate_state(0)    := '1';     --debugging signal
-            if v.slave.tReady = '1' and inMaster.tValid = '1' then
-               v.master            := inMaster;  --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
-               v.validate_state(1) := '1';  --debugging signal               
-
-            else
-               v.master.tValid     := '0';  --message to downstream data processing that there's no valid data ready
-               v.slave.tReady      := '0';  --message to upstream that we're not ready
-               v.master.tLast      := '0';
-               v.state             := IDLE_S;
-               --v.validate_state(2) := '1';  --debugging signal
-
-            end if;
-
-
-
-
-
-      end case;
-
-
+      -- Combinatoral output above reset
+      inSlave        <= v.slave;      
 
       -------------
       -- Reset
@@ -210,7 +162,7 @@ begin
       -- Outputs 
       axilReadSlave  <= r.axilReadSlave;
       axilWriteSlave <= r.axilWriteSlave;
-      inSlave        <= v.slave;
+
 
    end process comb;
 
@@ -221,26 +173,20 @@ begin
       end if;
    end process seq;
 
+     ---------------------------------
+   -- Output pipeline
    ---------------------------------
-   -- Output FIFO
-   ---------------------------------
-   U_OutFifo : entity work.AxiStreamFifoV2
+   U_AxiStreamPipeline_OUT : entity work.AxiStreamPipeline
       generic map (
-         TPD_G               => TPD_G,
-         SLAVE_READY_EN_G    => false,
-         GEN_SYNC_FIFO_G     => true,
-         FIFO_ADDR_WIDTH_G   => 9,
-         FIFO_PAUSE_THRESH_G => 500,
-         SLAVE_AXI_CONFIG_G  => INT_CONFIG_C,
-         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
+         TPD_G         => TPD_G,
+         PIPE_STAGES_G => 1)
       port map (
-         sAxisClk    => sysClk,
-         sAxisRst    => sysRst,
-         sAxisMaster => r.Master,
-         sAxisCtrl   => outCtrl,
-         mAxisClk    => sysClk,
-         mAxisRst    => sysRst,
-         mAxisMaster => dataOutMaster,
-         mAxisSlave  => dataOutSlave);
+         axisClk     => sysClk,         -- [in]
+         axisRst     => sysRst,         -- [in]
+         sAxisMaster => r.master,       -- [in]
+         sAxisSlave  => outSlave,       -- [out]
+         mAxisMaster => dataOutMaster,  -- [out]
+         mAxisSlave  => dataOutSlave);  -- [in]
+
 
 end mapping;

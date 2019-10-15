@@ -179,7 +179,7 @@ begin
             FIFO_ADDR_WIDTH_G   => 9,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
-            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+            MASTER_AXI_CONFIG_G => DSP_AXIS_CONFIG_C)
          port map (
             -- Slave Port
             sAxisClk    => axilClk,
@@ -199,8 +199,7 @@ begin
    U_TimeToolFEX : entity work.TimeToolFEX
       generic map (
          TPD_G             => TPD_G,
-         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr)
       port map (
          -- System Clock and Reset
          axilClk         => axilClk,
@@ -221,8 +220,7 @@ begin
    -------------------
    U_TimeToolPrescaler : entity work.TimeToolPrescaler
       generic map (
-         TPD_G             => TPD_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+         TPD_G             => TPD_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -254,7 +252,7 @@ begin
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 9,
             -- AXI Stream Port Configurations
-            SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
+            SLAVE_AXI_CONFIG_G  => DSP_AXIS_CONFIG_C,
             MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
          port map (
             -- Slave Port
