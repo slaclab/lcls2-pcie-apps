@@ -2,7 +2,7 @@
 -- File       : FrameIIR.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-15
+-- Last update: 2019-10-16
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -66,9 +66,9 @@ architecture mapping of FrameIIR is
       ramRdAddr      : slv(6 downto 0);
       ramWrEn        : sl;
       ramWrAddr      : slv(6 downto 0);
-      ramWrData      : slv(127 downto 0);
+      ramWrData      : slv(255 downto 0);
       scratchPad     : slv(31 downto 0);
-      timeConstant   : slv(7 downto 0);
+      timeConstant   : slv(8 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -81,7 +81,7 @@ architecture mapping of FrameIIR is
       ramWrAddr      => (others => '0'),
       ramWrData      => (others => '0'),
       scratchPad     => (others => '0'),
-      timeConstant   => (0 => '1', others => '0'));
+      timeConstant   => toSlv(8, 9));
 ---------------------------------------
 -------record intitial value-----------
 ---------------------------------------
@@ -96,7 +96,7 @@ architecture mapping of FrameIIR is
    signal outMaster : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
    signal outSlave  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
 
-   signal ramRdData : slv(127 downto 0);
+   signal ramRdData : slv(255 downto 0);
 
 begin
 
@@ -122,7 +122,7 @@ begin
          BRAM_EN_G    => false,
          REG_EN_G     => false,
          BYTE_WR_EN_G => false,
-         DATA_WIDTH_G => 128,
+         DATA_WIDTH_G => 256,
          ADDR_WIDTH_G => 7)
       port map (
          clka  => sysClk,               -- [in]
@@ -142,6 +142,7 @@ begin
    comb : process (axilReadMaster, axilWriteMaster, inMaster, outSlave, r, ramRdData, sysRst) is
       variable v      : RegType := REG_INIT_C;
       variable axilEp : AxiLiteEndpointType;
+      variable tc : integer range 0 to 8;
    begin
 
       -- Latch the current value
@@ -161,7 +162,14 @@ begin
 
       ------------------------      
       -- Main Part of Code
-      ------------------------ 
+      ------------------------
+      tc := 0;
+      for i in 0 to 8 loop
+         if (r.timeConstant(i) = '1') then
+            tc := i;
+         end if;
+      end loop;
+      
 
       v.slave.tReady  := '0';
       v.ramWrEn       := '0';
@@ -183,11 +191,11 @@ begin
 
          -- Override output tdata with IIR calculations
          for i in 0 to DSP_AXIS_CONFIG_C.TDATA_BYTES_C-1 loop
-            v.ramWrData(i*8+7 downto i*8) := slv(signed(ramRdData(i*8+7 downto i*8)) -
-                                                 shift_right(signed(ramRdData(i*8+7 downto i*8)), 3) +
-                                                 shift_right(signed(inMaster.tData(i*8+7 downto i*8)), 3));
+            v.ramWrData(i*16+15 downto i*16) := slv(signed(ramRdData(i*16+15 downto i*16)) -
+                                                 shift_right(signed(ramRdData(i*16+15 downto i*16)), tc) +
+                                                 shift_left(signed(inMaster.tData(i*8+7 downto i*8)), 8-tc));
 
-            v.master.tdata(i*8+7 downto i*8) := v.ramWrData(i*8+7 downto i*8);
+            v.master.tdata(i*8+7 downto i*8) := v.ramWrData(i*16+15 downto i*16+8);
          end loop;
 
          -- Write updated IIR calculations to ram
