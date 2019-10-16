@@ -2,7 +2,7 @@
 -- File       : TimeToolCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-15
+-- Last update: 2019-10-16
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ architecture mapping of TimeToolPrescaler is
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter        => (others => '0'),
-      prescalingRate => (others => '0'),
+      prescalingRate => toSlv(9, 32),
       scratchPad     => (others => '0'),
       state          => IDLE_S,
       validate_state => (others => '0'));
@@ -157,6 +157,7 @@ begin
                v.counter := r.counter + 1;
                if r.counter = r.prescalingRate then
                   v.state := MOVE_S;
+                  v.counter := (others => '0');
                else
                   v.state := SEND_NULL_S;
                end if;
