@@ -118,7 +118,7 @@ def frame_rate(sec):
 #cl.stop()	#does this need cl.start() counter part? don't see it in gui.py
 #time.sleep(1)
 #cl._dbg.close_h5_file()
-
+#pr.generateAddressMap(cl,'addressMapDummp.txt') to dump the address map for future look up
 
 
 cl.ClinkFeb[0].UartPiranha4[0]._tx.sendString('ssf 7000')
