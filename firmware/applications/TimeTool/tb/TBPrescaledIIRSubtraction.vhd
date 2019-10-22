@@ -18,14 +18,20 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.StdRtlPkg.all;
-use work.AxiPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
-use work.SsiPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+
+library axi_pcie_core;
+use axi_pcie_core.AxiPciePkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
+use surf.Pgp2bPkg.all;
+use surf.SsiPkg.all;
 use work.TestingPkg.all;
 
 use STD.textio.all;
@@ -138,7 +144,7 @@ begin
    --------------------
    -- AXI-Lite Crossbar
    --------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -159,7 +165,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk_2 : entity work.ClkRst
+   U_axilClk_2 : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -172,7 +178,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk : entity work.ClkRst
+   U_axilClk : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -199,7 +205,7 @@ begin
    ----------------------
    -- AXI Stream Repeater
    ----------------------
-   U_AxiStreamRepeater : entity work.AxiStreamRepeater
+   U_AxiStreamRepeater : entity surf.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
          NUM_MASTERS_G => 2)
@@ -219,7 +225,7 @@ begin
    ----------------------------------------    
    GEN_IB :
    for i in REPEATER_INDEX_RANGE_C generate
-      U_FIFO : entity work.AxiStreamFifoV2
+      U_FIFO : entity surf.AxiStreamFifoV2
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,

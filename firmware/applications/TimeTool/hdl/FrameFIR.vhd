@@ -18,9 +18,11 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
 
 use work.AppPkg.all;
 
@@ -143,7 +145,7 @@ begin
    --------------------------------
 
 
-   U_down_size_test : entity work.AxiStreamFifoV2
+   U_down_size_test : entity surf.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
@@ -194,7 +196,7 @@ begin
          event_s_reload_tlast_unexpected => event_s_reload_tlast_unexpected
          );
 
-   U_up_size_test : entity work.AxiStreamFifoV2
+   U_up_size_test : entity surf.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,

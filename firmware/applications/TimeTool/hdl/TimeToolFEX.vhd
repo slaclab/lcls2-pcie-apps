@@ -19,9 +19,11 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
 
 use work.AppPkg.all;
 
@@ -97,7 +99,7 @@ begin
    --------------------
    -- AXI-Lite Crossbar
    --------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -119,7 +121,7 @@ begin
    ----------------------
    -- AXI Stream Repeater
    ----------------------
-   U_AxiStreamRepeater_1 : entity work.AxiStreamRepeater
+   U_AxiStreamRepeater_1 : entity surf.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
          NUM_MASTERS_G => 2)
@@ -161,7 +163,7 @@ begin
    ----------------------
    -- AXI Stream Repeater
    ----------------------
-   U_AxiStreamRepeater_2 : entity work.AxiStreamRepeater
+   U_AxiStreamRepeater_2 : entity surf.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
          NUM_MASTERS_G => 2)
@@ -348,7 +350,7 @@ begin
    ----------------------
    -- EventBuilder Module
    ----------------------
-   U_EventBuilder : entity work.AxiStreamBatcherEventBuilder
+   U_EventBuilder : entity surf.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G         => TPD_G,
          NUM_SLAVES_G  => 2,

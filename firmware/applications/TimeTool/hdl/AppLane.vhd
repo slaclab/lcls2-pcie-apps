@@ -16,10 +16,12 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
 use work.AppPkg.all;
 
 entity AppLane is
@@ -67,7 +69,7 @@ begin
    -----------------------
    -- DMA to HW ASYNC FIFO
    -----------------------
-   U_DMA_to_HW : entity work.AxiStreamFifoV2
+   U_DMA_to_HW : entity surf.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
@@ -120,7 +122,7 @@ begin
    -------------------------------------
    -- Burst Fifo before interleaving MUX
    -------------------------------------
-   U_FIFO : entity work.AxiStreamFifoV2
+   U_FIFO : entity surf.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
@@ -151,7 +153,7 @@ begin
    -----------------
    -- AXI Stream MUX
    -----------------
-   U_Mux : entity work.AxiStreamMux
+   U_Mux : entity surf.AxiStreamMux
       generic map (
          TPD_G                => TPD_G,
          NUM_SLAVES_G         => 4,
@@ -180,7 +182,7 @@ begin
    -----------------------
    -- App to DMA ASYNC FIFO
    -----------------------
-   U_APP_to_DMA : entity work.AxiStreamFifoV2
+   U_APP_to_DMA : entity surf.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,

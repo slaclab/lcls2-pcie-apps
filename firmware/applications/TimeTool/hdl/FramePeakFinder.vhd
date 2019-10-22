@@ -19,9 +19,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
 
 use work.AppPkg.all;
 
@@ -105,7 +107,7 @@ begin
    ---------------------------------
    -- Input Pipeline
    ---------------------------------
-   U_AxiStreamPipeline_In : entity work.AxiStreamPipeline
+   U_AxiStreamPipeline_In : entity surf.AxiStreamPipeline
       generic map (
          TPD_G         => TPD_G,
          PIPE_STAGES_G => 1)
@@ -207,7 +209,7 @@ begin
    ---------------------------------
    -- Output FIFO
    ---------------------------------
-   U_OutFifo : entity work.AxiStreamFifoV2
+   U_OutFifo : entity surf.AxiStreamFifoV2
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,

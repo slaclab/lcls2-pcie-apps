@@ -18,10 +18,12 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.SsiPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+use surf.SsiPkg.all;
 use work.AppPkg.all;
 
 entity TimeToolCore is
@@ -125,7 +127,7 @@ begin
    ----------------------
    -- AXI Stream Repeater
    ----------------------
-   U_AxiStreamRepeater : entity work.AxiStreamRepeater
+   U_AxiStreamRepeater : entity surf.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
          NUM_MASTERS_G => NUM_AXIS_MASTERS_G)
@@ -143,7 +145,7 @@ begin
    --------------------
    -- AXI-Lite Crossbar
    --------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -167,7 +169,7 @@ begin
    ----------------------------------------    
    GEN_IB :
    for i in DSP_INDEX_RANGE_C generate
-      U_FIFO : entity work.AxiStreamFifoV2
+      U_FIFO : entity surf.AxiStreamFifoV2
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
@@ -241,7 +243,7 @@ begin
    ---------------------------------------------    
    GEN_OB :
    for i in DSP_INDEX_RANGE_C generate
-      U_FIFO : entity work.AxiStreamFifoV2
+      U_FIFO : entity surf.AxiStreamFifoV2
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
@@ -270,7 +272,7 @@ begin
    ----------------------
    -- EventBuilder Module
    ----------------------
-   U_EventBuilder : entity work.AxiStreamBatcherEventBuilder
+   U_EventBuilder : entity surf.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G         => TPD_G,
          NUM_SLAVES_G  => NUM_AXIS_MASTERS_G+1,

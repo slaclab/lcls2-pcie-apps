@@ -20,10 +20,12 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
 --surf
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.SsiPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+use surf.SsiPkg.all;
 
 use work.AppPkg.all;
 
@@ -93,7 +95,7 @@ begin
    ---------------------------------
    -- Input pipeline
    ---------------------------------
-   U_AxiStreamPipeline_In : entity work.AxiStreamPipeline
+   U_AxiStreamPipeline_In : entity surf.AxiStreamPipeline
       generic map (
          TPD_G         => TPD_G,
          PIPE_STAGES_G => 1)
@@ -176,7 +178,7 @@ begin
      ---------------------------------
    -- Output pipeline
    ---------------------------------
-   U_AxiStreamPipeline_OUT : entity work.AxiStreamPipeline
+   U_AxiStreamPipeline_OUT : entity surf.AxiStreamPipeline
       generic map (
          TPD_G         => TPD_G,
          PIPE_STAGES_G => 1)

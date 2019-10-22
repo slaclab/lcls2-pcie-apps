@@ -18,10 +18,12 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.SsiPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+use surf.SsiPkg.all;
 
 use work.AppPkg.all;
 
@@ -190,7 +192,7 @@ begin
    -- Output FIFO
    ---------------------------------
    dataOutMaster <= iDataOutMaster;
-   U_OutFifo : entity work.AxiStreamFifoV2
+   U_OutFifo : entity surf.AxiStreamFifoV2
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,
@@ -213,7 +215,7 @@ begin
    ---------------------------------
    -- Config Output FIFO
    ---------------------------------
-   U_AxiStreamPipeline_OUT : entity work.AxiStreamPipeline
+   U_AxiStreamPipeline_OUT : entity surf.AxiStreamPipeline
       generic map (
          TPD_G         => TPD_G,
          PIPE_STAGES_G => 1)

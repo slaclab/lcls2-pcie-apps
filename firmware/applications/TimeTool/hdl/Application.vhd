@@ -17,9 +17,11 @@ use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
 -- surf
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
 
 -- applications/TimeTool
 use work.AppPkg.all;
@@ -67,7 +69,7 @@ begin
    --------------------
    -- AXI-Lite Crossbar
    --------------------
-   U_AXIL_XBAR : entity work.AxiLiteCrossbar
+   U_AXIL_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
