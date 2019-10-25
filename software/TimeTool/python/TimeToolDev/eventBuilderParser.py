@@ -59,7 +59,7 @@ class eventBuilderParser():
         
         parsed_frame_size = sum(self.frame_sizes_reversed) +(len(self.frame_sizes_reversed)+1)*self.HEADER_WIDTH
         #print("parsing")
-        while(len(frame_bytearray)>parsed_frame_size):
+        while len(frame_bytearray)>(parsed_frame_size+self.HEADER_WIDTH):
             #print(len(frame_bytearray))
             self.frame_sizes_reversed.append(self.frames_to_position(frame_bytearray,self.frame_positions_reversed[-1][0]-16))
             
