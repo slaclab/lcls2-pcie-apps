@@ -2,7 +2,7 @@
 -- File       : DrpPgpIlv.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
--- Last update: 2019-05-30
+-- Last update: 2019-10-29
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -102,6 +102,9 @@ architecture top_level of DrpPgpIlv is
    signal rst200     : slv(0 downto 0);
    signal irst200    : slv(0 downto 0);
    signal urst200    : slv(0 downto 0);
+   signal rst200U    : slv(0 downto 0);
+   signal irst200U   : slv(0 downto 0);
+   signal urst200U   : slv(0 downto 0);
    signal userClk156 : sl;
    signal userReset  : slv(1 downto 0);
    signal userSwDip  : slv(3 downto 0);
@@ -127,7 +130,10 @@ architecture top_level of DrpPgpIlv is
    signal hwIbSlaves      : AxiStreamSlaveArray (3 downto 0);
    signal hwIbAlmostFull  : slv                 (3 downto 0);
    signal hwIbFull        : slv                 (3 downto 0);
-
+   signal hwIbOflow       : slv                 (3 downto 0);
+   signal hwIbFifoThres   : slv                 (15 downto 0);
+   signal hwIbFifoDepth   : Slv16Array          (3 downto 0);
+   
    signal memReady        : slv                (0 downto 0);
    signal memWriteMasters : AxiWriteMasterArray(3 downto 0);
    signal memWriteSlaves  : AxiWriteSlaveArray (3 downto 0);
@@ -221,6 +227,8 @@ begin
 
   i2c_rst_l      <= '1';
   qsfpModPrsL(0) <= qsfp0ModPrsL;
+  qsfp0ModSelL   <= '0';  -- enable I2C
+  qsfp1ModSelL   <= '0';  -- enable I2C
 
   pgpRefClkP(0) <= qsfp0RefClkP;
   pgpRefClkN(0) <= qsfp0RefClkN;
@@ -298,16 +306,29 @@ begin
     
     irst200(i) <= sysRsts(i);
 
+    -- Forcing BUFG for reset that's used everywhere      
     U_URST : entity work.RstSync
       port map ( clk      => clk200 (i),
                  asyncRst => irst200(i),
                  syncRst  => urst200(i) );
     
-    -- Forcing BUFG for reset that's used everywhere      
     U_BUFGU : BUFG
       port map (
         I => urst200(i),
         O => rst200(i));
+
+    -- Forcing BUFG for reset that's used everywhere
+    irst200U(i) <= sysRsts(i) or userReset(i);
+    
+    U_URSTU : entity work.RstSync
+      port map ( clk      => clk200 (i),
+                 asyncRst => irst200U(i),
+                 syncRst  => urst200U(i) );
+    
+    U_BUFGUU : BUFG
+      port map (
+        I => urst200U(i),
+        O => rst200U(i));
 
     U_MMCM : entity work.ClockManagerUltraScale
       generic map ( INPUT_BUFG_G       => false,
@@ -339,7 +360,6 @@ begin
         axilReadSlave   => pgpAxilReadSlaves  (i),
         axilWriteMaster => pgpAxilWriteMasters(i),
         axilWriteSlave  => pgpAxilWriteSlaves (i),
-        usrRst          => userReset          (i),
         -- DMA Interface (dmaClk domain)
         dmaClks         => hwClks        (4*i+3 downto 4*i),
         dmaRsts         => hwRsts        (4*i+3 downto 4*i),
@@ -349,6 +369,9 @@ begin
         dmaIbSlaves     => hwIbSlaves    (4*i+3 downto 4*i),
         dmaIbAlmostFull => hwIbAlmostFull(4*i+3 downto 4*i),
         dmaIbFull       => hwIbFull      (4*i+3 downto 4*i),
+        --
+        fifoThres       => hwIbFifoThres,
+        fifoDepth       => hwIbFifoDepth,
         -- QSFP Ports
         qsfp0RefClkP    => pgpRefClkP(i),
         qsfp0RefClkN    => pgpRefClkN(i),
@@ -367,9 +390,9 @@ begin
                  sAxisSlave      => hwIbSlaves     (4*i+3 downto 4*i),
                  sAlmostFull     => hwIbAlmostFull (4*i+3 downto 4*i),
                  sFull           => hwIbFull       (4*i+3 downto 4*i),
---                 sOverflow       => hwIbOflow      (4*i+3 downto 4*i),
+                 sOverflow       => hwIbOflow      (4*i+3 downto 4*i),
                  mAxiClk         => clk200         (i),
-                 mAxiRst         => rst200         (i),
+                 mAxiRst         => rst200U        (i),
                  mAxiWriteMaster => memWriteMasters(i),
                  mAxiWriteSlave  => memWriteSlaves (i),
                  rdDescReq       => rdDescReq     (i),
@@ -391,7 +414,6 @@ begin
                   usrRst          => userReset(i),
                   axiReadMaster   => memReadMasters(i),
                   axiReadSlave    => memReadSlaves (i),
---                  hwIbOflow       => hwIbOflow     (4*i+3 downto 4*i),
                   rdDescReq       => rdDescReq     (i),
                   rdDescAck       => rdDescReqAck  (i),
                   rdDescRet       => rdDescRet     (i),
@@ -399,6 +421,9 @@ begin
                   axisMasters     => mtpIbMasters  (i),
                   axisSlaves      => mtpIbSlaves   (i),
                   axisOflow       => mtpAxisCtrl   (i).overflow,
+                  hwIbOflow       => hwIbOflow     (4*i+3 downto 4*i),
+                  hwIbFifoThres   => hwIbFifoThres,
+                  hwIbFifoDepth   => hwIbFifoDepth,
                   axilClk         => axilClks        (i),
                   axilRst         => axilRsts        (i),
                   axilWriteMaster => mtpAxilWriteMasters(i),
@@ -477,12 +502,12 @@ begin
       -- QSFP[0] Ports
       qsfp0RstL       => qsfp0RstL   ,
       qsfp0LpMode     => qsfp0LpMode ,
-      qsfp0ModSelL    => qsfp0ModSelL,
+      qsfp0ModSelL    => open,
       qsfp0ModPrsL    => qsfp0ModPrsL,
       -- QSFP[1] Ports
       qsfp1RstL       => qsfp1RstL   ,
       qsfp1LpMode     => qsfp1LpMode ,
-      qsfp1ModSelL    => qsfp1ModSelL,
+      qsfp1ModSelL    => open,
       qsfp1ModPrsL    => qsfp1ModPrsL,
       -- Boot Memory Ports 
       flashCsL        => flashCsL  ,
