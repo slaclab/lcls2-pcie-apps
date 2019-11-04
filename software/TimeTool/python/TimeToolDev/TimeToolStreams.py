@@ -16,7 +16,11 @@ import random
 
 import TimeToolDev.eventBuilderParser as eventBuilderParser
 
-matplotlib.use("Qt5agg")
+try:
+    matplotlib.use("Qt5agg")
+except ImportError:
+    pass
+
 plt.ion()
 
 # import h5py
