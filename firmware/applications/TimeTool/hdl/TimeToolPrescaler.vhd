@@ -18,7 +18,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 --use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
+--use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
 use work.StdRtlPkg.all;
@@ -74,7 +74,8 @@ architecture mapping of TimeToolPrescaler is
       slave          : AxiStreamSlaveType;
       axilReadSlave  : AxiLiteReadSlaveType;
       axilWriteSlave : AxiLiteWriteSlaveType;
-      counter        : slv(31 downto 0);
+      debug_counter  : unsigned(31 downto 0);
+      counter        : unsigned(31 downto 0);
       prescalingRate : slv(31 downto 0);
       scratchPad     : slv(31 downto 0);
       state          : StateType;
@@ -87,6 +88,7 @@ architecture mapping of TimeToolPrescaler is
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter        => (others => '0'),
+      debug_counter  => (others => '0'),
       prescalingRate => (others => '0'),
       scratchPad     => (others => '0'),
       state          => IDLE_S,
@@ -165,7 +167,7 @@ begin
             ------------------------------
             v.validate_state := (others => '0');  --debugging signal
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
-               if v.counter = v.prescalingRate then
+               if v.counter = unsigned(v.prescalingRate) then
                   v.state := MOVE_S;
                else
                   v.state := SEND_NULL;
@@ -186,9 +188,16 @@ begin
 
             v.validate_state(0) := '1';     --debugging signal
             v.slave.tReady  := not outCtrl.pause;
-            if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter = v.prescalingRate then
+            if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter = unsigned(v.prescalingRate) then
                v.master            := inMaster;  --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
-               v.validate_state(1) := '1';  --debugging signal               
+               v.validate_state(1) := '1';  --debugging signal
+               if v.master.tLast = '0' and v.master.tValid ='1' then
+                   v.debug_counter     :=  v.debug_counter + 1;               
+               elsif v.master.tLast = '1' and v.master.tValid = '1' then
+                   v.debug_counter     :=  (others => '0');
+               else
+                   v.debug_counter := v.debug_counter;
+               end if;
 
             else
                v.master.tValid     := '0';  --message to downstream data processing that there's no valid data ready
@@ -238,7 +247,7 @@ begin
       --increment prescaling counter. needs to be after the data mover in order for the last packet to be sent
       -----------------------------
       if inMaster.tLast = '1' and inMaster.tValid = '1' and v.slave.tReady = '1' then
-         if v.counter >= v.prescalingRate then
+         if v.counter >= unsigned(v.prescalingRate) then
             v.counter := (others => '0');
          else
             v.counter := v.counter + 1;

@@ -345,7 +345,7 @@ begin
 
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"5", true);  --prescaler
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"3", true);  --iir time constant
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C3_0004", x"0", true);  --iir time constant
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C3_0004", x"1", true);  --do subtraction
 
    end process test;
 
