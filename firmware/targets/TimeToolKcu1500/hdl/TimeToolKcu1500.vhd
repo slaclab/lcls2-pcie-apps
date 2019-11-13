@@ -37,7 +37,8 @@ library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
 
 -- applications/TimeTool
-use work.AppPkg.all;
+library timetool;
+use timetool.AppPkg.all;
 
 entity TimeToolKcu1500 is
    generic (
@@ -255,7 +256,7 @@ begin
    ---------------------
    -- Application Module
    ---------------------
-   U_App : entity work.Application
+   U_App : entity timetool.Application
       generic map (
          TPD_G           => TPD_G,
          AXI_BASE_ADDR_G => AXIL_CONFIG_C(APP_INDEX_C).baseAddr)

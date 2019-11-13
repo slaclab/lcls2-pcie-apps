@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : TimeToolAppLane.vhd
+-- File       : AppLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
@@ -23,9 +23,11 @@ use surf.AxiPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 
-use work.AppPkg.all;
 
-entity TimeToolAppLane is
+library timetool; 
+use timetool.AppPkg.all;
+
+entity AppLane is
    generic (
       TPD_G           : time             := 1 ns;
       AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000");
@@ -52,9 +54,9 @@ entity TimeToolAppLane is
       dmaIbSlave      : in  AxiStreamSlaveType;
       dmaObMaster     : in  AxiStreamMasterType;
       dmaObSlave      : out AxiStreamSlaveType);
-end TimeToolAppLane;
+end AppLane;
 
-architecture mapping of TimeToolAppLane is
+architecture mapping of AppLane is
 
    signal eventMaster : AxiStreamMasterType;
    signal eventSlave  : AxiStreamSlaveType;
@@ -98,7 +100,7 @@ begin
    -----------------
    -- Time Tool Core
    -----------------
-   U_TimeToolCore : entity work.TimeToolCore
+   U_TimeToolCore : entity timetool.TimeToolCore
       generic map (
          TPD_G           => TPD_G,
          AXI_BASE_ADDR_G => AXI_BASE_ADDR_G)
