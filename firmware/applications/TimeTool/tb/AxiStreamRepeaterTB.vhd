@@ -33,6 +33,8 @@ use lcls_timing_core.TimingPkg.all;
 use surf.Pgp2bPkg.all;
 use surf.SsiPkg.all;
 
+library timetool; 
+
 entity AxiStreamRepeaterTB is end AxiStreamRepeaterTB;
 
 architecture testbed of AxiStreamRepeaterTB is
@@ -107,7 +109,7 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStreamSim
+      U_CamOutput : entity timetool.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,
             BYTE_SIZE_C   => 2+1,

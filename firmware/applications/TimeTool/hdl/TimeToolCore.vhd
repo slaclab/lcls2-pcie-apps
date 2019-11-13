@@ -26,6 +26,8 @@ use surf.AxiStreamPkg.all;
 use surf.SsiPkg.all;
 use work.AppPkg.all;
 
+library timetool; 
+
 entity TimeToolCore is
    generic (
       TPD_G           : time             := 1 ns;
@@ -96,7 +98,7 @@ begin
    -------------
    -- ByPass Module
    -------------
-   U_TimetoolBypass : entity work.TimetoolBypass
+   U_TimetoolBypass : entity timetool.TimetoolBypass
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
@@ -198,7 +200,7 @@ begin
    -------------
    -- FEX Module
    -------------
-   U_TimeToolFEX : entity work.TimeToolFEX
+   U_TimeToolFEX : entity timetool.TimeToolFEX
       generic map (
          TPD_G             => TPD_G,
          AXI_BASE_ADDR_G   => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr)
@@ -220,7 +222,7 @@ begin
    -------------------
    -- Prescaler Module
    -------------------
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   U_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G)
       port map (

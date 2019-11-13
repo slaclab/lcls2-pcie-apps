@@ -33,6 +33,8 @@ use lcls_timing_core.TimingPkg.all;
 use surf.Pgp2bPkg.all;
 use surf.SsiPkg.all;
 
+library timetool; 
+
 entity TimeToolFEX_placeholderTB is end TimeToolFEX_placeholderTB;
 
 architecture testbed of TimeToolFEX_placeholderTB is
@@ -159,7 +161,7 @@ begin
          mAxiReadMasters     => intReadMasters,
          mAxiReadSlaves      => intReadSlaves);
 
-   U_TimeToolCore : entity work.TimeToolCore
+   U_TimeToolCore : entity timetool.TimeToolCore
       generic map (
          TPD_G           => TPD_G,
          AXI_BASE_ADDR_G => AXI_CONFIG_C(1).baseAddr)

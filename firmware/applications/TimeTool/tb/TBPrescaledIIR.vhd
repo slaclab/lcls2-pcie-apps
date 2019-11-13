@@ -32,7 +32,9 @@ library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
 use surf.Pgp2bPkg.all;
 use surf.SsiPkg.all;
-use work.TestingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
@@ -175,7 +177,7 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStreamSim
+      U_CamOutput : entity timetool.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,
             BYTE_SIZE_C   => 2+1,
@@ -191,7 +193,7 @@ begin
    --------------------  
 
 
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   U_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -210,7 +212,7 @@ begin
          axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
 
-   U_NullPacketFilter : entity work.NullPacketFilter
+   U_NullPacketFilter : entity timetool.NullPacketFilter
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -230,7 +232,7 @@ begin
          axilWriteSlave  => axilWriteSlaves(NULL_FILTER_INDEX_C));
 
 
-   U_FrameIIR : entity work.FrameIIR
+   U_FrameIIR : entity timetool.FrameIIR
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)

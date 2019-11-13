@@ -35,6 +35,8 @@ use surf.SsiPkg.all;
 
 --XPMSIM packages?
 use lcls_timing_core.TPGPkg.all;
+
+library timetool; 
 --use work.QuadAdcPkg.all;
 
 
@@ -151,7 +153,7 @@ begin
                 bpRxLinkFull => (others=>(others=>'0')) );
 
 
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   U_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)

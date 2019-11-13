@@ -32,7 +32,9 @@ library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
 use surf.Pgp2bPkg.all;
 use surf.SsiPkg.all;
-use work.TestingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 
 entity TBAxilCrossbarConfig is end TBAxilCrossbarConfig;

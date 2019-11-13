@@ -32,7 +32,9 @@ library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
 use surf.Pgp2bPkg.all;
 use surf.SsiPkg.all;
-use work.TestingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 entity TBNullPacketFilter is end TBNullPacketFilter;
 
@@ -166,7 +168,7 @@ begin
    --------------------  
 
 
-      U_CamOutput : entity work.FileToAxiStreamSim
+      U_CamOutput : entity timetool.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,
             BYTE_SIZE_C   => 2+1,
@@ -182,7 +184,7 @@ begin
    --------------------  
 
 
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   U_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -201,7 +203,7 @@ begin
          axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
 
-   U_NullPacketFilter : entity work.NullPacketFilter
+   U_NullPacketFilter : entity timetool.NullPacketFilter
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)

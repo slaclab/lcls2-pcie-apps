@@ -38,7 +38,9 @@ use surf.Pgp2bPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
-use work.TestingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;

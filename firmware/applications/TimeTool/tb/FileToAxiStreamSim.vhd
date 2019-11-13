@@ -29,7 +29,9 @@ use surf.SsiPkg.all;
 
 library axi_pcie_core;
 use axi_pcie_core.AxiPciePkg.all;
-use work.TestingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;

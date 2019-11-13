@@ -33,6 +33,8 @@ use lcls_timing_core.TimingPkg.all;
 use surf.Pgp2bPkg.all;
 use surf.SsiPkg.all;
 
+library timetool; 
+
 entity TBSigProcessing is end TBSigProcessing;
 
 architecture testbed of TBSigProcessing is
@@ -76,7 +78,7 @@ begin
 
    
 
-   FileToAxiStreamSim_0 : entity work.FileToAxiStreamSim
+   FileToAxiStreamSim_0 : entity timetool.FileToAxiStreamSim
                generic map (
                   TPD_G         => TPD_G,
                   BYTE_SIZE_C   => 2+1,

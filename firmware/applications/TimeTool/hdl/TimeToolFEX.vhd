@@ -27,6 +27,8 @@ use surf.AxiStreamPkg.all;
 
 use work.AppPkg.all;
 
+library timetool; 
+
 entity TimeToolFEX is
    generic (
       TPD_G             : time                := 1 ns;
@@ -142,7 +144,7 @@ begin
    -------------------
    -- Prescaler Module. Place holder for event code based filter.
    -------------------
-   EVCFILTER : entity work.TimeToolPrescaler
+   EVCFILTER : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G)
       port map (
@@ -184,7 +186,7 @@ begin
    -------------------
    -- Prescaler Module
    -------------------
-   PRESCALER : entity work.TimeToolPrescaler
+   PRESCALER : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G)
       port map (
@@ -206,7 +208,7 @@ begin
    -- background subtraction
    -------------------
 
-   U_NullPacketFilter : entity work.NullPacketFilter
+   U_NullPacketFilter : entity timetool.NullPacketFilter
       generic map (
          TPD_G             => TPD_G)
       port map (
@@ -225,7 +227,7 @@ begin
          axilWriteSlave  => axilWriteSlaves(NULLFILTER_L));
 
 
-   U_FrameIIR : entity work.FrameIIR
+   U_FrameIIR : entity timetool.FrameIIR
       generic map (
          TPD_G             => TPD_G)
       port map (
@@ -243,7 +245,7 @@ begin
          axilWriteMaster => axilWriteMasters(FRAMEIIR_L),
          axilWriteSlave  => axilWriteSlaves(FRAMEIIR_L));
 
-   U_FrameSubtractor : entity work.FrameSubtractor
+   U_FrameSubtractor : entity timetool.FrameSubtractor
       generic map (
          TPD_G             => TPD_G)
       port map (
@@ -268,7 +270,7 @@ begin
    --------------------
    -- Axi lite to fir coefficient module
    -------------------- 
-   u_axilToFirCoef : entity work.AXILtoFIRcoef
+   u_axilToFirCoef : entity timetool.AXILtoFIRcoef
       generic map(
          TPD_G             => TPD_G,
          DEBUG_G           => true)
@@ -291,7 +293,7 @@ begin
    --------------------
    -- Surf wrapped FIR filter
    -------------------- 
-   edge_to_peak : entity work.FrameFIR
+   edge_to_peak : entity timetool.FrameFIR
       generic map(
          TPD_G             => TPD_G,
          DEBUG_G           => true)
@@ -311,7 +313,7 @@ begin
          configInSlave  => axisSlaves(AXIL_TO_FIR_CONFIG));
 
 
-   --U_FileInput : entity work.AxiStreamToFile
+   --U_FileInput : entity timetool.AxiStreamToFile
    --    generic map (
    --       TPD_G              => TPD_G,
    --       BYTE_SIZE_C        => 2+1,
@@ -326,7 +328,7 @@ begin
    --------------------
    -- Peak finder
    -------------------- 
-   U_FramePeakFinder : entity work.FramePeakFinder
+   U_FramePeakFinder : entity timetool.FramePeakFinder
       generic map (
          TPD_G             => TPD_G)
       port map (

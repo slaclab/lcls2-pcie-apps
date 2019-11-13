@@ -32,7 +32,9 @@ library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
 use surf.Pgp2bPkg.all;
 use surf.SsiPkg.all;
-use work.TestingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
@@ -135,7 +137,7 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStream
+      U_CamOutput : entity timetool.FileToAxiStream
          generic map (
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
@@ -150,7 +152,7 @@ begin
    -----------------
    -- Time Tool Core
    -----------------
-   U_TimeToolCore : entity work.TimeToolCore
+   U_TimeToolCore : entity timetool.TimeToolCore
       generic map (
          TPD_G           => TPD_G,
          AXI_BASE_ADDR_G => AXI_BASE_ADDR_G)

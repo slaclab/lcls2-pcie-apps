@@ -32,7 +32,9 @@ library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
 use surf.Pgp2bPkg.all;
 use surf.SsiPkg.all;
-use work.TestingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 entity TBTimeToolPrescaler is end TBTimeToolPrescaler;
 
@@ -129,7 +131,7 @@ begin
    -- Test data
    --------------------  
 
-      --U_CamOutput : entity work.FileToAxiStream
+      --U_CamOutput : entity timetool.FileToAxiStream
       --   generic map (
       --      TPD_G         => TPD_G,
       --      BYTE_SIZE_C   => 2+1,
@@ -140,7 +142,7 @@ begin
       --      mAxisMaster => appInMaster,
       --      mAxisSlave  => appInSlave);
 
-      U_CamOutput : entity work.FileToAxiStream
+      U_CamOutput : entity timetool.FileToAxiStream
          generic map (
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
@@ -157,7 +159,7 @@ begin
    --------------------  
 
 
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   U_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -176,7 +178,7 @@ begin
          axilWriteMaster => axilWriteMasters(0),
          axilWriteSlave  => axilWriteSlaves(0));
 
-   U2_TimeToolPrescaler : entity work.TimeToolPrescaler
+   U2_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
