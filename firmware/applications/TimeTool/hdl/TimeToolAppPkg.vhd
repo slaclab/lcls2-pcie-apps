@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : AppPkg.vhd
+-- File       : TimeToolAppPkg.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
@@ -20,7 +20,7 @@ use surf.StdRtlPkg.all;
 use surf.AxiStreamPkg.all;
 use surf.SsiPkg.all;
 
-package AppPkg is
+package TimeToolAppPkg is
 
    constant DMA_SIZE_C : positive range 1 to 4 := 1;
 
@@ -31,4 +31,4 @@ package AppPkg is
    constant DSP_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 16 byte (128-bit) AXIS interface
    constant DSP_AXIS_DOWNSIZED_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(1, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 1, 2);                                                                                                                        -- 
    
-end package AppPkg;
+end package TimeToolAppPkg;

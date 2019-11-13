@@ -286,7 +286,7 @@ begin
    ------------------
    -- Hardware Module
    ------------------
-   U_Hardware : entity lcls2_pgp_fw_lib.Hardware
+   U_HSIO : entity lcls2_pgp_fw_lib.Kcu1500Hsio
       generic map (
          TPD_G             => TPD_G,
          ROGUE_SIM_EN_G    => ROGUE_SIM_EN_G,

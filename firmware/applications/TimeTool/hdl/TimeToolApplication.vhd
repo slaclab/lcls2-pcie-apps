@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : Application.vhd
+-- File       : TimeToolApplication.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
@@ -24,9 +24,9 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 
 -- applications/TimeTool
-use work.AppPkg.all;
+use work.TimeToolAppPkg.all;
 
-entity Application is
+entity TimeToolApplication is
    generic (
       TPD_G           : time             := 1 ns;
       AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000");
@@ -53,9 +53,9 @@ entity Application is
       dmaIbSlaves      : in  AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0);
       dmaObMasters     : in  AxiStreamMasterArray(DMA_SIZE_C-1 downto 0);
       dmaObSlaves      : out AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0));
-end Application;
+end TimeToolApplication;
 
-architecture mapping of Application is
+architecture mapping of TimeToolApplication is
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(DMA_SIZE_C-1 downto 0) := genAxiLiteConfig(DMA_SIZE_C, AXI_BASE_ADDR_G, 22, 20);
 
@@ -92,7 +92,7 @@ begin
    -------------------
    GEN_VEC :
    for i in DMA_SIZE_C-1 downto 0 generate
-      U_Lane : entity work.AppLane
+      U_Lane : entity work.TimeToolAppLane
          generic map (
             TPD_G           => TPD_G,
             AXI_BASE_ADDR_G => AXIL_CONFIG_C(i).baseAddr)
