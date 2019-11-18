@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import pyrogue as pr
 
-import TimeToolDev.TimeToolStreams as streams
-import rogue.protocols
-import rogue.interfaces.stream
+import rogue
+
+import timetool.streams
+
+import lcls2_pgp_fw_lib.hardware.XilinxKcu1500
 
 import XilinxKcu1500Pgp       as kcu1500
 import ClinkFeb               as feb
@@ -12,70 +14,76 @@ import surf.axi               as axi
 import surf.protocols.batcher as batcher
 import LclsTimingCore         as timingCore
 
-class TimeToolDev(kcu1500.Core):
+class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
 
     def __init__(self,
-            name        = 'TimeToolDev',
-            description = 'Container for TimeTool Dev',
-            dataDebug   = False,
-            dev         = '/dev/datadev_0',# path to PCIe device
-            version3    = False,           # true = PGPv3, false = PGP2b
-            pollEn      = True,            # Enable automatic polling registers
-            initRead    = True,            # Read all registers at start of the system
-            numLane     = 1,               # Number of PGP lanes
-            **kwargs
-        ):
+                 dataDebug   = False,
+                 driverPath  = '/dev/datadev_0',# path to PCIe device
+                 pgp3        = False,           # true = PGPv3, false = PGP2b
+                 pollEn      = True,            # Enable automatic polling registers
+                 initRead    = True,            # Read all registers at start of the system
+                 numLanes    = 1,
+                 **kwargs):
+        
         super().__init__(
-            name        = name, 
-            description = description, 
-            dev         = dev, 
-            version3    = version3, 
+            driverPath  = driverPath, 
+            pgp3        = pgp3, 
             pollEn      = pollEn, 
             initRead    = initRead, 
-            numLane     = numLane, 
-            **kwargs
-        )
-        self.dev    = dev,
+            numLanes    = numLanes, 
+            **kwargs)
         
+        self.driverPath    = driverPath
+
+
+        self.interfaces = axipcie.AxiPcieDma(driverPath, numLanes, destList=list(range(4)))
+
+
+        # Instantiate the top level Device and pass it the memeory map
+        self.add(timetool.TimeToolKcu1500(
+            memBase = self.interfaces.memMap,
+            pgp3    = pgp3))
+
                         
         # Check if not doing simulation
-        if (dev!='sim'):            
+        if (driverPath!='sim'):            
             
             # Create arrays to be filled
-            self._srp = [None for lane in range(numLane)]
+            self._srp = [None for lane in range(numLanes)]
             
             # Create the stream interface
-            for lane in range(numLane):
+            for lane in range(numLanes):
                     
                 # SRP
                 self._srp[lane] = rogue.protocols.srp.SrpV3()
-                pr.streamConnectBiDir(self._dma[lane][0],self._srp[lane])
-                         
+                pr.streamConnectBiDir(self.interfaces.dmaStreams[lane][0], self._srp[lane])
+
                 # CameraLink Feb Board
                 self.add(feb.ClinkFeb(      
                     name        = (f'ClinkFeb[{lane}]'), 
                     memBase     = self._srp[lane], 
-                    serial      = [self._dma[lane][2],None],
+                    serial      = [self.interfaces.dmaStreams[lane][2],None],
                     camType     = ['Piranha4',        None],
-                    version3    = version3,
-                    enableDeps  = [self.Hardware.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
+                    version3    = pgp3,
+                    enableDeps  = [self.TimeToolKcu1500.Kcu1500Hsio.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
                     expand      = False,
                 ))
 
         # Else doing Rogue VCS simulation
         else:
+            roguePgp = lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500HsioRogueStreams(numLanes=numLanes, pgp3=pgp3)
         
             # Create arrays to be filled
-            self._frameGen = [None for lane in range(numLane)]
+            self._frameGen = [None for lane in range(numLanes)]
             
             # Create the stream interface
-            for lane in range(numLane):  
+            for lane in range(numLanes):  
             
                 # Create the frame generator
-                self._frameGen[lane] = streams.TimeToolTxEmulation()
+                self._frameGen[lane] = timetool.streams.TimeToolTxEmulation()
                 
                 # Connect the frame generator
-                pr.streamConnect(self._frameGen[lane],self._pgp[lane][1]) 
+                pr.streamConnect(self._frameGen[lane],self.roguePgp.pgpStreams[lane][1]) 
                     
                 # Create a command to execute the frame generator
                 self.add(pr.BaseCommand(   
@@ -89,20 +97,20 @@ class TimeToolDev(kcu1500.Core):
                 ))               
                 
         # Create arrays to be filled
-        self._dbg = [None for lane in range(numLane)]        
+        self._dbg = [None for lane in range(numLanes)]        
         
         # Create the stream interface
-        for lane in range(numLane):        
+        for lane in range(numLanes):        
             # Debug slave
             if dataDebug:
                 
                 # Check if VCS or not
-                if (dev!='sim'): 
+                if (driverPath!='sim'): 
                     #print("using TimeToolRx")
-                    self._dbg[lane] = streams.TimeToolRx(expand=True)
+                    self._dbg[lane] = timetool.streams.TimeToolRx(expand=True)
                 else:
                     #print("using TimeToolRxVcs")
-                    self._dbg[lane] = streams.TimeToolRxVcs(expand=True)
+                    self._dbg[lane] = timetool.streams.TimeToolRxVcs(expand=True)
                 
                 # Connect the streams
                 pr.streamTap(self._dma[lane][1],self._dbg[lane])
@@ -110,12 +118,6 @@ class TimeToolDev(kcu1500.Core):
                 # Add stream device to root class
                 self.add(self._dbg)
                 
-        # Time tool application
-        self.add(timeTool.Application(
-            memBase = self._memMap,
-            offset  = 0x00C00000,
-            numLane = numLane,
-        ))
         
         self.add(pr.LocalVariable(
             name        = 'RunState', 
@@ -173,11 +175,11 @@ class TimeToolDev(kcu1500.Core):
         )
         
         # Check if not simulation
-        if (dev!='sim'):           
+        if (driverPath!='sim'):           
             # Read all the variables
             self.ReadAll()
             # Some initialization after starting root
-            for lane in range(numLane):
+            for lane in range(numLanes):
                 self.ClinkFeb[lane].ClinkTop.Ch[0].BaudRate.set(9600)
                 self.ClinkFeb[lane].ClinkTop.Ch[0].SerThrottle.set(10000)
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
@@ -194,8 +196,8 @@ class TimeToolDev(kcu1500.Core):
             self.Hardware.hidden = True
             # Bypass the time AXIS channel
             eventDev = self.find(typ=batcher.AxiStreamBatcherEventBuilder)
-            for dev in eventDev:
-                dev.Bypass.set(0x1)            
+            for d in eventDev:
+                d.Bypass.set(0x1)            
                 
     def initialize(self):
         self.StopRun()

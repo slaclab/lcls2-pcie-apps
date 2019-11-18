@@ -173,28 +173,28 @@ class TimeToolRxVcs(TimeToolRx):
         print("____________________________________________________")
         self.frameCount.set(self.frameCount.value() + 1,False)
      
-        '''berr = [0,0,0,0,0,0,0,0]
-        #frameLength = 4100 # sn : medium mode, 12 bit
-        frameLength = 2052 # sn : medium mode, 8 bit
-        #if len(p) != 2048: 
-        if len(p) != frameLength:
-            #print('length:',len(p))
-            self.lengthErrors.set(self.lengthErrors.value() + 1,False)
-        else:
-            for i in range(frameLength-4):
-                exp = i & 0xFF
-                if p[i] != exp:
-                    #print("Error at pos {}. Got={:2x}, Exp={:2x}".format(i,p[i],exp))
-                    d = p[i] ^ exp
-                    c = i % 8
-                    berr[c] = berr[c] | d
-                    self.dataErrors.set(self.dataErrors.value() + 1,False)
-        #print(len(p))
-        to_print = np.array(p)[-16:]
-        print(np.array(p)[:24],to_print) #comment out for long term test
-        #self.to_save_to_h5.append(np.array(p))
-        for i in range(8):
-            self.node('byteError{}'.format(i)).set(berr[i],False)'''
+#         berr = [0,0,0,0,0,0,0,0]
+#         #frameLength = 4100 # sn : medium mode, 12 bit
+#         frameLength = 2052 # sn : medium mode, 8 bit
+#         #if len(p) != 2048: 
+#         if len(p) != frameLength:
+#             #print('length:',len(p))
+#             self.lengthErrors.set(self.lengthErrors.value() + 1,False)
+#         else:
+#             for i in range(frameLength-4):
+#                 exp = i & 0xFF
+#                 if p[i] != exp:
+#                     #print("Error at pos {}. Got={:2x}, Exp={:2x}".format(i,p[i],exp))
+#                     d = p[i] ^ exp
+#                     c = i % 8
+#                     berr[c] = berr[c] | d
+#                     self.dataErrors.set(self.dataErrors.value() + 1,False)
+#         #print(len(p))
+#         to_print = np.array(p)[-16:]
+#         print(np.array(p)[:24],to_print) #comment out for long term test
+#         #self.to_save_to_h5.append(np.array(p))
+#         for i in range(8):
+#             self.node('byteError{}'.format(i)).set(berr[i],False)
         
 #####################################################################        
 #####################################################################        
