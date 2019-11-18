@@ -1,9 +1,8 @@
 import pyrogue as pr
 
 class TimeToolKcu1500(pr.Device):
-    NUM_LANES = 1
-    
-    def __init__(self, numLanes=1, pgp3=False, **kwargs)
+    def __init__(self, numLanes=1, pgp3=False, **kwargs):
+        super().__init__(**kwargs)
 
         self.add(pcie.AxiPcieCore(
             offset      = 0x00000000,

@@ -3,16 +3,16 @@ import pyrogue as pr
 
 import rogue
 
+import timetool
 import timetool.streams
+
+import ClinkFeb
 
 import lcls2_pgp_fw_lib.hardware.XilinxKcu1500
 
-import XilinxKcu1500Pgp       as kcu1500
-import ClinkFeb               as feb
-import TimeTool               as timeTool
-import surf.axi               as axi
-import surf.protocols.batcher as batcher
-import LclsTimingCore         as timingCore
+import surf.protocols.batcher
+
+import LclsTimingCore
 
 class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
 
@@ -32,20 +32,20 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
             initRead    = initRead, 
             numLanes    = numLanes, 
             **kwargs)
-        
-        self.driverPath    = driverPath
 
-
-        self.interfaces = axipcie.AxiPcieDma(driverPath, numLanes, destList=list(range(4)))
-
+        # Create memory interface
+        self.memMap = axipcie.createAxiPcieMemMap(driverPath, 'localhost', 8000)
 
         # Instantiate the top level Device and pass it the memeory map
         self.add(timetool.TimeToolKcu1500(
-            memBase = self.interfaces.memMap,
+            memBase = self.memMap,
             pgp3    = pgp3))
 
+        # Create DMA streams
+        self.dmaStreams = axipcie.createAxiPcieDmaStreams(driverPath, {lane:{dest for dest in range(4)} for lane in range(numLanes)}, 'localhost', 8000)
+
                         
-        # Check if not doing simulation
+        # Map dma streams to SRP, CLinkFebs
         if (driverPath!='sim'):            
             
             # Create arrays to be filled
@@ -56,18 +56,17 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                     
                 # SRP
                 self._srp[lane] = rogue.protocols.srp.SrpV3()
-                pr.streamConnectBiDir(self.interfaces.dmaStreams[lane][0], self._srp[lane])
+                pr.streamConnectBiDir(self.dmaStreams[lane][0], self._srp[lane])
 
                 # CameraLink Feb Board
-                self.add(feb.ClinkFeb(      
+                self.add(CLinkFeb.ClinkFeb(      
                     name        = (f'ClinkFeb[{lane}]'), 
                     memBase     = self._srp[lane], 
-                    serial      = [self.interfaces.dmaStreams[lane][2],None],
+                    serial      = [self.dmaStreams[lane][2],None],
                     camType     = ['Piranha4',        None],
                     version3    = pgp3,
                     enableDeps  = [self.TimeToolKcu1500.Kcu1500Hsio.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
-                    expand      = False,
-                ))
+                    expand      = False))
 
         # Else doing Rogue VCS simulation
         else:
@@ -131,8 +130,8 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
             print ('TimeToolDev.StopRun() executed')
             
             # Get devices
-            trigChDev = self.find(typ=timingCore.EvrV2ChannelReg)
-            eventDev  = self.find(typ=batcher.AxiStreamBatcherEventBuilder)
+            trigChDev = self.find(typ=LclsTimingCore.EvrV2ChannelReg)
+            eventDev  = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)
             
             # Turn off the triggering
             for devPtr in trigChDev:
@@ -150,8 +149,8 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
             print ('TimeToolDev.StartRun() executed')
             
             # Get devices
-            trigChDev = self.find(typ=timingCore.EvrV2ChannelReg)
-            eventDev  = self.find(typ=batcher.AxiStreamBatcherEventBuilder)    
+            trigChDev = self.find(typ=LclsTimingCore.EvrV2ChannelReg)
+            eventDev  = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)    
             
             # Turn off the blowoff to allow steams to flow to DMA engine
             for devPtr in eventDev:
@@ -167,12 +166,12 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
             # Update the run state status variable
             self.RunState.set(True)        
 
-        # Start the system
-        self.start(
-            pollEn   = self._pollEn,
-            initRead = self._initRead,
-            timeout  = self._timeout,
-        )
+#         # Start the system
+#         self.start(
+#             pollEn   = self._pollEn,
+#             initRead = self._initRead,
+#             timeout  = self._timeout,
+#         )
         
         # Check if not simulation
         if (driverPath!='sim'):           
@@ -195,7 +194,7 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
             self.Hardware.enable.set(False)
             self.Hardware.hidden = True
             # Bypass the time AXIS channel
-            eventDev = self.find(typ=batcher.AxiStreamBatcherEventBuilder)
+            eventDev = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)
             for d in eventDev:
                 d.Bypass.set(0x1)            
                 
