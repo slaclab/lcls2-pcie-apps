@@ -24,9 +24,11 @@ use surf.StdRtlPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.SsiPkg.all;
-use work.AppPkg.all;
 
-library timetool; 
+library timetool;
+use timetool.AppPkg.all;
+
+library timetool;
 
 entity TimeToolCore is
    generic (
@@ -178,7 +180,7 @@ begin
             SLAVE_READY_EN_G    => true,
             VALID_THOLD_G       => 1,
             -- FIFO configurations
-            BRAM_EN_G           => true,
+            MEMORY_TYPE_G       => "block",
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 9,
             -- AXI Stream Port Configurations
@@ -202,8 +204,8 @@ begin
    -------------
    U_TimeToolFEX : entity timetool.TimeToolFEX
       generic map (
-         TPD_G             => TPD_G,
-         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr)
+         TPD_G           => TPD_G,
+         AXI_BASE_ADDR_G => AXIL_CONFIG_C(FEX_INDEX_C).baseAddr)
       port map (
          -- System Clock and Reset
          axilClk         => axilClk,
@@ -224,7 +226,7 @@ begin
    -------------------
    U_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
-         TPD_G             => TPD_G)
+         TPD_G => TPD_G)
       port map (
          -- System Clock and Reset
          sysClk          => axilClk,
@@ -252,7 +254,7 @@ begin
             SLAVE_READY_EN_G    => true,
             VALID_THOLD_G       => 1,
             -- FIFO configurations
-            BRAM_EN_G           => true,
+            MEMORY_TYPE_G       => "block",
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 9,
             -- AXI Stream Port Configurations

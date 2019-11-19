@@ -28,7 +28,9 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.SsiPkg.all;
 
-use work.AppPkg.all;
+
+library timetool;
+use timetool.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;

@@ -2,7 +2,7 @@
 -- File       : FrameSubtractor.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-15
+-- Last update: 2019-11-18
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -25,7 +25,9 @@ use surf.StdRtlPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 
-use work.AppPkg.all;
+
+library timetool;
+use timetool.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -36,8 +38,8 @@ use unisim.vcomponents.all;
 
 entity FrameSubtractor is
    generic (
-      TPD_G             : time                := 1 ns;
-      DEBUG_G           : boolean             := true);
+      TPD_G   : time    := 1 ns;
+      DEBUG_G : boolean := true);
    port (
       -- System Interface
       sysClk           : in  sl;
@@ -59,9 +61,9 @@ end FrameSubtractor;
 
 architecture mapping of FrameSubtractor is
 
-   constant CAMERA_RESOLUTION_BITS : positive            := 8;
-   constant CAMERA_PIXEL_NUMBER    : positive            := 2048;
-   constant PIXELS_PER_TRANSFER    : positive            := 16;
+   constant CAMERA_RESOLUTION_BITS : positive := 8;
+   constant CAMERA_PIXEL_NUMBER    : positive := 2048;
+   constant PIXELS_PER_TRANSFER    : positive := 16;
 
    type RegType is record
       master         : AxiStreamMasterType;
@@ -89,7 +91,7 @@ architecture mapping of FrameSubtractor is
 
    signal inMaster : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
    signal inSlave  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
-   signal outSlave  : AxiStreamSlaveType   := AXI_STREAM_SLAVE_INIT_C;
+   signal outSlave : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
 
    signal pedestalInMasterBuf : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
    signal pedestalInSlaveBuf  : AxiStreamSlaveType  := AXI_STREAM_SLAVE_INIT_C;
@@ -123,12 +125,12 @@ begin
 
    U_SimpleDualPortRam_1 : entity surf.SimpleDualPortRam
       generic map (
-         TPD_G        => TPD_G,
-         BRAM_EN_G    => false,
-         DOB_REG_G    => false,
-         BYTE_WR_EN_G => false,
-         DATA_WIDTH_G => 128,
-         ADDR_WIDTH_G => 7)
+         TPD_G         => TPD_G,
+         MEMORY_TYPE_G => "distributed",
+         DOB_REG_G     => false,
+         BYTE_WR_EN_G  => false,
+         DATA_WIDTH_G  => 128,
+         ADDR_WIDTH_G  => 7)
       port map (
          clka  => sysClk,                                -- [in]
          wea   => pedestalInMaster.tvalid,               -- [in]
@@ -167,7 +169,7 @@ begin
       ------------------------ 
 
       -- Subtract incomming data against pedestals
-      v.slave.tReady  := '0';
+      v.slave.tReady := '0';
 
       if (inSlave.tReady = '1') then
          v.master.tValid := '0';
@@ -197,9 +199,9 @@ begin
 
 
       -- Combinatoral outputs above the reset
-      inSlave <= v.slave;
+      inSlave                   <= v.slave;
       pedestalInSlaveBuf.tready <= '1';
-      
+
       -------------
       -- Reset
       -------------
@@ -233,11 +235,11 @@ begin
       port map (
          axisClk     => sysClk,         -- [in]
          axisRst     => sysRst,         -- [in]
-         sAxisMaster => r.master,      -- [in]
+         sAxisMaster => r.master,       -- [in]
          sAxisSlave  => outSlave,       -- [out]
          mAxisMaster => dataOutMaster,  -- [out]
          mAxisSlave  => dataOutSlave);  -- [in]
-   
+
 
 
 end mapping;

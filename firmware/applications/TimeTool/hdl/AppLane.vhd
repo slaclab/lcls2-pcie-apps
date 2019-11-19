@@ -24,7 +24,7 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 
 
-library timetool; 
+library timetool;
 use timetool.AppPkg.all;
 
 entity AppLane is
@@ -79,7 +79,7 @@ begin
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         MEMORY_TYPE_G       => "block",
          GEN_SYNC_FIFO_G     => false,
          FIFO_ADDR_WIDTH_G   => 9,
          -- AXI Stream Port Configurations
@@ -135,7 +135,7 @@ begin
          VALID_THOLD_G       => 128,    -- Hold until enough to burst into the interleaving MUX
          VALID_BURST_MODE_G  => true,
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         MEMORY_TYPE_G       => "block",
          GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 9,
          -- AXI Stream Port Configurations
@@ -194,7 +194,7 @@ begin
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         MEMORY_TYPE_G       => "block",
          GEN_SYNC_FIFO_G     => false,
          FIFO_ADDR_WIDTH_G   => 9,
          -- AXI Stream Port Configurations

@@ -2,7 +2,7 @@
 -- File       : AXILtoFIRcoef.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-15
+-- Last update: 2019-11-18
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -25,7 +25,9 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.SsiPkg.all;
 
-use work.AppPkg.all;
+
+library timetool;
+use timetool.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -133,7 +135,7 @@ begin
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
       v.reloadMaster.tValid := '0';
-      v.reloadMaster.tLast := '0';
+      v.reloadMaster.tLast  := '0';
 
       case r.state is
 
@@ -197,7 +199,7 @@ begin
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,
          GEN_SYNC_FIFO_G     => true,
-         BRAM_EN_G           => false,
+         MEMORY_TYPE_G       => "distributed",
          FIFO_ADDR_WIDTH_G   => 4,
          FIFO_PAUSE_THRESH_G => 8,
          SLAVE_AXI_CONFIG_G  => DSP_AXIS_CONFIG_C,

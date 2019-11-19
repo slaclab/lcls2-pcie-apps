@@ -2,7 +2,7 @@
 -- File       : FrameIIR.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-16
+-- Last update: 2019-11-18
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -25,7 +25,9 @@ use surf.StdRtlPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 
-use work.AppPkg.all;
+
+library timetool;
+use timetool.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -36,8 +38,8 @@ use unisim.vcomponents.all;
 
 entity FrameIIR is
    generic (
-      TPD_G             : time                := 1 ns;
-      DEBUG_G           : boolean             := true);
+      TPD_G   : time    := 1 ns;
+      DEBUG_G : boolean := true);
    port (
       -- System Interface
       sysClk          : in  sl;
@@ -56,9 +58,9 @@ end FrameIIR;
 
 architecture mapping of FrameIIR is
 
-   constant CAMERA_RESOLUTION_BITS : positive            := 8;
-   constant CAMERA_PIXEL_NUMBER    : positive            := 2048;
-   constant PIXEL_PER_TRANSFER     : positive            := 16;
+   constant CAMERA_RESOLUTION_BITS : positive := 8;
+   constant CAMERA_PIXEL_NUMBER    : positive := 2048;
+   constant PIXEL_PER_TRANSFER     : positive := 16;
 
    type RegType is record
       master         : AxiStreamMasterType;
@@ -120,12 +122,12 @@ begin
 
    U_SimpleDualPortRam_1 : entity surf.DualPortRam
       generic map (
-         TPD_G        => TPD_G,
-         BRAM_EN_G    => false,
-         REG_EN_G     => false,
-         BYTE_WR_EN_G => false,
-         DATA_WIDTH_G => 256,
-         ADDR_WIDTH_G => 7)
+         TPD_G         => TPD_G,
+         MEMORY_TYPE_G => "distributed",
+         REG_EN_G      => false,
+         BYTE_WR_EN_G  => false,
+         DATA_WIDTH_G  => 256,
+         ADDR_WIDTH_G  => 7)
       port map (
          clka  => sysClk,               -- [in]
          wea   => r.ramWrEn,            -- [in]
@@ -144,7 +146,7 @@ begin
    comb : process (axilReadMaster, axilWriteMaster, inMaster, outSlave, r, ramRdData, sysRst) is
       variable v      : RegType := REG_INIT_C;
       variable axilEp : AxiLiteEndpointType;
-      variable tc : integer range 0 to 8;
+      variable tc     : integer range 0 to 8;
    begin
 
       -- Latch the current value
@@ -171,15 +173,15 @@ begin
             tc := i;
          end if;
       end loop;
-      
 
-      v.slave.tReady  := '0';
-      v.ramWrEn       := '0';
+
+      v.slave.tReady := '0';
+      v.ramWrEn      := '0';
 
       -- Clear tvalid when ack'd by tready
       if outSlave.tready = '1' then
          v.master.tValid := '0';
-         v.master.tLast := '0';
+         v.master.tLast  := '0';
       end if;
 
       if v.master.tvalid = '0' and inMaster.tValid = '1' then
@@ -194,8 +196,8 @@ begin
          -- Override output tdata with IIR calculations
          for i in 0 to DSP_AXIS_CONFIG_C.TDATA_BYTES_C-1 loop
             v.ramWrData(i*16+15 downto i*16) := slv(signed(ramRdData(i*16+15 downto i*16)) -
-                                                 shift_right(signed(ramRdData(i*16+15 downto i*16)), tc) +
-                                                 shift_left(signed(inMaster.tData(i*8+7 downto i*8)), 8-tc));
+                                                    shift_right(signed(ramRdData(i*16+15 downto i*16)), tc) +
+                                                    shift_left(signed(inMaster.tData(i*8+7 downto i*8)), 8-tc));
 
             v.master.tdata(i*8+7 downto i*8) := v.ramWrData(i*16+15 downto i*16+8);
          end loop;

@@ -2,7 +2,7 @@
 -- File       : FrameFIR.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-15
+-- Last update: 2019-11-18
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -24,7 +24,8 @@ use surf.StdRtlPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 
-use work.AppPkg.all;
+library timetool;
+use timetool.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -152,7 +153,7 @@ begin
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         MEMORY_TYPE_G       => "block",
          GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 9,
          FIFO_PAUSE_THRESH_G => 500,
@@ -203,7 +204,7 @@ begin
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         MEMORY_TYPE_G       => "block",
          GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 9,
          FIFO_PAUSE_THRESH_G => 500,
