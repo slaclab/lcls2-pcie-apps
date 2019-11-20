@@ -344,7 +344,7 @@ begin
 
    U_GenRx: for i in 1 downto 0 generate
 
-      U_PrbsRx: entity work.SsiPrbsTx 
+      U_PrbsRx: entity work.SsiPrbsRx 
          generic map (
             TPD_G                     => TPD_G,
             PRBS_SEED_SIZE_G          => 256,
