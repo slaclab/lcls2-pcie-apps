@@ -8,12 +8,13 @@ pyrogue.addLibraryPath('../../../firmware/submodules/lcls-timing-core/python')
 pyrogue.addLibraryPath('../../../firmware/submodules/lcls2-pgp-fw-lib/python')
 pyrogue.addLibraryPath('../../../firmware/submodules/surf/python')
 pyrogue.addLibraryPath('../../../firmware/python')
+pyrogue.addLibraryPath('../python')
 
 import pyrogue.pydm
 import pyrogue.gui
 import rogue
 
-from RateTest import RateTestRoot
+from RateTestApp import RateTestRoot
 
 rogue.Logging.setFilter('pyrogue.prbs.rx',rogue.Logging.Debug)
 #rogue.Logging.setLevel(rogue.Logging.Debug)
