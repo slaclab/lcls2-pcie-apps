@@ -1,15 +1,7 @@
 #!/usr/bin/env python3
 import pyrogue as pr
-import rogue.protocols
-import surf.axi
 import axipcie
-import surf.protocols.clink
 import surf.protocols.ssi
-import time
-import TimeTool
-import pyrogue.utilities.fileio
-import pyrogue.utilities.prbs
-import numpy as np
 
 class FpgaBoard(pr.Device):
 
