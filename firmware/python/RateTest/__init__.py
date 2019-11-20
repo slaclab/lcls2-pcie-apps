@@ -1,4 +1,4 @@
 
 
-from RateTest._Root import *
+from RateTest._Fpga import *
 
