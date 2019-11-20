@@ -85,7 +85,7 @@ architecture top_level of RateTestKcu1500 is
 
    constant DMA_LANES_C : positive := 8;
 
-   constant NUM_AXIL_MASTERS_C : positive := 6;
+   constant NUM_AXIL_MASTERS_C : positive := 8;
 
    constant HW_INDEX_C  : natural := 0;
    constant APP_INDEX_C : natural := 1;
@@ -341,5 +341,28 @@ begin
             axilWriteSlave  => axilWriteSlaves(i+2));
             
    end generate;         
-         
+
+   U_GenRx: for i in 1 downto 0 generate
+
+      U_PrbsRx: entity work.SsiPrbsTx 
+         generic map (
+            TPD_G                     => TPD_G,
+            PRBS_SEED_SIZE_G          => 256,
+            GEN_SYNC_FIFO_G           => false,
+            SLAVE_AXI_PIPE_STAGES_G   => 1,
+            SLAVE_AXI_STREAM_CONFIG_G => DMA_AXIS_CONFIG_C)
+         port map (
+            sAxisClk        => dmaClk,
+            sAxisRst        => dmaRst,
+            sAxisMaster     => dmaObMasters(i+4),
+            sAxisSlave      => dmaObSlaves(i+4),
+            axiClk          => axilClk,
+            axiRst          => axilRst,
+            axiReadMaster   => axilReadMasters(i+6),
+            axiReadSlave    => axilReadSlaves(i+6),
+            axiWriteMaster  => axilWriteMasters(i+6),
+            axiWriteSlave   => axilWriteSlaves(i+6));
+            
+   end generate;         
+
 end top_level;

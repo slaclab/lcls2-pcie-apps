@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
-import pyrogue.gui
-import RateTestDev
-import sys
 
+import pyrogue
+
+pyrogue.addLibraryPath('../../../firmware/submodules/axi-pcie-core/python')
+pyrogue.addLibraryPath('../../../firmware/submodules/clink-gateway-fw-lib/python')
+pyrogue.addLibraryPath('../../../firmware/submodules/lcls-timing-core/python')
+pyrogue.addLibraryPath('../../../firmware/submodules/lcls2-pgp-fw-lib/python')
+pyrogue.addLibraryPath('../../../firmware/submodules/surf/python')
+pyrogue.addLibraryPath('../../../firmware/python')
+
+import pyrogue.pydm
+import pyrogue.gui
 import rogue
+
+from RateTest import RateTestRoot
 
 rogue.Logging.setFilter('pyrogue.prbs.rx',rogue.Logging.Debug)
 #rogue.Logging.setLevel(rogue.Logging.Debug)
 
-cl = RateTestDev.RateTestDev()
+with RateTestRoot() as root:
 
-# Create GUI
-appTop = pyrogue.gui.application(sys.argv)
-guiTop = pyrogue.gui.GuiTop(group='TimeToolDev')
-guiTop.addTree(cl)
+    #pyrogue.pydm.runPyDM(root=root)
+    pyrogue.gui.runGui(root=root)
 
-# Run gui
-appTop.exec_()
-cl.stop()
 
