@@ -21,7 +21,7 @@ rogue.Logging.setFilter('pyrogue.prbs.rx',rogue.Logging.Debug)
 
 with RateTestRoot() as root:
 
-    #pyrogue.pydm.runPyDM(root=root)
-    pyrogue.gui.runGui(root=root)
+    pyrogue.pydm.runPyDM(root=root)
+    #pyrogue.gui.runGui(root=root)
 
 
