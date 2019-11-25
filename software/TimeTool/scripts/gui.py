@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-import setupLibPaths
-import pyrogue.gui
-import TimeToolDev
+
 import sys
 import argparse
+
+import setupLibPaths
+import pyrogue.gui
+import timetool
+
 
 #################################################################
 
@@ -23,7 +26,7 @@ parser.add_argument(
 )  
 
 parser.add_argument(
-    "--version3", 
+    "--pgp3", 
     type     = argBool,
     required = False,
     default  = False,
@@ -59,23 +62,15 @@ args = parser.parse_args()
 
 #################################################################
 
-cl = TimeToolDev.TimeToolDev(
-    dev       = args.dev,
-    dataDebug = args.dataDebug,
-    version3  = args.version3,
-    pollEn    = args.pollEn,
-    initRead  = args.initRead,
-)
-
-#################################################################
+with timetool.TimeToolKcu1500Root(**vars(args)) as root:
 
 # Create GUI
-appTop = pyrogue.gui.application(sys.argv)
-guiTop = pyrogue.gui.GuiTop(group='TimeToolDev')
-guiTop.addTree(cl)
-guiTop.resize(800, 1000)
+    appTop = pyrogue.gui.application(sys.argv)
+    guiTop = pyrogue.gui.GuiTop()
+    guiTop.addTree(root)
+    guiTop.resize(1000, 1000)
 
-# Run gui
-appTop.exec_()
-cl.stop()
+    # Run gui
+    appTop.exec_()
+
 
