@@ -14,7 +14,9 @@ import surf.protocols.batcher
 
 import LclsTimingCore
 
-class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
+import axipcie
+
+class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
 
     def __init__(self,
                  dataDebug   = False,
@@ -56,7 +58,8 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                     
                 # SRP
                 self._srp[lane] = rogue.protocols.srp.SrpV3()
-                pr.streamConnectBiDir(self.dmaStreams[lane][0], self._srp[lane])
+                self.dmaStreams[lane][0] == self._srp[lane]
+                #pr.streamConnectBiDir(self.dmaStreams[lane][0], self._srp[lane])
 
                 # CameraLink Feb Board
                 self.add(CLinkFeb.ClinkFeb(      
@@ -70,7 +73,7 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
 
         # Else doing Rogue VCS simulation
         else:
-            roguePgp = lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500HsioRogueStreams(numLanes=numLanes, pgp3=pgp3)
+            self.roguePgp = lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500HsioRogueStreams(numLanes=numLanes, pgp3=pgp3)
         
             # Create arrays to be filled
             self._frameGen = [None for lane in range(numLanes)]
@@ -82,7 +85,8 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                 self._frameGen[lane] = timetool.streams.TimeToolTxEmulation()
                 
                 # Connect the frame generator
-                pr.streamConnect(self._frameGen[lane],self.roguePgp.pgpStreams[lane][1]) 
+                print(self.roguePgp.pgpStreams)
+                self._frameGen[lane] >> self.roguePgp.pgpStreams[lane][1]
                     
                 # Create a command to execute the frame generator
                 self.add(pr.BaseCommand(   
@@ -112,7 +116,7 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                     self._dbg[lane] = timetool.streams.TimeToolRxVcs(expand=True)
                 
                 # Connect the streams
-                pr.streamTap(self._dma[lane][1],self._dbg[lane])
+                self._dma[lane][1] >> self._dbg[lane]
                 
                 # Add stream device to root class
                 self.add(self._dbg)
@@ -191,8 +195,8 @@ class TimeTookKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
         else:
             # Disable the PGP PHY device (speed up the simulation)
-            self.Hardware.enable.set(False)
-            self.Hardware.hidden = True
+#            self.TimeToolKcu1500.Kcu1500Hsio.enable.set(False)
+#            self.TimeToolKcu1500.Kcu1500Hsio.hidden = True
             # Bypass the time AXIS channel
             eventDev = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)
             for d in eventDev:

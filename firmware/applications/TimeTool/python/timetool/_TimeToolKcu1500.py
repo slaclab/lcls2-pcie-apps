@@ -1,10 +1,15 @@
 import pyrogue as pr
 
+import axipcie
+import lcls2_pgp_fw_lib.hardware.XilinxKcu1500
+
+import timetool
+
 class TimeToolKcu1500(pr.Device):
     def __init__(self, numLanes=1, pgp3=False, **kwargs):
         super().__init__(**kwargs)
 
-        self.add(pcie.AxiPcieCore(
+        self.add(axipcie.AxiPcieCore(
             offset      = 0x00000000,
             numDmaLanes = numLanes,
             expand      = False,
@@ -12,8 +17,8 @@ class TimeToolKcu1500(pr.Device):
         
             
         # PGP Hardware on PCIe 
-        self.add(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500Hsio(            
-            offset    = 0x0080_0000
+        self.add(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500Hsio( 
+            offset    = 0x0080_0000,
             numLanes  = numLanes,
             pgp3      = pgp3,
             expand    = False,

@@ -2,6 +2,8 @@ import pyrogue as pr
 
 import surf.protocols.batcher
 
+import timetool
+
 class AppLane(pr.Device):
     def __init__(self, **kwargs):
         

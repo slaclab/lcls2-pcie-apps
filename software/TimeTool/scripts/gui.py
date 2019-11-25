@@ -7,6 +7,8 @@ import setupLibPaths
 import pyrogue.gui
 import timetool
 
+import lcls2_pgp_fw_lib
+
 
 #################################################################
 
@@ -18,7 +20,8 @@ argBool = lambda s: s.lower() in ['true', 't', 'yes', '1']
 
 # Add arguments
 parser.add_argument(
-    "--dev", 
+    "--dev",
+    dest     = 'driverPath',
     type     = str,
     required = False,
     default  = '/dev/datadev_0',
@@ -37,7 +40,7 @@ parser.add_argument(
     "--pollEn", 
     type     = argBool,
     required = False,
-    default  = True,
+    default  = False,
     help     = "Enable auto-polling",
 ) 
 
@@ -45,7 +48,7 @@ parser.add_argument(
     "--initRead", 
     type     = argBool,
     required = False,
-    default  = True,
+    default  = False,
     help     = "Enable read all variables at start",
 )  
 
@@ -53,7 +56,7 @@ parser.add_argument(
     "--dataDebug", 
     type     = argBool,
     required = False,
-    default  = True,
+    default  = False,
     help     = "Enable TimeToolRx module",
 )  
 
