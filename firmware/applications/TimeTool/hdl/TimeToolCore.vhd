@@ -55,9 +55,9 @@ end TimeToolCore;
 
 architecture mapping of TimeToolCore is
 
-   constant NUM_AXIS_MASTERS_G : positive := 2;
+   constant NUM_AXIS_MASTERS_C : positive := 2;
 
-   constant NUM_AXIL_MASTERS_C : natural := NUM_AXIS_MASTERS_G+2;
+   constant NUM_AXIL_MASTERS_C : natural := NUM_AXIS_MASTERS_C+2;
 
    constant EVENT_INDEX_C    : natural := 0;
    constant FEX_INDEX_C      : natural := 1;
@@ -134,7 +134,7 @@ begin
    U_AxiStreamRepeater : entity surf.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
-         NUM_MASTERS_G => NUM_AXIS_MASTERS_G)
+         NUM_MASTERS_G => NUM_AXIS_MASTERS_C)
       port map (
          -- Clock and reset
          axisClk      => axilClk,
@@ -278,9 +278,15 @@ begin
    ----------------------
    U_EventBuilder : entity surf.AxiStreamBatcherEventBuilder
       generic map (
-         TPD_G         => TPD_G,
-         NUM_SLAVES_G  => NUM_AXIS_MASTERS_G+1,
-         AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
+         TPD_G          => TPD_G,
+         NUM_SLAVES_G   => NUM_AXIS_MASTERS_C+1,
+         MODE_G         => "ROUTED",
+         TDEST_ROUTES_G => (
+            0           => "--------",
+            1           => "--------",
+            2           => "--------"),
+         TRANS_TDEST_G  => X"01",
+         AXIS_CONFIG_G  => DMA_AXIS_CONFIG_C)
       port map (
          -- Clock and Reset
          axisClk                         => axilClk,
