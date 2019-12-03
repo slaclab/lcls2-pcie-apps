@@ -21,7 +21,9 @@ use ieee.std_logic_arith.all;
 
 library surf;
 use surf.StdRtlPkg.all;
-use work.BuildInfoPkg.all;
+
+library ruckus;
+use ruckus.BuildInfoPkg.all;
 
 entity TimeToolKcu1500VcsTb is end TimeToolKcu1500VcsTb;
 
