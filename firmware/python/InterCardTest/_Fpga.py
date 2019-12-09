@@ -12,5 +12,5 @@ class Fpga(pr.Device):
 
         self.add(surf.protocols.ssi.SsiPrbsTx(name=f'PrbsTx',offset=0x00800000))
         self.add(surf.protocols.ssi.SsiPrbsRx(name=f'PrbsRx',offset=0x00900000))
-        self.add(axipcie.AxiPipCore(offset=0x00A00000))
+        self.add(axipcie.AxiGpuAsyncCore(offset=0x00A00000))
 
