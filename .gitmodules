@@ -16,13 +16,13 @@
 	ignore = dirty
 [submodule "firmware/submodules/lcls2-pgp-fw-lib"]
 	path = firmware/submodules/lcls2-pgp-fw-lib
-	url = https://github.comslaclab/lcls2-pgp-fw-lib
+	url = https://github.com/slaclab/lcls2-pgp-fw-lib
 	ignore = dirty
 [submodule "firmware/submodules/clink-gateway-fw-lib"]
 	path = firmware/submodules/clink-gateway-fw-lib
-	url = https://github.comslaclab/clink-gateway-fw-lib
+	url = https://github.com/slaclab/clink-gateway-fw-lib
 	ignore = dirty
 [submodule "firmware/submodules/l2si-core"]
 	path = firmware/submodules/l2si-core
-	url = https://github.comslaclab/l2si-core
+	url = https://github.com/slaclab/l2si-core
 	ignore = dirty
