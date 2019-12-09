@@ -221,26 +221,25 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-   U_AxiPciePipCore : entity work.AxiPciePipCore
+   U_GpuAsync: entity work.AxiPcieGpuAsyncCore
       generic map (
          TPD_G             => TPD_G,
-         NUM_AXIS_G        => 1,
+         NUM_CHAN_G        => 1,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C)
       port map (
-         -- AXI4-Lite Interfaces (axilClk domain)
-         axilClk         => axilClk,
-         axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(2),
-         axilReadSlave   => axilReadSlaves(2),
-         axilWriteMaster => axilWriteMasters(2),
-         axilWriteSlave  => axilWriteSlaves(2),                  
+         axilClk          => axilClk,
+         axilRst          => axilRst,
+         axilReadMaster   => axilReadMasters(2),
+         axilReadSlave    => axilReadSlaves(2),
+         axilWriteMaster  => axilWriteMasters(2),
+         axilWriteSlave   => axilWriteSlaves(2),
          -- AXI Stream Interface (axisClk domain)
-         axisClk         => dmaClk,
-         axisRst         => dmaRst,
-         sAxisMasters    => strObMasters,
-         sAxisSlaves     => strObSlaves,
-         mAxisMasters    => strIbMasters,
-         mAxisSlaves     => strIbSlaves,
+         axisClk          => dmaClk,
+         axisRst          => dmaRst,
+         sAxisMaster      => strObMasters(0),
+         sAxisSlave       => strObSlaves(0),
+         mAxisMaster      => strIbMasters(0),
+         mAxisSlave       => strIbSlaves(0),
          -- AXI4 Interfaces (axiClk domain)
          axiClk          => dmaClk,
          axiRst          => dmaRst,
@@ -248,8 +247,6 @@ begin
          sAxiWriteSlave  => pipIbSlave,
          mAxiWriteMaster => pipObMaster,
          mAxiWriteSlave  => pipObSlave); 
-
-
 
    U_PrbsTx: entity work.SsiPrbsTx 
       generic map (
