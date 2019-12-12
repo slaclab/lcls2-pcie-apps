@@ -9,6 +9,9 @@ import timetool
 
 import lcls2_pgp_fw_lib
 
+import rogue
+
+rogue.Logging.setFilter('pyrogue.batcher', rogue.Logging.Debug)
 
 #################################################################
 
