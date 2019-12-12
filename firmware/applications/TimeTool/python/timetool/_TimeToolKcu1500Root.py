@@ -16,6 +16,56 @@ import LclsTimingCore
 
 import axipcie
 
+def getField(value, highBit, lowBit):
+    mask = 2**(highBit-lowBit+1)-1
+    return (value >> lowBit) & mask
+
+
+class DataDebug(rogue.interfaces.stream.Slave):
+    def __init__(self, name):
+        rogue.interfaces.stream.Slave.__init__(self)
+
+        self.channelData = [[] for _ in range(8)]
+        self.name = name
+
+    def _acceptFrame(self, frame):
+        ba = bytearray(frame.getPayload())
+        frame.read(ba, 0)
+        print(f'{self.name}: Got frame - {len(ba)} bytes')
+        print(ba)
+
+        lword = int.from_bytes(ba, 'little', signed=False)
+        print(f'{lword:064_x}')
+
+        d = {}
+        # this is wrong
+        d['pulseId'] = getField(lword, 55, 0)
+        d['timeStamp'] = getField(lword, 127, 64)
+        d['partitions'] = getField(lword, 135, 128)
+        d['triggerInfo'] = getField(lword, 151, 136)
+        d['type'] = 'Event' if d['triggerInfo']&0x8000 else 'Transition'
+        
+        d['count'] = getField(lword, 159, 152)
+        d['version'] = getField(lword, 167, 160)
+        
+        d['wordDecode'] = e = {}
+        ti = d['triggerInfo']
+
+        if d['type'] == 'Event':
+            e['l0Accept'] = getField(ti, 0, 0)
+            e['l0Tag'] = getField(ti, 5, 1)
+            e['l0Reject'] = getField(ti, 7, 7)
+            e['l1Expect'] = getField(ti, 8, 8)
+            e['l1Accept'] = getField(ti, 9, 9)
+            e['l1Tag'] = getField(ti, 14, 10)
+        else:
+            e['l0Tag'] = getField(ti, 5, 1)
+            e['header'] = getField(ti, 13, 6)
+
+        print(d)
+
+
+
 class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
 
     def __init__(self,
@@ -100,26 +150,28 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                 ))               
                 
         # Create arrays to be filled
-        self._dbg = [None for lane in range(numLanes)]        
+        self._dbg = [DataDebug("DataDebug") for lane in range(numLanes)]
+        self.unbatchers = [rogue.protocols.batcher.SplitterV1() for lane in range(numLanes)]
         
         # Create the stream interface
         for lane in range(numLanes):        
             # Debug slave
             if dataDebug:
+
                 
                 # Check if VCS or not
-                if (driverPath!='sim'): 
+#                if (driverPath!='sim'): 
                     #print("using TimeToolRx")
-                    self._dbg[lane] = timetool.streams.TimeToolRx(expand=True)
-                else:
+#                    self._dbg[lane] = timetool.streams.TimeToolRx(expand=True)
+#                else:
                     #print("using TimeToolRxVcs")
-                    self._dbg[lane] = timetool.streams.TimeToolRxVcs(expand=True)
+#                    self._dbg[lane] = timetool.streams.TimeToolRxVcs(expand=True)
                 
                 # Connect the streams
-                self._dma[lane][1] >> self._dbg[lane]
+                self.dmaStreams[lane][1] >> self.unbatchers[lane] >> self._dbg[lane]
                 
                 # Add stream device to root class
-                self.add(self._dbg)
+                #self.add(self._dbg[lane])
                 
         
         self.add(pr.LocalVariable(
