@@ -279,12 +279,12 @@ begin
    U_EventBuilder : entity surf.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G          => TPD_G,
-         NUM_SLAVES_G   => NUM_AXIS_MASTERS_C+1,
+         NUM_SLAVES_G   => 1, --NUM_AXIS_MASTERS_C+1,
          MODE_G         => "ROUTED",
          TDEST_ROUTES_G => (
-            0           => "--------",
-            1           => "--------",
-            2           => "--------"),
+            0           => "--------"),--,
+--             1           => "--------",
+--             2           => "--------"),
          TRANS_TDEST_G  => X"01",
          AXIS_CONFIG_G  => DMA_AXIS_CONFIG_C)
       port map (
@@ -298,10 +298,10 @@ begin
          axilWriteSlave                  => axilWriteSlaves(EVENT_INDEX_C),
          -- Inbound Master AXIS Interfaces
          sAxisMasters(EVENT_INDEX_C)     => eventAxisMaster,
-         sAxisMasters(DSP_INDEX_RANGE_C) => dspMasters,
+--         sAxisMasters(DSP_INDEX_RANGE_C) => dspMasters,
          -- Inbound Slave AXIS Interfaces
          sAxisSlaves(EVENT_INDEX_C)      => eventAxisSlave,
-         sAxisSlaves(DSP_INDEX_RANGE_C)  => dspSlaves,
+--         sAxisSlaves(DSP_INDEX_RANGE_C)  => dspSlaves,
          -- Outbound AXIS
          mAxisMaster                     => timeToolToByPassMaster,
          mAxisSlave                      => timeToolToByPassSlave);
