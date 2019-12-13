@@ -7,7 +7,7 @@ class RateTestRoot(pr.Root):
     def __init__(self):
         pr.Root.__init__(self,name='RateTestRoot',description='Rate Tester', pollEn=True)
 
-        for i in range(2):
+        for i in range(1):
             self.add(RateTestApp.PcieControl(index=i))
 
             self.add(RateTestApp.PrbsMultiRx(name=f'PrbsMultiRx[{i}]',
