@@ -21,6 +21,9 @@ parser = argparse.ArgumentParser()
 # Convert str to bool
 argBool = lambda s: s.lower() in ['true', 't', 'yes', '1']
 
+def auto_int(x):
+    return int (x,0)
+
 # Add arguments
 parser.add_argument(
     "--dev",
@@ -61,7 +64,8 @@ parser.add_argument(
     required = False,
     default  = False,
     help     = "Enable TimeToolRx module",
-)  
+)
+  
 
 # Get the arguments
 args = parser.parse_args()

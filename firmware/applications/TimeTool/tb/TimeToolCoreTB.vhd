@@ -211,6 +211,8 @@ begin
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_201c", x"81818181", true); --axi lite to FIR coeffcients
 
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_2020", x"1", true); --axi lite to FIR coeffcients
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_6004", x"0", true);  --prescaler
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C1_7004", x"0", true);  --subtraction toggle
 
        
 

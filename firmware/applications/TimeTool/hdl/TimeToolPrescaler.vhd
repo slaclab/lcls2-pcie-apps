@@ -17,8 +17,14 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+<<<<<<< HEAD
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
+=======
+--use ieee.std_logic_arith.all;
+--use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
+>>>>>>> origin/dsp_dev
 
 -- surf
 
@@ -72,7 +78,8 @@ architecture mapping of TimeToolPrescaler is
       slave          : AxiStreamSlaveType;
       axilReadSlave  : AxiLiteReadSlaveType;
       axilWriteSlave : AxiLiteWriteSlaveType;
-      counter        : slv(31 downto 0);
+      debug_counter  : unsigned(31 downto 0);
+      counter        : unsigned(31 downto 0);
       prescalingRate : slv(31 downto 0);
       scratchPad     : slv(31 downto 0);
       state          : StateType;
@@ -85,6 +92,7 @@ architecture mapping of TimeToolPrescaler is
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
       counter        => (others => '0'),
+      debug_counter  => (others => '0'),
       prescalingRate => toSlv(9, 32),
       scratchPad     => (others => '0'),
       state          => IDLE_S,
@@ -179,6 +187,12 @@ begin
                   v.state := IDLE_S;
                end if;
                v.validate_state(1) := '1';  --debugging signal               
+               if v.master.tLast = '0' and v.master.tValid ='1' then
+                   v.debug_counter     :=  v.debug_counter + 1;               
+               elsif v.master.tLast = '1' and v.master.tValid = '1' then
+                   v.debug_counter     :=  (others => '0');
+               else
+                   v.debug_counter := v.debug_counter;
             end if;
 
          when SEND_NULL_S =>

@@ -73,6 +73,7 @@ architecture mapping of FrameSubtractor is
       pedestalRdAddr : slv(6 downto 0);
       pedestalWrAddr : slv(6 downto 0);
       scratchPad     : slv(31 downto 0);
+      do_subtraction        : slv(31 downto 0);
    end record RegType;
 
    constant REG_INIT_C : RegType := (
@@ -82,7 +83,8 @@ architecture mapping of FrameSubtractor is
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C,
       pedestalRdAddr => (others => '0'),
       pedestalWrAddr => (others => '0'),
-      scratchPad     => (others => '0'));
+      scratchPad     => (others => '0'),
+      do_subtraction        => (others=>'0'));
 
 
 
@@ -161,6 +163,7 @@ begin
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
       axiSlaveRegister (axilEp, x"000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"004", 0, v.do_subtraction);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
@@ -178,9 +181,12 @@ begin
 
       if v.master.tValid = '0' and inMaster.tValid = '1' then
          v.master := inMaster;
-         for i in 0 to DSP_AXIS_CONFIG_C.TDATA_BYTES_C-1 loop
-            v.master.tData(i*8+7 downto i*8) := slv(signed(inMaster.tdata(i*8+7 downto i*8))-signed(pedestalRamData(i*8+7 downto i*8)));
-         end loop;
+         if r.do_subtraction(0) = '1' then -- Attempt to merge Sioan's code, not sure this is right
+            v.scratchPad(0) := '1';
+            for i in 0 to DSP_AXIS_CONFIG_C.TDATA_BYTES_C-1 loop
+               v.master.tData(i*8+7 downto i*8) := slv(signed(inMaster.tdata(i*8+7 downto i*8))-signed(pedestalRamData(i*8+7 downto i*8)));
+            end loop;
+         end if;
          v.pedestalRdAddr := slv(unsigned(r.pedestalRdAddr) + 1);
          if (inMaster.tLast = '1') then
             v.pedestalRdAddr := (others => '0');

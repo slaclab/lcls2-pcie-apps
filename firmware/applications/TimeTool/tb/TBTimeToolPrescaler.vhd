@@ -40,6 +40,8 @@ entity TBTimeToolPrescaler is end TBTimeToolPrescaler;
 
 architecture testbed of TBTimeToolPrescaler is
 
+   constant TEST_OUTPUT_FILE_NAME : string := TEST_FILE_PATH & "/output_results.dat";
+
    constant TPD_G              : time := 1 ns;
    --constant BUILD_INFO_G      : BuildInfoType;
 
@@ -90,6 +92,8 @@ architecture testbed of TBTimeToolPrescaler is
 
    signal axiClk   : sl;
    signal axiRst   : sl;
+
+   file file_RESULTS : text;
 
 begin
 
@@ -142,17 +146,17 @@ begin
       --      mAxisMaster => appInMaster,
       --      mAxisSlave  => appInSlave);
 
-      U_CamOutput : entity timetool.FileToAxiStream
+      U_CamOutput : entity timetool.FileToAxiStreamSim
          generic map (
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
-            DMA_AXIS_CONFIG_G  => SRC_CONFIG_C,
-            CLK_PERIOD_G       => 10 ns)
+            AXIS_CONFIG_G => SRC_CONFIG_C)
          port map (
-            sysClk         => axiClk,
-            sysRst         => axiRst,
-            dataOutMaster  => appInMaster,
-            dataOutSlave   => appInSlave);
+            axiClk         => axiClk,
+            axiRst         => axiRst,
+            mAxisMaster    => appInMaster,
+            mAxisSlave     => appInSlave);
+
 
    --------------------
    -- Modules to be tested
@@ -214,5 +218,34 @@ begin
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_1004", x"1", true);
 
    end process test;
+
+   ---------------------------------
+   -- save_file
+   ---------------------------------
+   save_to_file : process is
+      variable to_file              : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
+      variable v_OLINE              : line; 
+      constant c_WIDTH              : natural := 128;
+      constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
+
+   begin
+
+      to_file := appOutMaster;
+
+      file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
+
+      while true loop
+
+            --write(v_OLINE, appInMaster.tData(c_WIDTH -1 downto 0), right, c_WIDTH);
+            write(v_OLINE, appOutMaster.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
+            writeline(file_RESULTS, v_OLINE);
+
+            wait for CLK_PERIOD_G;
+
+      end loop;
+      
+      file_close(file_RESULTS);
+
+   end process save_to_file;
 
 end testbed;

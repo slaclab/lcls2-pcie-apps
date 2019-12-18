@@ -25,6 +25,6 @@ use ieee.std_logic_textio.all;
 
 package TestingPkg is
 
-   constant TEST_FILE_PATH : string := "/u1/sioan/slaclab/lcls2-pcie-apps";
+   constant TEST_FILE_PATH : string := "../../../../firmware/..";
    
 end package TestingPkg;

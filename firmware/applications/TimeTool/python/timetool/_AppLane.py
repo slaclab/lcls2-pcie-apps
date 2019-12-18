@@ -24,6 +24,3 @@ class AppLane(pr.Device):
             offset = 0x20000, 
         ))
 
-        self.add(timetool.ByPass( 
-            offset = 0x30000, 
-        ))
