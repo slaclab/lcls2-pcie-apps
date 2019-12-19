@@ -2,7 +2,7 @@
 -- File       : TimeToolCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-12-04
--- Last update: 2019-10-16
+-- Last update: 2019-12-19
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -17,16 +17,8 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-<<<<<<< HEAD
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
-=======
---use ieee.std_logic_arith.all;
---use ieee.std_logic_unsigned.all;
-use ieee.numeric_std.all;
->>>>>>> origin/dsp_dev
-
--- surf
 
 library surf;
 use surf.StdRtlPkg.all;
@@ -47,8 +39,8 @@ use unisim.vcomponents.all;
 
 entity TimeToolPrescaler is
    generic (
-      TPD_G             : time                := 1 ns;
-      DEBUG_G           : boolean             := true);
+      TPD_G   : time    := 1 ns;
+      DEBUG_G : boolean := true);
    port (
       -- System Interface
       sysClk          : in  sl;
@@ -78,8 +70,8 @@ architecture mapping of TimeToolPrescaler is
       slave          : AxiStreamSlaveType;
       axilReadSlave  : AxiLiteReadSlaveType;
       axilWriteSlave : AxiLiteWriteSlaveType;
-      debug_counter  : unsigned(31 downto 0);
-      counter        : unsigned(31 downto 0);
+      debug_counter  : slv(31 downto 0);
+      counter        : slv(31 downto 0);
       prescalingRate : slv(31 downto 0);
       scratchPad     : slv(31 downto 0);
       state          : StateType;
@@ -108,7 +100,7 @@ architecture mapping of TimeToolPrescaler is
 
    signal inMaster : AxiStreamMasterType;
    signal inSlave  : AxiStreamSlaveType;
-   signal outSlave  : AxiStreamSlaveType;
+   signal outSlave : AxiStreamSlaveType;
 
 begin
 
@@ -154,7 +146,7 @@ begin
       v.slave.tReady := '0';
       if (outSlave.tReady = '1') then
          v.master.tvalid := '0';
-         v.master.tlast := '0';
+         v.master.tlast  := '0';
       end if;
 
       case r.state is
@@ -168,7 +160,7 @@ begin
                -- Don't ack yet, will do this in later states
                v.counter := r.counter + 1;
                if r.counter = r.prescalingRate then
-                  v.state := MOVE_S;
+                  v.state   := MOVE_S;
                   v.counter := (others => '0');
                else
                   v.state := SEND_NULL_S;
@@ -181,18 +173,18 @@ begin
             ------------------------------
             v.validate_state(0) := '1';     --debugging signal
             if v.master.tValid = '0' and inMaster.tValid = '1' then
-               v.slave.tready := '1';       -- ack the txn
+               v.slave.tready := '1';   -- ack the txn
                v.master       := inMaster;  --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
                if (inMaster.tLast = '1') then
                   v.state := IDLE_S;
                end if;
-               v.validate_state(1) := '1';  --debugging signal               
-               if v.master.tLast = '0' and v.master.tValid ='1' then
-                   v.debug_counter     :=  v.debug_counter + 1;               
+               v.validate_state(1) := '1';  --debugging signal
+                                            --
+               if v.master.tLast = '0' and v.master.tValid = '1' then
+                  v.debug_counter := v.debug_counter + 1;
                elsif v.master.tLast = '1' and v.master.tValid = '1' then
-                   v.debug_counter     :=  (others => '0');
-               else
-                   v.debug_counter := v.debug_counter;
+                  v.debug_counter := (others => '0');
+               end if;
             end if;
 
          when SEND_NULL_S =>
@@ -204,7 +196,7 @@ begin
                v.master.tLast  := '1';
                v.slave.tready  := '1';  -- ack the txn
 
-               v.master.tkeep := (others => '0');
+               v.master.tkeep    := (others => '0');
                v.master.tKeep(0) := '1';
                ssiSetUserEofe(DSP_AXIS_CONFIG_C, v.master, '1');
 
@@ -239,7 +231,7 @@ begin
    end process comb;
 
    seq : process (sysClk) is
-   begin 
+   begin
       if (rising_edge(sysClk)) then
          r <= rin after TPD_G;
       end if;
