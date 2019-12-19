@@ -25,6 +25,7 @@ use work.AxiStreamPkg.all;
 use work.AxiPkg.all;
 use work.SsiPkg.all;
 use work.AxiPciePkg.all;
+use work.TestingPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
@@ -68,6 +69,8 @@ architecture rtl of FileToAxiStreamSim is
       counter      => 100,
       state        => IDLE_S);
 
+   constant TEST_INPUT_FILE_NAME : string := TEST_FILE_PATH & "/sim_input_data.dat";
+
    file file_VECTORS : text;
    file file_RESULTS : text;
  
@@ -76,20 +79,35 @@ architecture rtl of FileToAxiStreamSim is
 
    constant CLK_PERIOD_G : time      := 10 ns;
 
-   signal r   : RegType := REG_INIT_C;
-   signal rin : RegType;
+   signal r            : RegType := REG_INIT_C;
+   signal rin          : RegType;
 
-   signal outCtrl  : AxiStreamCtrlType;
+   signal sysClk       :  sl;
+   signal sysRst       :  sl;
+
+   signal outCtrl      : AxiStreamCtrlType;
    
-   signal r_ADD_TERM1 : std_logic_vector(BITS_PER_TRANSFER-1 downto 0) := (others => '0');
-   signal r_ADD_TERM2 : sl := '0';
+   signal r_ADD_TERM1  : std_logic_vector(BITS_PER_TRANSFER-1 downto 0) := (others => '0');
+   signal r_ADD_TERM2  : sl := '0';
    --signal w_SUM       : std_logic_vector(c_WIDTH downto 0);
 
 
 
 begin
+   
+   outCtrl.pause <= not mAxisSlave.tready;
 
-   process
+   U_axilClk_2 : entity work.ClkRst
+      generic map (
+         CLK_PERIOD_G      => CLK_PERIOD_G,
+         RST_START_DELAY_G => 0 ns,
+         RST_HOLD_TIME_G   => 1000 ns)
+      port map (
+         clkP => sysClk,
+         rst  => sysRst);
+
+
+   process 
       variable v           : RegType := REG_INIT_C;
       variable v_ILINE     : line;
       variable v_OLINE     : line;
@@ -97,21 +115,22 @@ begin
       variable v_ADD_TERM2 : sl := '0';
       variable v_SPACE     : character;
 
-   begin
+   begin 
       v := r;
       
       --w_SUM <= (others=>'1');
 
       --file_open(file_RESULTS, "output_results.txt", write_mode);
-      file_open(file_VECTORS, "/u1/sioan/lcls2-pcie-apps/sim_input_data.dat",  read_mode);
+      file_open(file_VECTORS, TEST_INPUT_FILE_NAME,  read_mode);
       
 
     while not endfile(file_VECTORS) loop
 
     wait for CLK_PERIOD_G;
 
-    v.slave.tReady    := mAxisSlave.tReady;
+    v.slave.tReady    := not outCtrl.pause;
     v.master          := AXI_STREAM_MASTER_INIT_C;
+    v.master.tValid   := '1';
 
     case r.state is
 
@@ -144,7 +163,7 @@ begin
                             r_ADD_TERM2 <= v_ADD_TERM2;
 
                             v.master.tData(BITS_PER_TRANSFER-1 downto 0)        := v_ADD_TERM1;
-                            v.master.tValid                                     := '1';
+                            --v.master.tValid                                     := '1';   <- this line is bad and violates axi protocol.  should always be true
                             v.master.tLast                                      := v_ADD_TERM2;
                             v.master.tKeep(BITS_PER_TRANSFER/8-1 downto 0)      := (others=>'1');
             
@@ -152,7 +171,7 @@ begin
              
                         
                     else
-                            v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready
+                            --v.master.tValid := '0';   --message to downstream data processing that there's no valid data ready <- this line is bad and violates axi handshake protocol
                             v.slave.tReady  := '0';   --message to upstream that we're not ready
                             v.master.tLast  := '0';
                             v.state         := IDLE_S;
@@ -208,7 +227,7 @@ begin
       --writeline(file_RESULTS, v_OLINE);
 
     
-      r <= v;
+      rin <= v;
 
       mAxisMaster <= v.master;
 
@@ -219,6 +238,13 @@ begin
      
     wait;
 
-  end process;
+   end process;
+
+   seq : process (sysClk) is
+   begin
+      if (rising_edge(sysClk)) then
+         r <= rin after TPD_G;
+      end if;
+   end process seq;
 
 end architecture rtl;

@@ -35,6 +35,10 @@ class AppLane(pr.Device):
         self.add(tt.Prescale( 
             offset = 0x20000, 
         ))
+
+        self.add(tt.ByPass( 
+            offset = 0x30000, 
+        ))
         
 class Application(pr.Device):
     def __init__(   self,       

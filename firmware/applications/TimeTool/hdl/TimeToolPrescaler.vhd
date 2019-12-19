@@ -104,11 +104,6 @@ architecture mapping of TimeToolPrescaler is
    signal inSlave  : AxiStreamSlaveType;
    signal outCtrl  : AxiStreamCtrlType;
 
-   component ila_1
-      port (clk    : sl;
-            probe0 : slv(127 downto 0));
-   end component;
-
 begin
 
    ---------------------------------
@@ -135,23 +130,6 @@ begin
 
 
    ---------------------------------
-   -- Xilinx debug integrated logic analyzer.
-   ---------------------------------
-   GEN_DEBUG : if DEBUG_G generate
-      U_ILA : ila_1
-         port map (clk                   => sysClk,
-                   probe0(31 downto 0)   => r.prescalingRate,
-                   probe0(63 downto 32)  => r.scratchPad,
-                   probe0(95 downto 64)  => r.counter,
-                   probe0(96)            => r.master.tLast,
-                   --probe0(671 downto 608)                   => r.master.tKeep,
-                   --probe0(607 downto 96)                    => r.master.tData,
-                   probe0(127 downto 97) => (others => '0'));
-   end generate;
-
-
-
-   ---------------------------------
    -- Application
    ---------------------------------
    comb : process (axilReadMaster, axilWriteMaster, inMaster, outCtrl, r,
@@ -170,8 +148,8 @@ begin
       -- Determine the transaction type
       axiSlaveWaitTxn(axilEp, axilWriteMaster, axilReadMaster, v.axilWriteSlave, v.axilReadSlave);
 
-      axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
-      axiSlaveRegister (axilEp, x"0004", 0, v.prescalingRate);
+      axiSlaveRegister (axilEp, x"000", 0, v.scratchPad);
+      axiSlaveRegister (axilEp, x"004", 0, v.prescalingRate);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
@@ -197,11 +175,17 @@ begin
                v.state := IDLE_S;
             end if;
 
+            v.slave.tReady  := '0';  --may need to be after v.state := IDLE_S statement
+
          when MOVE_S =>
             ------------------------------
             -- send regular frame
             ------------------------------
+            
+            ssiSetUserEofe(DMA_AXIS_CONFIG_G, v.master, '0'); -- side band data to batcher to indicate that the frame contains data
+
             v.validate_state(0) := '1';     --debugging signal
+            v.slave.tReady  := not outCtrl.pause;
             if v.slave.tReady = '1' and inMaster.tValid = '1' and v.counter = v.prescalingRate then
                v.master            := inMaster;  --copies one 'transfer' (trasnfer is the AXI jargon for one TVALID/TREADY transaction)
                v.validate_state(1) := '1';  --debugging signal               
@@ -219,6 +203,7 @@ begin
             ------------------------------
             -- send null frame
             ------------------------------
+            v.slave.tReady  := not outCtrl.pause;
             if v.slave.tReady = '1' and inMaster.tValid = '1' then
                v.master.tValid := '1';
                v.master.tLast  := '1';
@@ -235,7 +220,7 @@ begin
             end if;
 
          when BLOWOFF_S =>
-            if inMaster.tValid = '1' and inMaster.tLast = '1' then
+            if (inMaster.tValid = '1' and inMaster.tLast = '1') or (ssiGetUserEofe(DMA_AXIS_CONFIG_G, inMaster)='1') then
                v.state := IDLE_S;
             else
                v.master.tValid := '0';
