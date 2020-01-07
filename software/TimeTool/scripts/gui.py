@@ -5,13 +5,12 @@ import argparse
 
 import setupLibPaths
 import pyrogue.gui
+import pyrogue.pydm
 import timetool
-
-import lcls2_pgp_fw_lib
 
 import rogue
 
-rogue.Logging.setFilter('pyrogue.batcher', rogue.Logging.Debug)
+#rogue.Logging.setFilter('pyrogue.batcher', rogue.Logging.Debug)
 
 #################################################################
 
@@ -65,6 +64,11 @@ parser.add_argument(
     default  = False,
     help     = "Enable TimeToolRx module",
 )
+
+parser.add_argument(
+    "--serverPort",
+    type = int,
+    default = 9099)
   
 
 # Get the arguments
@@ -74,13 +78,15 @@ args = parser.parse_args()
 
 with timetool.TimeToolKcu1500Root(**vars(args)) as root:
 
-# Create GUI
-    appTop = pyrogue.gui.application(sys.argv)
-    guiTop = pyrogue.gui.GuiTop()
-    guiTop.addTree(root)
-    guiTop.resize(1000, 1000)
+    pyrogue.pydm.runPyDM(root=root)
 
-    # Run gui
-    appTop.exec_()
+# Create GUI
+  #   appTop = pyrogue.gui.application(sys.argv)
+#     guiTop = pyrogue.gui.GuiTop()
+#     guiTop.addTree(root)
+#     guiTop.resize(1000, 1000)
+
+#     # Run gui
+#     appTop.exec_()
 
 
