@@ -16,8 +16,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
--- SURF 
-
 library surf;
 use surf.StdRtlPkg.all;
 use surf.AxiLitePkg.all;
@@ -26,17 +24,12 @@ use surf.SsiPkg.all;
 
 library lcls2_pgp_fw_lib;
 
--- axi-pcie-core 
-
 library axi_pcie_core;
-use axi_pcie_core.AxiPciePkg.all;                -- KCU1500 version
-
--- lcls-timing-core
+use axi_pcie_core.AxiPciePkg.all;       -- KCU1500 version
 
 library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
 
--- applications/TimeTool
 library timetool;
 use timetool.AppPkg.all;
 
@@ -44,7 +37,7 @@ entity TimeToolKcu1500 is
    generic (
       TPD_G          : time    := 1 ns;
       ROGUE_SIM_EN_G : boolean := false;
-      PGP_TYPE_G     : boolean := false;  -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s
+      PGP_TYPE_G     : string  := "PGP2b";  -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s
       BUILD_INFO_G   : BuildInfoType);
    port (
       ---------------------
