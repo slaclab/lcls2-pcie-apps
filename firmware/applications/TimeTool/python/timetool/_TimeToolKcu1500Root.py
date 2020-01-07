@@ -31,8 +31,9 @@ class DataDebug(rogue.interfaces.stream.Slave):
     def _acceptFrame(self, frame):
         ba = bytearray(frame.getPayload())
         frame.read(ba, 0)
+        print('-------------------------')
         print(f'{self.name}: Got frame - {len(ba)} bytes')
-        print(ba)
+        #print(ba)
 
         lword = int.from_bytes(ba, 'little', signed=False)
         print(f'{lword:064_x}')
@@ -63,6 +64,8 @@ class DataDebug(rogue.interfaces.stream.Slave):
             e['header'] = getField(ti, 13, 6)
 
         print(d)
+        print('-------------------------')
+        print()
 
 
 
@@ -76,6 +79,9 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                  initRead    = True,            # Read all registers at start of the system
                  numLanes    = 1,
                  **kwargs):
+
+        if driverPath == 'sim':
+            kwargs['timeout'] = 100000000
         
         super().__init__(
             driverPath  = driverPath, 
