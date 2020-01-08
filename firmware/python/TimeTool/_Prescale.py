@@ -21,7 +21,7 @@ class Prescale(pr.Device):
         self.add(pr.RemoteVariable(   
             name         = 'ScratchPad',
             description  = 'Register to test reads and writes',
-            offset       = 0x0000,
+            offset       = 0x000,
             bitSize      = 32,
             bitOffset    = 0,
             mode         = 'RW',
@@ -31,7 +31,7 @@ class Prescale(pr.Device):
         self.add(pr.RemoteVariable(    
             name         = "DialInPreScaling",
             description  = 'TBD',
-            offset       =  0x0004,
+            offset       =  0x004,
             bitSize      =  32,
             bitOffset    =  0,
             mode         = "RW",

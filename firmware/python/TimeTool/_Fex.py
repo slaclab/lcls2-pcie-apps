@@ -11,6 +11,9 @@
 
 import pyrogue as pr
 
+import surf.protocols.batcher as batcher
+import TimeTool               as tt
+
 class Fex(pr.Device):
     def __init__(   self,       
             name        = "Fex",
@@ -18,21 +21,32 @@ class Fex(pr.Device):
             **kwargs):
         super().__init__(name=name, description=description, **kwargs) 
 
-        self.add(pr.RemoteVariable(   
-            name         = 'ScratchPad',
-            description  = 'Register to test reads and writes',
-            offset       = 0x0000,
-            bitSize      = 32,
-            bitOffset    = 0,
-            mode         = 'RW',
-            disp         = '{:#08x}',
-        ))           
+        #pre-scaler that is being used as a placeholder for the event code filter
 
-        self.add(pr.RemoteVariable(    
-            name         = "AddValue",
-            description  = 'TBD',
-            offset       =  0x0004,
-            bitSize      =  8,
-            bitOffset    =  0,
-            mode         = "RW",
+        self.add(batcher.AxiStreamBatcherEventBuilder( 
+                name         = 'EventBuilder', 
+                offset       = 0x0000, 
+                numberSlaves = 2,
+                tickUnit     = '156.25MHz',            
         ))
+            
+
+        self.add(tt.Prescale(
+            name   = 'EVC_placeholder',
+            offset = 0x1000, 
+        ))
+
+        self.add(tt.FIR( 
+            offset = 0x2000, 
+        ))
+
+        self.add(tt.FrameIIR( 
+            offset = 0x3000, 
+        ))
+
+        self.add(tt.Prescale(
+            name   = 'background_prescaler', 
+            offset = 0x6000,
+        ))
+
+
