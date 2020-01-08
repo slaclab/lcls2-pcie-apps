@@ -21,18 +21,26 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.AxiPkg.all;
-use work.SsiPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+use surf.AxiPkg.all;
+use surf.SsiPkg.all;
+
+library axi_pcie_core;
+use axi_pcie_core.AxiPciePkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
+use surf.Pgp2bPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
-use work.TestingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -125,7 +133,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk_2 : entity work.ClkRst
+   U_axilClk_2 : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 1  ns,
@@ -206,7 +214,7 @@ begin
    ---------------------------------
    -- Output FIFO
    ---------------------------------
-   U_OutFifo : entity work.AxiStreamFifoV2
+   U_OutFifo : entity surf.AxiStreamFifoV2
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,

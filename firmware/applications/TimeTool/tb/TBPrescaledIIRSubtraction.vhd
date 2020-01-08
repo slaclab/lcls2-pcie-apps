@@ -2,7 +2,7 @@
 -- File       : TimeToolKcu1500.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-10-24
--- Last update: 2018-11-08
+-- Last update: 2019-11-18
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -17,19 +17,26 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-
-use work.StdRtlPkg.all;
-use work.AxiPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
-use work.SsiPkg.all;
-use work.TestingPkg.all;
-
 use STD.textio.all;
 use ieee.std_logic_textio.all;
+
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+use surf.Pgp2bPkg.all;
+use surf.SsiPkg.all;
+
+library axi_pcie_core;
+use axi_pcie_core.AxiPciePkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 entity TBPrescaledIIRSubtraction is end TBPrescaledIIRSubtraction;
 
@@ -37,33 +44,33 @@ architecture testbed of TBPrescaledIIRSubtraction is
 
    constant TEST_OUTPUT_FILE_NAME : string := TEST_FILE_PATH & "/output_results.dat";
 
-   constant AXI_BASE_ADDR_G   : slv(31 downto 0) := x"00C0_0000";
+   constant AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000";
 
-   constant TPD_G             : time             := 1 ns;
+   constant TPD_G : time := 1 ns;
 
-   constant DMA_SIZE_C        : positive         := 1;
+   constant DMA_SIZE_C : positive := 1;
 
-   constant NUM_MASTERS_G     : positive         := 3;
+   constant NUM_MASTERS_G : positive := 3;
 
    ----------------------------
    ----------------------------
    ----------------------------
-   constant NUM_AXIL_MASTERS_C  : natural := 4;
+   constant NUM_AXIL_MASTERS_C : natural := 4;
 
-   constant PRESCALE_INDEX_C           : natural := 0;
-   constant NULL_FILTER_INDEX_C        : natural := 1;
-   constant FRAME_IIR_INDEX_C          : natural := 2;
-   constant FRAME_SUBTRACTOR_INDEX_C   : natural := 3;
+   constant PRESCALE_INDEX_C         : natural := 0;
+   constant NULL_FILTER_INDEX_C      : natural := 1;
+   constant FRAME_IIR_INDEX_C        : natural := 2;
+   constant FRAME_SUBTRACTOR_INDEX_C : natural := 3;
 
 
-   constant NUM_REPEATER_OUTS          : natural := 2;
+   constant NUM_REPEATER_OUTS : natural := 2;
 
 
    subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
 
-   constant AXIL_CONFIG_C  : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
 
- 
+
    ----------------------------
    ----------------------------
    ----------------------------
@@ -76,29 +83,29 @@ architecture testbed of TBPrescaledIIRSubtraction is
 
    constant SRC_CONFIG_C : AxiStreamConfigType := (
       TSTRB_EN_C    => false,
-      TDATA_BYTES_C => 4, -- 128 bits
+      TDATA_BYTES_C => 4,               -- 128 bits
       TDEST_BITS_C  => 0,
       TID_BITS_C    => 0,
       TKEEP_MODE_C  => TKEEP_COMP_C,
       TUSER_BITS_C  => 2,
       TUSER_MODE_C  => TUSER_FIRST_LAST_C);
 
-   signal userClk156   : sl;
-   signal dmaClk       : sl;
-   signal dmaRst       : sl;
+   signal userClk156 : sl;
+   signal dmaClk     : sl;
+   signal dmaRst     : sl;
 
    signal appInMaster  : AxiStreamMasterType;
    signal appInSlave   : AxiStreamSlaveType;
    signal appOutMaster : AxiStreamMasterType;
    signal appOutSlave  : AxiStreamSlaveType;
 
-   signal PrescalerToNullFilterMaster  : AxiStreamMasterType;
-   signal PrescalerToNullFilterSlave   : AxiStreamSlaveType;
+   signal PrescalerToNullFilterMaster : AxiStreamMasterType;
+   signal PrescalerToNullFilterSlave  : AxiStreamSlaveType;
 
-   signal NullFilterToFrameIIRMaster  : AxiStreamMasterType;
-   signal NullFilterToFrameIIRSlave   : AxiStreamSlaveType;
+   signal NullFilterToFrameIIRMaster : AxiStreamMasterType;
+   signal NullFilterToFrameIIRSlave  : AxiStreamSlaveType;
 
-   signal FrameIIRToSubtractorMaster  : AxiStreamMasterType;
+   signal FrameIIRToSubtractorMaster : AxiStreamMasterType;
    signal FrameIIRToSubtractorSlave  : AxiStreamSlaveType;
 
 
@@ -120,11 +127,11 @@ architecture testbed of TBPrescaledIIRSubtraction is
    signal dataIbMasters : AxiStreamMasterArray(REPEATER_INDEX_RANGE_C);
    signal dataIbSlaves  : AxiStreamSlaveArray(REPEATER_INDEX_RANGE_C);
 
-   signal axiClk   : sl;
-   signal axiRst   : sl;
+   signal axiClk : sl;
+   signal axiRst : sl;
 
-   signal axilClk   : sl;
-   signal axilRst   : sl;
+   signal axilClk : sl;
+   signal axilRst : sl;
 
    file file_RESULTS : text;
 
@@ -134,11 +141,11 @@ begin
    appInSlave.tReady  <= '1';
    axilClk            <= axiClk;
    axilRst            <= axiRst;
-   
+
    --------------------
    -- AXI-Lite Crossbar
    --------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -159,7 +166,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk_2 : entity work.ClkRst
+   U_axilClk_2 : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -172,7 +179,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk : entity work.ClkRst
+   U_axilClk : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -185,21 +192,21 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStreamSim
-         generic map (
-            TPD_G         => TPD_G,
-            BYTE_SIZE_C   => 2+1,
-            AXIS_CONFIG_G => SRC_CONFIG_C)
-         port map (
-            axiClk      => axiClk,
-            axiRst      => axiRst,
-            mAxisMaster => appInMaster,
-            mAxisSlave  => appInSlave);
+   U_CamOutput : entity timetool.FileToAxiStreamSim
+      generic map (
+         TPD_G         => TPD_G,
+         BYTE_SIZE_C   => 2+1,
+         AXIS_CONFIG_G => SRC_CONFIG_C)
+      port map (
+         axiClk      => axiClk,
+         axiRst      => axiRst,
+         mAxisMaster => appInMaster,
+         mAxisSlave  => appInSlave);
 
    ----------------------
    -- AXI Stream Repeater
    ----------------------
-   U_AxiStreamRepeater : entity work.AxiStreamRepeater
+   U_AxiStreamRepeater : entity surf.AxiStreamRepeater
       generic map (
          TPD_G         => TPD_G,
          NUM_MASTERS_G => 2)
@@ -219,14 +226,14 @@ begin
    ----------------------------------------    
    GEN_IB :
    for i in REPEATER_INDEX_RANGE_C generate
-      U_FIFO : entity work.AxiStreamFifoV2
+      U_FIFO : entity surf.AxiStreamFifoV2
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
             SLAVE_READY_EN_G    => true,
             VALID_THOLD_G       => 1,
             -- FIFO configurations
-            BRAM_EN_G           => true,
+            MEMORY_TYPE_G       => "block",
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 9,
             -- AXI Stream Port Configurations
@@ -250,7 +257,7 @@ begin
    --------------------  
 
 
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   U_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -269,7 +276,7 @@ begin
          axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
 
-   U_NullPacketFilter : entity work.NullPacketFilter
+   U_NullPacketFilter : entity timetool.NullPacketFilter
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -289,7 +296,7 @@ begin
          axilWriteSlave  => axilWriteSlaves(NULL_FILTER_INDEX_C));
 
 
-   U_FrameIIR : entity work.FrameIIR
+   U_FrameIIR : entity timetool.FrameIIR
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -308,7 +315,7 @@ begin
          axilWriteMaster => axilWriteMasters(FRAME_IIR_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(FRAME_IIR_INDEX_C));
 
-   U_FrameSubtractor : entity work.FrameSubtractor
+   U_FrameSubtractor : entity timetool.FrameSubtractor
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -322,15 +329,15 @@ begin
          dataOutMaster    => appOutMaster,
          dataOutSlave     => appOutSlave,
          -- Pedestal DMA Interfaces  (sysClk domain)
-         pedestalInMaster =>  FrameIIRToSubtractorMaster,
-         pedestalInSlave  =>  FrameIIRToSubtractorSlave,
+         pedestalInMaster => FrameIIRToSubtractorMaster,
+         pedestalInSlave  => FrameIIRToSubtractorSlave,
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMasters(FRAME_SUBTRACTOR_INDEX_C),
-         axilReadSlave   => axilReadSlaves(FRAME_SUBTRACTOR_INDEX_C),
-         axilWriteMaster => axilWriteMasters(FRAME_SUBTRACTOR_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(FRAME_SUBTRACTOR_INDEX_C));
+         axilReadMaster   => axilReadMasters(FRAME_SUBTRACTOR_INDEX_C),
+         axilReadSlave    => axilReadSlaves(FRAME_SUBTRACTOR_INDEX_C),
+         axilWriteMaster  => axilWriteMasters(FRAME_SUBTRACTOR_INDEX_C),
+         axilWriteSlave   => axilWriteSlaves(FRAME_SUBTRACTOR_INDEX_C));
 
-  ---------------------------------
+   ---------------------------------
    -- AXI-Lite Register Transactions
    ---------------------------------
    test : process is
@@ -345,6 +352,7 @@ begin
 
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"5", true);  --prescaler
       axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C2_0004", x"3", true);  --iir time constant
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C3_0004", x"1", true);  --do subtraction
 
    end process test;
 
@@ -352,10 +360,10 @@ begin
    -- save_file
    ---------------------------------
    save_to_file : process is
-      variable to_file              : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
-      variable v_OLINE              : line; 
-      constant c_WIDTH              : natural := 128;
-      constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
+      variable to_file           : AxiStreamMasterType      := AXI_STREAM_MASTER_INIT_C;
+      variable v_OLINE           : line;
+      constant c_WIDTH           : natural                  := 128;
+      constant test_data_to_file : slv(c_WIDTH -1 downto 0) := (others => '0');
 
    begin
 
@@ -365,14 +373,14 @@ begin
 
       while true loop
 
-            --write(v_OLINE, appInMaster.tData(c_WIDTH -1 downto 0), right, c_WIDTH);
-            write(v_OLINE, appOutMaster.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
-            writeline(file_RESULTS, v_OLINE);
+         --write(v_OLINE, appInMaster.tData(c_WIDTH -1 downto 0), right, c_WIDTH);
+         write(v_OLINE, appOutMaster.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
+         writeline(file_RESULTS, v_OLINE);
 
-            wait for CLK_PERIOD_G;
+         wait for CLK_PERIOD_G;
 
       end loop;
-      
+
       file_close(file_RESULTS);
 
    end process save_to_file;

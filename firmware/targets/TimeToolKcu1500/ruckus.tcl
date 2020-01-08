@@ -9,14 +9,14 @@ loadRuckusTcl $::env(PROJ_DIR)/../../submodules/lcls2-pgp-fw-lib/hardware/Xilinx
 loadRuckusTcl $::env(PROJ_DIR)/../../applications
 
 # Load the l2si-core source code
-loadSource -dir "$::env(PROJ_DIR)/../../submodules/l2si-core/xpm/rtl"
-loadSource -dir "$::env(PROJ_DIR)/../../submodules/l2si-core/base/rtl"
+loadSource -lib l2si_core -dir "$::env(PROJ_DIR)/../../submodules/l2si-core/xpm/rtl"
+loadSource -lib l2si_core -dir "$::env(PROJ_DIR)/../../submodules/l2si-core/base/rtl"
 
 # Load local source Code and constraints
-loadSource -dir "$::DIR_PATH/hdl"
+loadSource -lib timetool -dir "$::DIR_PATH/hdl"
 
 # Load Simulation
-loadSource -sim_only -dir "$::DIR_PATH/tb"
+loadSource -lib timetool -sim_only -dir "$::DIR_PATH/tb"
 set_property top {TimeToolKcu1500VcsTb} [get_filesets sim_1]
 
 # Updating impl_1 strategy

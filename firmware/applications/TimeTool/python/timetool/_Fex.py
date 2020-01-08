@@ -12,7 +12,7 @@
 import pyrogue as pr
 
 import surf.protocols.batcher as batcher
-import TimeTool               as tt
+import timetool               as tt
 
 class Fex(pr.Device):
     def __init__(   self,       
@@ -49,4 +49,7 @@ class Fex(pr.Device):
             offset = 0x6000,
         ))
 
+        self.add(tt.FrameSubtractor( 
+            offset = 0x7000, 
+        ))
 

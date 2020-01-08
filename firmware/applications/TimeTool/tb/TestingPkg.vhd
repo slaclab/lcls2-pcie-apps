@@ -14,15 +14,17 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.StdRtlPkg.all;
-use work.AxiStreamPkg.all;
-use work.SsiPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiStreamPkg.all;
+use surf.SsiPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
 
 package TestingPkg is
 
-   constant TEST_FILE_PATH : string := "/u1/sioan/slaclab/lcls2-pcie-apps";
+   constant TEST_FILE_PATH : string := "../../../../firmware/..";
    
 end package TestingPkg;

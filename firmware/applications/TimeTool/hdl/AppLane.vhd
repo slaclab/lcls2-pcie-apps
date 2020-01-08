@@ -16,11 +16,16 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.AppPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+
+
+library timetool;
+use timetool.AppPkg.all;
 
 entity AppLane is
    generic (
@@ -40,8 +45,8 @@ entity AppLane is
       pgpObMasters    : in  AxiStreamQuadMasterType;
       pgpObSlaves     : out AxiStreamQuadSlaveType;
       -- Trigger Event streams (axilClk domain)
-      trigMaster      : in  AxiStreamMasterType;
-      trigSlave       : out AxiStreamSlaveType;
+      eventAxisMaster : in  AxiStreamMasterType;
+      eventAxisSlave  : out AxiStreamSlaveType;
       -- DMA Interface (dmaClk domain)
       dmaClk          : in  sl;
       dmaRst          : in  sl;
@@ -67,14 +72,14 @@ begin
    -----------------------
    -- DMA to HW ASYNC FIFO
    -----------------------
-   U_DMA_to_HW : entity work.AxiStreamFifoV2
+   U_DMA_to_HW : entity surf.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         MEMORY_TYPE_G       => "block",
          GEN_SYNC_FIFO_G     => false,
          FIFO_ADDR_WIDTH_G   => 9,
          -- AXI Stream Port Configurations
@@ -95,7 +100,7 @@ begin
    -----------------
    -- Time Tool Core
    -----------------
-   U_TimeToolCore : entity work.TimeToolCore
+   U_TimeToolCore : entity timetool.TimeToolCore
       generic map (
          TPD_G           => TPD_G,
          AXI_BASE_ADDR_G => AXI_BASE_ADDR_G)
@@ -104,13 +109,13 @@ begin
          axilClk         => axilClk,
          axilRst         => axilRst,
          -- Trigger Event streams (axilClk domain)
-         trigMaster      => trigMaster,
-         trigSlave       => trigSlave,
+         eventAxisMaster => eventAxisMaster,  -- [in]
+         eventAxisSlave  => eventAxisSlave,   -- [out]
          -- DMA Interface (sysClk domain)
-         dataInMaster    => pgpObMasters(1),
-         dataInSlave     => pgpObSlaves(1),
-         eventMaster     => eventMaster,
-         eventSlave      => eventSlave,
+         dataInMaster    => pgpObMasters(1),  -- [in]
+         dataInSlave     => pgpObSlaves(1),   -- [out]
+         eventMaster     => eventMaster,      -- [out]
+         eventSlave      => eventSlave,       -- [in]
          -- AXI-Lite Interface (sysClk domain)
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
@@ -120,17 +125,17 @@ begin
    -------------------------------------
    -- Burst Fifo before interleaving MUX
    -------------------------------------
-   U_FIFO : entity work.AxiStreamFifoV2
+   U_FIFO : entity surf.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
          INT_PIPE_STAGES_G   => 1,
          PIPE_STAGES_G       => 1,
          SLAVE_READY_EN_G    => true,
-         VALID_THOLD_G       => 128,  -- Hold until enough to burst into the interleaving MUX
+         VALID_THOLD_G       => 128,    -- Hold until enough to burst into the interleaving MUX
          VALID_BURST_MODE_G  => true,
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         MEMORY_TYPE_G       => "block",
          GEN_SYNC_FIFO_G     => true,
          FIFO_ADDR_WIDTH_G   => 9,
          -- AXI Stream Port Configurations
@@ -151,7 +156,7 @@ begin
    -----------------
    -- AXI Stream MUX
    -----------------
-   U_Mux : entity work.AxiStreamMux
+   U_Mux : entity surf.AxiStreamMux
       generic map (
          TPD_G                => TPD_G,
          NUM_SLAVES_G         => 4,
@@ -180,7 +185,7 @@ begin
    -----------------------
    -- App to DMA ASYNC FIFO
    -----------------------
-   U_APP_to_DMA : entity work.AxiStreamFifoV2
+   U_APP_to_DMA : entity surf.AxiStreamFifoV2
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
@@ -189,7 +194,7 @@ begin
          SLAVE_READY_EN_G    => true,
          VALID_THOLD_G       => 1,
          -- FIFO configurations
-         BRAM_EN_G           => true,
+         MEMORY_TYPE_G       => "block",
          GEN_SYNC_FIFO_G     => false,
          FIFO_ADDR_WIDTH_G   => 9,
          -- AXI Stream Port Configurations

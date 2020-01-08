@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
-import setupLibPaths
-import pyrogue.gui
-import TimeToolDev
+
 import sys
 import argparse
+
+import setupLibPaths
+import pyrogue.gui
+import pyrogue.pydm
+import timetool
+
+import rogue
+
+#rogue.Logging.setFilter('pyrogue.batcher', rogue.Logging.Debug)
 
 #################################################################
 
@@ -13,9 +20,13 @@ parser = argparse.ArgumentParser()
 # Convert str to bool
 argBool = lambda s: s.lower() in ['true', 't', 'yes', '1']
 
+def auto_int(x):
+    return int (x,0)
+
 # Add arguments
 parser.add_argument(
-    "--dev", 
+    "--dev",
+    dest     = 'driverPath',
     type     = str,
     required = False,
     default  = '/dev/datadev_0',
@@ -23,7 +34,7 @@ parser.add_argument(
 )  
 
 parser.add_argument(
-    "--version3", 
+    "--pgp3", 
     type     = argBool,
     required = False,
     default  = False,
@@ -34,7 +45,7 @@ parser.add_argument(
     "--pollEn", 
     type     = argBool,
     required = False,
-    default  = True,
+    default  = False,
     help     = "Enable auto-polling",
 ) 
 
@@ -42,7 +53,7 @@ parser.add_argument(
     "--initRead", 
     type     = argBool,
     required = False,
-    default  = True,
+    default  = False,
     help     = "Enable read all variables at start",
 )  
 
@@ -50,32 +61,32 @@ parser.add_argument(
     "--dataDebug", 
     type     = argBool,
     required = False,
-    default  = True,
+    default  = False,
     help     = "Enable TimeToolRx module",
-)  
+)
+
+parser.add_argument(
+    "--serverPort",
+    type = int,
+    default = 9099)
+  
 
 # Get the arguments
 args = parser.parse_args()
 
 #################################################################
 
-cl = TimeToolDev.TimeToolDev(
-    dev       = args.dev,
-    dataDebug = args.dataDebug,
-    version3  = args.version3,
-    pollEn    = args.pollEn,
-    initRead  = args.initRead,
-)
+with timetool.TimeToolKcu1500Root(**vars(args)) as root:
 
-#################################################################
+    pyrogue.pydm.runPyDM(root=root)
 
 # Create GUI
-appTop = pyrogue.gui.application(sys.argv)
-guiTop = pyrogue.gui.GuiTop(group='TimeToolDev')
-guiTop.addTree(cl)
-guiTop.resize(800, 1000)
+  #   appTop = pyrogue.gui.application(sys.argv)
+#     guiTop = pyrogue.gui.GuiTop()
+#     guiTop.addTree(root)
+#     guiTop.resize(1000, 1000)
 
-# Run gui
-appTop.exec_()
-cl.stop()
+#     # Run gui
+#     appTop.exec_()
+
 

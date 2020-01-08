@@ -18,14 +18,22 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.StdRtlPkg.all;
-use work.AxiPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
-use work.SsiPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+
+library axi_pcie_core;
+use axi_pcie_core.AxiPciePkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
+use surf.Pgp2bPkg.all;
+use surf.SsiPkg.all;
+
+library timetool; 
 
 entity TimeToolFEX_placeholderTB is end TimeToolFEX_placeholderTB;
 
@@ -95,7 +103,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk_2 : entity work.ClkRst
+   U_axilClk_2 : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -108,7 +116,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk : entity work.ClkRst
+   U_axilClk : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -121,7 +129,7 @@ begin
    -- Test data
    --------------------  
 
-   --   U_PackTx : entity work.AxiStreamBytePackerTbTx
+   --   U_PackTx : entity surf.AxiStreamBytePackerTbTx
    --      generic map (
    --         TPD_G         => TPD_G,
    --         BYTE_SIZE_C   => 2+1,
@@ -135,7 +143,7 @@ begin
    -- Modules to be tested
    --------------------  
 
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -153,7 +161,7 @@ begin
          mAxiReadMasters     => intReadMasters,
          mAxiReadSlaves      => intReadSlaves);
 
-   U_TimeToolCore : entity work.TimeToolCore
+   U_TimeToolCore : entity timetool.TimeToolCore
       generic map (
          TPD_G           => TPD_G,
          AXI_BASE_ADDR_G => AXI_CONFIG_C(1).baseAddr)

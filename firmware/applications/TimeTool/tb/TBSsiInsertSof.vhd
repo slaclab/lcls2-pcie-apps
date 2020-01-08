@@ -18,42 +18,48 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+use work.StdRtlPkg.all;
+use work.AxiPkg.all;
+use work.AxiLitePkg.all;
+use work.AxiStreamPkg.all;
+use work.AxiPciePkg.all;
+use work.TimingPkg.all;
+use work.Pgp2bPkg.all;
+use work.SsiPkg.all;
+use work.TestingPkg.all;
 
-library surf;
-use surf.StdRtlPkg.all;
-use surf.AxiPkg.all;
-use surf.AxiLitePkg.all;
-use surf.AxiStreamPkg.all;
+entity TBSsiInsertSof is end TBSsiInsertSof;
 
-library axi_pcie_core;
-use axi_pcie_core.AxiPciePkg.all;
+architecture testbed of TBSsiInsertSof is
 
-library lcls_timing_core;
-use lcls_timing_core.TimingPkg.all;
-use surf.Pgp2bPkg.all;
-use surf.SsiPkg.all;
+   constant AXI_BASE_ADDR_G   : slv(31 downto 0) := x"00C0_0000";
 
-library timetool;
-use timetool.TestingPkg.all;
+   constant TPD_G             : time             := 1 ns;
 
-use STD.textio.all;
-use ieee.std_logic_textio.all;
+   constant DMA_SIZE_C        : positive         := 1;
 
-entity TBIIR_filter is end TBIIR_filter;
+   constant NUM_AXI_MASTERS_C : positive         := 3;
+   constant NUM_MASTERS_G     : positive         := 3;
 
-architecture testbed of TBIIR_filter is
+   ----------------------------
+   ----------------------------
+   ----------------------------
+   constant NUM_AXIL_MASTERS_C : natural := NUM_MASTERS_G;
 
-   constant TEST_OUTPUT_FILE_NAME : string := TEST_FILE_PATH & "/output_results.dat";
+   constant PRESCALE_INDEX_C    : natural := 0;
+   constant NULL_FILTER_INDEX_C : natural := 1;
+   constant HEADER_APPENDER_C   : natural := 2;
 
-   constant TPD_G             : time := 1 ns;
-   --constant BUILD_INFO_G      : BuildInfoType;
+   subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
 
-   constant DMA_SIZE_C        : positive := 1;
+   constant AXIL_CONFIG_C  : AxiLiteCrossbarMasterConfigArray(AXIL_INDEX_RANGE_C) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
 
-   constant NUM_AXI_MASTERS_C : positive := 2;
-   constant NUM_MASTERS_G     : positive := 2;
+ 
+   ----------------------------
+   ----------------------------
+   ----------------------------
 
-   constant DMA_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);  -- 16 byte (128-bit) AXIS interface
+
    constant DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
 
    constant CLK_PERIOD_G : time := 10 ns;
@@ -76,24 +82,58 @@ architecture testbed of TBIIR_filter is
    signal appOutMaster : AxiStreamMasterType;
    signal appOutSlave  : AxiStreamSlaveType;
 
+   signal PrescalerToNullFilterMaster  : AxiStreamMasterType;
+   signal PrescalerToNullFilterSlave   : AxiStreamSlaveType;
+
    signal axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal axilWriteSlave  : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
    signal axilReadMaster  : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
    signal axilReadSlave   : AxiLiteReadSlaveType   := AXI_LITE_READ_SLAVE_INIT_C;
 
+   signal axilWriteMasters : AxiLiteWriteMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(AXIL_INDEX_RANGE_C);
+   signal axilReadMasters  : AxiLiteReadMasterArray(AXIL_INDEX_RANGE_C);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(AXIL_INDEX_RANGE_C);
+
+
+
    signal axiClk   : sl;
    signal axiRst   : sl;
 
-   file file_RESULTS : text;
+   signal axilClk   : sl;
+   signal axilRst   : sl;
 
 begin
 
    appOutSlave.tReady <= '1';
+   axilClk            <= axiClk;
+   axilRst            <= axiRst;
+   
+   --------------------
+   -- AXI-Lite Crossbar
+   --------------------
+   U_XBAR : entity work.AxiLiteCrossbar
+      generic map (
+         TPD_G              => TPD_G,
+         NUM_SLAVE_SLOTS_G  => 1,
+         NUM_MASTER_SLOTS_G => NUM_AXIL_MASTERS_C,
+         MASTERS_CONFIG_G   => AXIL_CONFIG_C)
+      port map (
+         axiClk              => axilClk,
+         axiClkRst           => axilRst,
+         sAxiWriteMasters(0) => axilWriteMaster,
+         sAxiWriteSlaves(0)  => axilWriteSlave,
+         sAxiReadMasters(0)  => axilReadMaster,
+         sAxiReadSlaves(0)   => axilReadSlave,
+         mAxiWriteMasters    => axilWriteMasters,
+         mAxiWriteSlaves     => axilWriteSlaves,
+         mAxiReadMasters     => axilReadMasters,
+         mAxiReadSlaves      => axilReadSlaves);
 
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk_2 : entity surf.ClkRst
+   U_axilClk_2 : entity work.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -106,7 +146,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk : entity surf.ClkRst
+   U_axilClk : entity work.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -119,7 +159,8 @@ begin
    -- Test data
    --------------------  
 
-        U_CamOutput : entity timetool.FileToAxiStreamSim
+
+      U_CamOutput : entity work.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,
             BYTE_SIZE_C   => 2+1,
@@ -135,7 +176,7 @@ begin
    --------------------  
 
 
-   U_FrameIIR : entity timetool.FrameIIR
+   U_TimeToolPrescaler : entity work.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -146,15 +187,33 @@ begin
          -- DMA Interface (sysClk domain)
          dataInMaster    => appInMaster,
          dataInSlave     => appInSlave,
-         dataOutMaster   => appOutMaster,
-         dataOutSlave    => appOutSlave,
+         dataOutMaster   => PrescalerToNullFilterMaster,
+         dataOutSlave    => PrescalerToNullFilterSlave,
          -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster  => axilReadMaster,
-         axilReadSlave   => axilReadSlave,
-         axilWriteMaster => axilWriteMaster,
-         axilWriteSlave  => axilWriteSlave);
+         axilReadMaster  => axilReadMasters(PRESCALE_INDEX_C),
+         axilReadSlave   => axilReadSlaves(PRESCALE_INDEX_C),
+         axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
 
-  ---------------------------------
+   U_HEADER_APPENDER : entity work.SsiInsertSof
+      generic map (
+         COMMON_CLK_G       => true,
+         INSERT_USER_HDR_G  => true,
+         SLAVE_FIFO_G       => false,
+         MASTER_FIFO_G      => false)
+      port map (
+         -- System Clock and Reset
+         sAxisClk        => dmaClk,
+         SAxisRst        => dmaRst,
+         mAxisClk        => dmaClk,
+         mAxisRst        => dmaRst,
+         -- DMA Interface (sysClk domain)
+         sAxisMaster     => PrescalerToNullFilterMaster,
+         sAxisSlave      => PrescalerToNullFilterSlave,
+         mUserHdr        => (5 downto 3 =>'1',others => '0'),
+         mAxisMaster     => appOutMaster,
+         mAxisSlave      => appOutSlave);  
+---------------------------------
    -- AXI-Lite Register Transactions
    ---------------------------------
    test : process is
@@ -167,40 +226,8 @@ begin
       wait until axiRst = '1';
       wait until axiRst = '0';
 
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"0000_0000", x"7", true);
-      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"0000_0004", x"2", true);
+      axiLiteBusSimWrite (axiClk, axilWriteMaster, axilWriteSlave, x"00C0_0004", x"7", true);
 
    end process test;
-
-   ---------------------------------
-   -- save_file
-   ---------------------------------
-   save_to_file : process is
-      variable to_file              : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
-      variable v_OLINE              : line; 
-      constant c_WIDTH              : natural := 128;
-      constant test_data_to_file    : slv(c_WIDTH -1 downto 0) := (others => '0');
-
-   begin
-
-      to_file := appOutMaster;
-
-      file_open(file_RESULTS, TEST_OUTPUT_FILE_NAME, write_mode);
-
-      while true loop
-
-            --write(v_OLINE, appInMaster.tData(c_WIDTH -1 downto 0), right, c_WIDTH);
-            write(v_OLINE, appOutMaster.tData(c_WIDTH-1 downto 0), right, c_WIDTH);
-            writeline(file_RESULTS, v_OLINE);
-
-            wait for CLK_PERIOD_G;
-
-      end loop;
-      
-      file_close(file_RESULTS);
-
-   end process save_to_file;
-
-
 
 end testbed;
