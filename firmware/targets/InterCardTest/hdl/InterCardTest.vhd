@@ -241,12 +241,12 @@ begin
          mAxisMaster      => strIbMasters(0),
          mAxisSlave       => strIbSlaves(0),
          -- AXI4 Interfaces (axiClk domain)
-         axiClk          => dmaClk,
-         axiRst          => dmaRst,
-         sAxiWriteMaster => pipIbMaster,
-         sAxiWriteSlave  => pipIbSlave,
-         mAxiWriteMaster => pipObMaster,
-         mAxiWriteSlave  => pipObSlave); 
+         axiClk           => dmaClk,
+         axiRst           => dmaRst,
+         axiWriteMaster   => pipIbMaster,
+         axiWriteSlave    => pipIbSlave,
+         --axiReadMaster    => pipObMaster,
+         --axiReadSlave     => pipObSlave); 
 
    U_PrbsTx: entity work.SsiPrbsTx 
       generic map (
