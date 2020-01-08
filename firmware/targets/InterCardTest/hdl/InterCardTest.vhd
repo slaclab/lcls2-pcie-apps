@@ -99,6 +99,11 @@ architecture top_level of InterCardTest is
    signal pipObMaster : AxiWriteMasterType;
    signal pipObSlave  : AxiWriteSlaveType;
 
+   signal usrReadMaster  : AxiReadMasterType;
+   signal usrReadSlave   : AxiReadSlaveType;
+   signal usrWriteMaster : AxiWriteMasterType;
+   signal usrWriteSlave  : AxiWriteSlaveType;
+
    signal strObMasters : AxiStreamMasterArray(0 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal strObSlaves  : AxiStreamSlaveArray(0 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
    signal strIbMasters : AxiStreamMasterArray(0 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
@@ -156,11 +161,11 @@ begin
          dmaObSlaves    => dmaObSlaves,
          dmaIbMasters   => dmaIbMasters,
          dmaIbSlaves    => dmaIbSlaves,
-         -- PIP Interface [0x00080000:0008FFFF] (dmaClk domain)
-         pipIbMaster    => pipIbMaster,
-         pipIbSlave     => pipIbSlave,
-         pipObMaster    => pipObMaster,
-         pipObSlave     => pipObSlave,
+         -- User General Purpose AXI4 Interfaces (dmaClk domain)
+         usrReadMaster   => usrReadMaster,
+         usrReadSlave    => usrReadSlave,
+         usrWriteMaster  => usrWriteMaster,
+         usrWriteSlave   => usrWriteSlave,
          -- AXI-Lite Interface
          appClk         => axilClk,
          appRst         => axilRst,
@@ -243,10 +248,10 @@ begin
          -- AXI4 Interfaces (axiClk domain)
          axiClk           => dmaClk,
          axiRst           => dmaRst,
-         axiWriteMaster   => pipIbMaster,
-         axiWriteSlave    => pipIbSlave,
-         --axiReadMaster    => pipObMaster,
-         --axiReadSlave     => pipObSlave); 
+         axiWriteMaster   => userWriteMaster,
+         axiWriteSlave    => userWriteSlave,
+         axiReadMaster    => userReadMaster,
+         axiReadSlave     => userReadSlave);
 
    U_PrbsTx: entity work.SsiPrbsTx 
       generic map (
