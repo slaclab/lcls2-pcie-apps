@@ -46,8 +46,9 @@ class DataDebug(rogue.interfaces.stream.Slave):
         d['triggerInfo'] = getField(lword, 151, 136)
         d['type'] = 'Event' if d['triggerInfo']&0x8000 else 'Transition'
         
-        d['count'] = getField(lword, 159, 152)
-        d['version'] = getField(lword, 167, 160)
+        d['count'] = getField(lword, 175, 152)
+        d['version'] = getField(lword, 183, 176)
+        d['payload'] = getField(lword, 191, 184)
         
         d['wordDecode'] = e = {}
         ti = d['triggerInfo']
