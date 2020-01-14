@@ -12,6 +12,8 @@ import surf.axi               as axi
 import surf.protocols.batcher as batcher
 import LclsTimingCore         as timingCore
 
+#test conda build sh comment
+
 class TimeToolDev(kcu1500.Core):
 
     def __init__(self,
@@ -23,6 +25,7 @@ class TimeToolDev(kcu1500.Core):
             pollEn      = True,            # Enable automatic polling registers
             initRead    = True,            # Read all registers at start of the system
             numLane     = 1,               # Number of PGP lanes
+            enVcMask    = 0xff,             # channel to ignore for pgp read to work
             **kwargs
         ):
         super().__init__(
@@ -33,6 +36,7 @@ class TimeToolDev(kcu1500.Core):
             pollEn      = pollEn, 
             initRead    = initRead, 
             numLane     = numLane, 
+            enVcMask    = enVcMask,
             **kwargs
         )
         self.dev    = dev,
@@ -180,14 +184,14 @@ class TimeToolDev(kcu1500.Core):
             for lane in range(numLane):
                 self.ClinkFeb[lane].ClinkTop.Ch[0].BaudRate.set(9600)
                 self.ClinkFeb[lane].ClinkTop.Ch[0].SerThrottle.set(10000)
-                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
+                #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
                 self.ClinkFeb[lane].ClinkTop.Ch[0].LinkMode.setDisp('Full')
                 self.ClinkFeb[lane].ClinkTop.Ch[0].DataMode.setDisp('8Bit')
                 self.ClinkFeb[lane].ClinkTop.Ch[0].FrameMode.setDisp('Line')
                 self.ClinkFeb[lane].ClinkTop.Ch[0].TapCount.set(8)                    
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SendEscape()
                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SPF.setDisp('0')
-                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
+                #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
         else:
             # Disable the PGP PHY device (speed up the simulation)
             self.Hardware.enable.set(False)

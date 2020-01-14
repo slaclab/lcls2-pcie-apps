@@ -56,7 +56,7 @@ architecture mapping of TimeToolCore is
    constant EVENT_INDEX_C      : natural  := 0;
    constant FEX_INDEX_C        : natural  := 1;
    constant PRESCALE_INDEX_C   : natural  := 2;
-   constant BYPASS_INDEX_C     : natural  := 3;
+   constant BYPASS_INDEX_C     : natural  := 3; --this has been removed.  was causing first pixel in camera to get duplicated
 
    subtype  AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
 
@@ -81,46 +81,15 @@ architecture mapping of TimeToolCore is
    signal dspMasters                  : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
    signal dspSlaves                   : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal byPassToTimeToolMaster      : AxiStreamMasterType;
-   signal byPassToTimeToolSlave       : AxiStreamSlaveType;
+   signal byPassToTimeToolMaster      : AxiStreamMasterType;  --this has been removed.  was causing first pixel in camera to get duplicated
+   signal byPassToTimeToolSlave       : AxiStreamSlaveType;   --this has been removed.  was causing first pixel in camera to get duplicated
 
-   signal timeToolToByPassMaster      : AxiStreamMasterType;
-   signal timeToolToByPassSlave       : AxiStreamSlaveType;
+   signal timeToolToByPassMaster      : AxiStreamMasterType;  --this has been removed.  was causing first pixel in camera to get duplicated
+   signal timeToolToByPassSlave       : AxiStreamSlaveType;   --this has been removed.  was causing first pixel in camera to get duplicated
 
 
 
 begin
-
-   -------------
-   -- ByPass Module
-   -------------
-   U_TimetoolBypass : entity work.TimetoolBypass
-      generic map (
-         TPD_G                => TPD_G,
-         DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_C)
-      port map (
-         -- System Clock and Reset
-         sysClk               => axilClk,
-         sysRst               => axilRst,
-         -- DMA Interface (sysClk domain)
-         dataInMaster         => dataInMaster,
-         dataInSlave          => dataInSlave,
-         dataOutMaster        => eventMaster,
-         dataOutSlave         => eventSlave,
-
-         fromTimeToolMaster   => timeToolToByPassMaster,
-         fromTimeToolSlave    => timeToolToByPassSlave,
-
-         toTimeToolMaster     => byPassToTimeToolMaster,
-         toTimeToolSlave      => byPassToTimeToolSlave,
-
-
-         -- AXI-Lite Interface (sysClk domain)
-         axilReadMaster       => axilReadMasters(BYPASS_INDEX_C),
-         axilReadSlave        => axilReadSlaves(BYPASS_INDEX_C),
-         axilWriteMaster      => axilWriteMasters(BYPASS_INDEX_C),
-         axilWriteSlave       => axilWriteSlaves(BYPASS_INDEX_C));
-
 
    ----------------------
    -- AXI Stream Repeater
@@ -134,8 +103,8 @@ begin
          axisClk      => axilClk,
          axisRst      => axilRst,
          -- Slave
-         sAxisMaster  => byPassToTimeToolMaster,
-         sAxisSlave   => byPassToTimeToolSlave,
+         sAxisMaster  => dataInMaster,
+         sAxisSlave   => dataInSlave,
          -- Masters
          mAxisMasters => dataInMasters,
          mAxisSlaves  => dataInSlaves);
@@ -293,7 +262,7 @@ begin
          sAxisSlaves(EVENT_INDEX_C)      => trigSlave,
          sAxisSlaves(DSP_INDEX_RANGE_C)  => dspSlaves,
          -- Outbound AXIS
-         mAxisMaster                     => timeToolToByPassMaster,
-         mAxisSlave                      => timeToolToByPassSlave);
+         mAxisMaster                     => eventMaster,
+         mAxisSlave                      => eventSlave);
 
 end mapping;

@@ -44,24 +44,10 @@ my_output_data = np.array(read_sim_file(my_output_file,2,signed=False)).astype(d
 
 plt.figure(0)
 plt.plot(my_input_data)
-plt.twinx()
-plt.plot(my_output_data,'r-')
-plt.xlim(9000,18000)
-thismanager = plt.get_current_fig_manager()
-thismanager.window.move(0,250)
+
 
 plt.figure(1)
-plt.plot(my_output_data,'r-')
-plt.twinx()
-plt.plot(np.convolve([-1,-1,-1,-1,1,1,1,1],my_input_data))
-plt.xlim(9000,18000)
-thismanager = plt.get_current_fig_manager()
-thismanager.window.move(0,500)
-
-
-plt.figure(2)
-plt.plot(np.convolve([-1,-1,-1,-1,1,1,1,1],my_input_data))
-plt.xlim(9000,18000)
+plt.plot(my_output_data)
 
 
 plt.show()

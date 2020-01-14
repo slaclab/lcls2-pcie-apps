@@ -42,8 +42,13 @@ for i in range(n_frames):
 
       my_frame_array = np.convolve(np.ones(8)/8,my_frame_array,mode='same').astype(np.int)      
       
-      my_frame_array[0]  = 67        #test values to makes sure no pixels are being lost
-      my_frame_array[-1] = 73      #test values to makes sure no pixels are being lost
+      my_frame_array[0]  = 68        #test values to makes sure no pixels are being lost '0x44'
+      my_frame_array[16] = 79      #test values to makes sure no pixels are being lost '0x4f'
+      my_frame_array[32] = 85      #test values to makes sure no pixels are being lost '0x55'
+      my_frame_array[-1] = 73      #test values to makes sure no pixels are being lost '0x49'
+      my_frame_array[-4] = 72      #test values to makes sure no pixels are being lost '0x49'
+      my_frame_array[-8] = 71      #test values to makes sure no pixels are being lost '0x49'
+
 
       if(i%400==1):
             my_frame_array = my_frame_array * 0
