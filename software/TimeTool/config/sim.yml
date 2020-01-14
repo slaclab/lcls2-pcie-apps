@@ -1,6 +1,0 @@
-TimeToolDev:
-  Application:
-    AppLane[:]:
-      EventBuilder:
-        Bypass:  0x1 # Bypass channel 0 (timing channel for simulation only)
-        

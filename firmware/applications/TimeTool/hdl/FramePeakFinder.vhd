@@ -159,6 +159,8 @@ begin
 
       axiSlaveRegister (axilEp, x"0000", 0, v.scratchPad);
       axiSlaveRegister (axilEp, x"0004", 0, v.timeConstant(7 downto 0));
+      --axiSlaveRegister (axilEp, x"0008", 0, v.max);
+      --axiSlaveRegister (axilEp, x"0012", 0, v.max_pixel);
 
       axiSlaveDefault(axilEp, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
@@ -223,6 +225,7 @@ begin
                 v.master.tLast  := '1';
                 v.master.tData                                       := (others => '0');
                 v.master.tData(CAMERA_PIXEL_NUMBER_BITS -1 downto 0) := v.max_pixel;
+                --v.master.tData(CAMERA_PIXEL_NUMBER_BITS + CAMERA_RESOLUTION_BITS -1 downto CAMERA_PIXEL_NUMBER_BITS) := v.max;
                 if v.slave.tReady = '1' then
                         v.state          := IDLE_S;
 
