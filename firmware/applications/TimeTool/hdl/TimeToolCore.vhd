@@ -41,9 +41,10 @@ entity TimeToolCore is
       -- Trigger Event streams (axilClk domain)
       eventAxisMaster : in  AxiStreamMasterType;
       eventAxisSlave  : out AxiStreamSlaveType;
-      -- DMA Interfaces (axilClk domain)
+      -- PGP data from camera
       dataInMaster    : in  AxiStreamMasterType;
       dataInSlave     : out AxiStreamSlaveType;
+      -- DMA Interfaces (axilClk domain)      
       eventMaster     : out AxiStreamMasterType;
       eventSlave      : in  AxiStreamSlaveType;
       -- AXI-Lite Interface (axilClk domain)

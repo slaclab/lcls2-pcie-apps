@@ -71,6 +71,7 @@ begin
 
    -----------------------
    -- DMA to HW ASYNC FIFO
+   -- SRP to downstream FEB
    -----------------------
    U_DMA_to_HW : entity surf.AxiStreamFifoV2
       generic map (
@@ -111,12 +112,12 @@ begin
          -- Trigger Event streams (axilClk domain)
          eventAxisMaster => eventAxisMaster,  -- [in]
          eventAxisSlave  => eventAxisSlave,   -- [out]
-         -- DMA Interface (sysClk domain)
+         -- DMA Interface (axilClk domain)
          dataInMaster    => pgpObMasters(1),  -- [in]
          dataInSlave     => pgpObSlaves(1),   -- [out]
          eventMaster     => eventMaster,      -- [out]
          eventSlave      => eventSlave,       -- [in]
-         -- AXI-Lite Interface (sysClk domain)
+         -- AXI-Lite Interface (axilClk domain)
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
          axilWriteMaster => axilWriteMaster,
