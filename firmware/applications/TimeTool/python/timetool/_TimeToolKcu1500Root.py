@@ -105,7 +105,8 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
         # Instantiate the top level Device and pass it the memeory map
         self.add(timetool.TimeToolKcu1500(
             memBase = self.memMap,
-            pgp3    = pgp3))
+            pgp3    = pgp3,
+            expand = True))
 
         # Create DMA streams
         self.dmaStreams = axipcie.createAxiPcieDmaStreams(driverPath, {lane:{dest for dest in range(4)} for lane in range(numLanes)}, 'localhost', 8000)

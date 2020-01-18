@@ -20,7 +20,7 @@ class TimeToolKcu1500(pr.Device):
             offset    = 0x0080_0000,
             numLanes  = numLanes,
             pgp3      = pgp3,
-            expand    = False,
+            expand    = True,
         ))
 
         
