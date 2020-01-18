@@ -304,10 +304,10 @@ begin
          axilWriteMaster     => axilWriteMasters(HW_INDEX_C),
          axilWriteSlave      => axilWriteSlaves(HW_INDEX_C),
          -- PGP Streams (axilClk domain)
-         pgpIbMasters        => pgpIbMasters,
-         pgpIbSlaves         => pgpIbSlaves,
-         pgpObMasters        => pgpObMasters,
-         pgpObSlaves         => pgpObSlaves,
+         pgpIbMasters        => pgpIbMasters,      -- [in]
+         pgpIbSlaves         => pgpIbSlaves,       -- [out]
+         pgpObMasters        => pgpObMasters,      -- [out]
+         pgpObSlaves         => pgpObSlaves,       -- [in]
          -- Trigger / event interfaces
          triggerClk          => axilClk,           -- [in]
          triggerRst          => axilRst,           -- [in]
