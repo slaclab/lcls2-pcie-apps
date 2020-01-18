@@ -147,22 +147,14 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
             for lane in range(numLanes):  
             
                 # Create the frame generator
-                self._frameGen[lane] = timetool.streams.TimeToolTxEmulation()
-                
-                # Connect the frame generator
-                print(self.roguePgp.pgpStreams)
+                self._frameGen[lane] = timetool.Piranha4VcsEmu('localhost', 7000)
+
+                # When a trigger is received, the fake frame generator will be called
+                self.roguePgp.pgpTriggers[lane].setRecvCb( self._frameGen[lane].trigCb )
+
+                # Resulting frame will be pushed at pgp VC1
                 self._frameGen[lane] >> self.roguePgp.pgpStreams[lane][1]
                     
-                # Create a command to execute the frame generator
-                self.add(pr.BaseCommand(   
-                    name         = f'GenFrame[{lane}]',
-                    function     = lambda cmd, lane=lane: self._frameGen[lane].myFrameGen(),
-                ))  
-                # Create a command to execute the frame generator. Accepts user data argument
-                self.add(pr.BaseCommand(   
-                    name         = f'GenUserFrame[{lane}]',
-                    function     = lambda cmd, lane=lane: self._frameGen[lane].myFrameGen,
-                ))               
                 
         # Create arrays to be filled
         self._dbg = [DataDebug("DataDebug") for lane in range(numLanes)]
