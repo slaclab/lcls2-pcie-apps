@@ -8,5 +8,6 @@ from timetool._ByPass                import *
 from timetool._FIR                   import *
 from timetool._FrameIIR              import *
 from timetool._FrameSubtractor       import *
+from timetool._Piranha4VcsEmu        import *
 from timetool._TimeToolKcu1500       import *
 from timetool._TimeToolKcu1500Root   import *

@@ -150,38 +150,6 @@ class dsp_plotting():
 #####################################################################        
 ##################################################################### 
 
-# This class emulates the Piranha4 Test Pattern
-class TimeToolTxEmulation(rogue.interfaces.stream.Master):
-    # Init method must call the parent class init
-    def __init__(self):
-        super().__init__()
-        self._maxSize = 2048
-
-    # Method for generating a frame
-    def myFrameGen(self,*args):
-        # First request an empty from from the primary slave
-        # The first arg is the size, the second arg is a boolean
-        # indicating if we can allow zero copy buffers, usually set to true
-        frame = self._reqFrame(self._maxSize, True) # Here we request a frame capable of holding 2048 bytes
-
-        # Create a 2048 byte array with an incrementing value
-        #ba = bytearray([(i&0xFF) for i in range(self._maxSize)])
-        #IPython.embed()
-        if(0==len(args)):
-              ba = self.make_byte_array()
-        else:
-              ba=args[0]
-        #print(self.make_byte_array())
-
-        # Write the data to the frame at offset 0
-        frame.write(ba,0)
-        
-        # Send the frame to the currently attached slaves
-        self._sendFrame(frame)
-
-    def make_byte_array(self):
-        return bytearray([(i&0xFF) for i in range(self._maxSize)])
-
 #####################################################################        
 #####################################################################        
 #####################################################################        
