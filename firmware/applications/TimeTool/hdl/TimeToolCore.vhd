@@ -60,10 +60,13 @@ architecture mapping of TimeToolCore is
 
    constant NUM_AXIL_MASTERS_C : natural := NUM_AXIS_MASTERS_C+2;
 
-   constant EVENT_INDEX_C      : natural  := 0;
-   constant FEX_INDEX_C        : natural  := 1;
-   constant PRESCALE_INDEX_C   : natural  := 2;
-   constant BYPASS_INDEX_C     : natural  := 3; --this has been removed.  was causing first pixel in camera to get duplicated
+   constant EVENT_INDEX_C : natural := 0;
+   constant PGP_INDEX_C   : natural := 1;
+
+   -- These need updating
+   constant FEX_INDEX_C      : natural := 1;
+   constant PRESCALE_INDEX_C : natural := 2;
+   constant BYPASS_INDEX_C   : natural := 3;  --this has been removed.  was causing first pixel in camera to get duplicated
 
    subtype AXIL_INDEX_RANGE_C is integer range NUM_AXIL_MASTERS_C-1 downto 0;
 
@@ -88,12 +91,14 @@ architecture mapping of TimeToolCore is
    signal dspMasters : AxiStreamMasterArray(DSP_INDEX_RANGE_C);
    signal dspSlaves  : AxiStreamSlaveArray(DSP_INDEX_RANGE_C);
 
-   signal byPassToTimeToolMaster      : AxiStreamMasterType;  --this has been removed.  was causing first pixel in camera to get duplicated
-   signal byPassToTimeToolSlave       : AxiStreamSlaveType;   --this has been removed.  was causing first pixel in camera to get duplicated
+   signal byPassToTimeToolMaster : AxiStreamMasterType;  --this has been removed.  was causing first pixel in camera to get duplicated
+   signal byPassToTimeToolSlave  : AxiStreamSlaveType;  --this has been removed.  was causing first pixel in camera to get duplicated
 
-   signal timeToolToByPassMaster      : AxiStreamMasterType;  --this has been removed.  was causing first pixel in camera to get duplicated
-   signal timeToolToByPassSlave       : AxiStreamSlaveType;   --this has been removed.  was causing first pixel in camera to get duplicated
+   signal timeToolToByPassMaster : AxiStreamMasterType;  --this has been removed.  was causing first pixel in camera to get duplicated
+   signal timeToolToByPassSlave  : AxiStreamSlaveType;  --this has been removed.  was causing first pixel in camera to get duplicated
 
+   signal bufDataInMaster : AxiStreamMasterType;
+   signal bufDataInSlave  : AxiStreamSlaveType;
 
 
 begin
@@ -101,20 +106,20 @@ begin
    ----------------------
    -- AXI Stream Repeater
    ----------------------
-   U_AxiStreamRepeater : entity surf.AxiStreamRepeater
-      generic map (
-         TPD_G         => TPD_G,
-         NUM_MASTERS_G => NUM_AXIS_MASTERS_C)
-      port map (
-         -- Clock and reset
-         axisClk      => axilClk,
-         axisRst      => axilRst,
-         -- Slave
-         sAxisMaster  => dataInMaster,
-         sAxisSlave   => dataInSlave,
-         -- Masters
-         mAxisMasters => dataInMasters,
-         mAxisSlaves  => dataInSlaves);
+--    U_AxiStreamRepeater : entity surf.AxiStreamRepeater
+--       generic map (
+--          TPD_G         => TPD_G,
+--          NUM_MASTERS_G => NUM_AXIS_MASTERS_C)
+--       port map (
+--          -- Clock and reset
+--          axisClk      => axilClk,
+--          axisRst      => axilRst,
+--          -- Slave
+--          sAxisMaster  => dataInMaster,
+--          sAxisSlave   => dataInSlave,
+--          -- Masters
+--          mAxisMasters => dataInMasters,
+--          mAxisSlaves  => dataInSlaves);
 
    --------------------
    -- AXI-Lite Crossbar
@@ -243,37 +248,65 @@ begin
             mAxisSlave  => dspSlaves(i));
    end generate GEN_OB;
 
+
+   U_BUFFER_FIFO : entity surf.AxiStreamFifoV2
+      generic map (
+         -- General Configurations
+         TPD_G               => TPD_G,
+         SLAVE_READY_EN_G    => true,
+         VALID_THOLD_G       => 1,
+         -- FIFO configurations
+         MEMORY_TYPE_G       => "block",
+         GEN_SYNC_FIFO_G     => true,
+         FIFO_ADDR_WIDTH_G   => 9,
+         -- AXI Stream Port Configurations
+         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
+         MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+      port map (
+         -- Slave Port
+         sAxisClk    => axilClk,
+         sAxisRst    => axilRst,
+         sAxisMaster => dataInMaster,
+         sAxisSlave  => dataInSlave,
+         -- Master Port
+         mAxisClk    => axilClk,
+         mAxisRst    => axilRst,
+         mAxisMaster => bufDataInMaster,
+         mAxisSlave  => bufDataInSlave);
+
    ----------------------
    -- EventBuilder Module
    ----------------------
    U_EventBuilder : entity surf.AxiStreamBatcherEventBuilder
       generic map (
          TPD_G          => TPD_G,
-         NUM_SLAVES_G   => 1, --NUM_AXIS_MASTERS_C+1,
+         NUM_SLAVES_G   => 2,           --NUM_AXIS_MASTERS_C+1,
          MODE_G         => "ROUTED",
          TDEST_ROUTES_G => (
-            0           => "--------"),--,
---             1           => "--------",
+            0           => "0000000-",  --,
+            1           => "00000010"),
 --             2           => "--------"),
          TRANS_TDEST_G  => X"01",
          AXIS_CONFIG_G  => DMA_AXIS_CONFIG_C)
       port map (
          -- Clock and Reset
-         axisClk                         => axilClk,
-         axisRst                         => axilRst,
+         axisClk                     => axilClk,
+         axisRst                     => axilRst,
          -- AXI-Lite Interface (axisClk domain)
-         axilReadMaster                  => axilReadMasters(EVENT_INDEX_C),
-         axilReadSlave                   => axilReadSlaves(EVENT_INDEX_C),
-         axilWriteMaster                 => axilWriteMasters(EVENT_INDEX_C),
-         axilWriteSlave                  => axilWriteSlaves(EVENT_INDEX_C),
+         axilReadMaster              => axilReadMasters(EVENT_INDEX_C),
+         axilReadSlave               => axilReadSlaves(EVENT_INDEX_C),
+         axilWriteMaster             => axilWriteMasters(EVENT_INDEX_C),
+         axilWriteSlave              => axilWriteSlaves(EVENT_INDEX_C),
          -- Inbound Master AXIS Interfaces
-         sAxisMasters(EVENT_INDEX_C)     => eventAxisMaster,
+         sAxisMasters(EVENT_INDEX_C) => eventAxisMaster,
+         sAxisMasters(PGP_INDEX_C)   => bufDataInMaster,
 --         sAxisMasters(DSP_INDEX_RANGE_C) => dspMasters,
          -- Inbound Slave AXIS Interfaces
-         sAxisSlaves(EVENT_INDEX_C)      => eventAxisSlave,
+         sAxisSlaves(EVENT_INDEX_C)  => eventAxisSlave,
+         sAxisSlaves(PGP_INDEX_C)    => bufDataInSlave,
 --         sAxisSlaves(DSP_INDEX_RANGE_C)  => dspSlaves,
          -- Outbound AXIS
-         mAxisMaster                     => eventMaster,
-         mAxisSlave                      => eventSlave);
+         mAxisMaster                 => eventMaster,
+         mAxisSlave                  => eventSlave);
 
 end mapping;

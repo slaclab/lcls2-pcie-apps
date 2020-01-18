@@ -29,42 +29,49 @@ class DataDebug(rogue.interfaces.stream.Slave):
         self.name = name
 
     def _acceptFrame(self, frame):
-        ba = bytearray(frame.getPayload())
+        frameSize = frame.getPayload()
+        ba = bytearray(frameSize)
+        channel = frame.getChannel()
         frame.read(ba, 0)
         print('-------------------------')
-        print(f'{self.name}: Got frame - {len(ba)} bytes')
+        print(f'{self.name}: Got frame - channel {channel} -  {len(ba)} bytes')
         #print(ba)
+        if channel == 0 or channel == 1:
+            print("EventHeader Channel")
+            lword = int.from_bytes(ba, 'little', signed=False)
+            print(f'{lword:064_x}')
 
-        lword = int.from_bytes(ba, 'little', signed=False)
-        print(f'{lword:064_x}')
+            d = {}
+            # this is wrong
+            d['pulseId'] = getField(lword, 55, 0)
+            d['timeStamp'] = getField(lword, 127, 64)
+            d['partitions'] = getField(lword, 135, 128)
+            d['triggerInfo'] = getField(lword, 159, 144)
+            d['type'] = 'Event' if d['triggerInfo']&0x8000 else 'Transition'
 
-        d = {}
-        # this is wrong
-        d['pulseId'] = getField(lword, 55, 0)
-        d['timeStamp'] = getField(lword, 127, 64)
-        d['partitions'] = getField(lword, 135, 128)
-        d['triggerInfo'] = getField(lword, 151, 136)
-        d['type'] = 'Event' if d['triggerInfo']&0x8000 else 'Transition'
-        
-        d['count'] = getField(lword, 175, 152)
-        d['version'] = getField(lword, 183, 176)
-        d['payload'] = getField(lword, 191, 184)
-        
-        d['wordDecode'] = e = {}
-        ti = d['triggerInfo']
+            d['count'] = getField(lword, 183, 160)
+            d['version'] = getField(lword, 191, 184)
+            d['payload'] = getField(lword, 199, 192)
 
-        if d['type'] == 'Event':
-            e['l0Accept'] = getField(ti, 0, 0)
-            e['l0Tag'] = getField(ti, 5, 1)
-            e['l0Reject'] = getField(ti, 7, 7)
-            e['l1Expect'] = getField(ti, 8, 8)
-            e['l1Accept'] = getField(ti, 9, 9)
-            e['l1Tag'] = getField(ti, 14, 10)
-        else:
-            e['l0Tag'] = getField(ti, 5, 1)
-            e['header'] = getField(ti, 13, 6)
+            d['wordDecode'] = e = {}
+            ti = d['triggerInfo']
 
-        print(d)
+            if d['type'] == 'Event':
+                e['l0Accept'] = getField(ti, 0, 0)
+                e['l0Tag'] = getField(ti, 5, 1)
+                e['l0Reject'] = getField(ti, 7, 7)
+                e['l1Expect'] = getField(ti, 8, 8)
+                e['l1Accept'] = getField(ti, 9, 9)
+                e['l1Tag'] = getField(ti, 14, 10)
+            else:
+                e['l0Tag'] = getField(ti, 5, 1)
+                e['header'] = getField(ti, 13, 6)
+
+            print(d)
+
+        if channel == 2:
+            print("Raw camera data channel")
+            print(frame.getNumpy(0, frameSize))
         print('-------------------------')
         print()
 
