@@ -26,7 +26,7 @@ def auto_int(x):
 # Add arguments
 parser.add_argument(
     "--dev",
-    dest     = 'driverPath',
+    dest     = 'dev',
     type     = str,
     required = False,
     default  = '/dev/datadev_0',
