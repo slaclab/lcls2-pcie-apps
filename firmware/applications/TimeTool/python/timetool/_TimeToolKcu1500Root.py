@@ -13,12 +13,9 @@ import lcls2_pgp_fw_lib.hardware.XilinxKcu1500
 import surf.protocols.batcher
 
 import LclsTimingCore
+import l2si_core
 
 import axipcie
-
-def getField(value, highBit, lowBit):
-    mask = 2**(highBit-lowBit+1)-1
-    return (value >> lowBit) & mask
 
 
 class DataDebug(rogue.interfaces.stream.Slave):
@@ -29,70 +26,43 @@ class DataDebug(rogue.interfaces.stream.Slave):
         self.name = name
 
     def _acceptFrame(self, frame):
-        frameSize = frame.getPayload()
-        ba = bytearray(frameSize)
         channel = frame.getChannel()
-        frame.read(ba, 0)
-        print('-------------------------')
-        print(f'{self.name}: Got frame - channel {channel} -  {len(ba)} bytes')
-        #print(ba)
+
         if channel == 0 or channel == 1:
-            print("EventHeader Channel")
-            lword = int.from_bytes(ba, 'little', signed=False)
-            print(f'{lword:064_x}')
-
-            d = {}
-            # this is wrong
-            d['pulseId'] = getField(lword, 55, 0)
-            d['timeStamp'] = getField(lword, 127, 64)
-            d['partitions'] = getField(lword, 135, 128)
-            d['triggerInfo'] = getField(lword, 159, 144)
-            d['type'] = 'Event' if d['triggerInfo']&0x8000 else 'Transition'
-
-            d['count'] = getField(lword, 183, 160)
-            d['version'] = getField(lword, 191, 184)
-            d['payload'] = getField(lword, 199, 192)
-
-            d['wordDecode'] = e = {}
-            ti = d['triggerInfo']
-
-            if d['type'] == 'Event':
-                e['l0Accept'] = getField(ti, 0, 0)
-                e['l0Tag'] = getField(ti, 5, 1)
-                e['l0Reject'] = getField(ti, 7, 7)
-                e['l1Expect'] = getField(ti, 8, 8)
-                e['l1Accept'] = getField(ti, 9, 9)
-                e['l1Tag'] = getField(ti, 14, 10)
-            else:
-                e['l0Tag'] = getField(ti, 5, 1)
-                e['header'] = getField(ti, 13, 6)
-
+            print('-------------------------')            
+            d = l2si_core.parseEventHeaderFrame(frame)
             print(d)
+            if channel == 1:
+                print('-------------------------')
+                print()
 
         if channel == 2:
+            frameSize = frame.getPayload()
+            ba = bytearray(frameSize)
+            frame.read(ba, 0)            
             print("Raw camera data channel")
             print(frame.getNumpy(0, frameSize))
-        print('-------------------------')
+            print('-------------------------')
         print()
 
 
 
-class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
+class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
 
     def __init__(self,
                  dataDebug   = False,
-                 driverPath  = '/dev/datadev_0',# path to PCIe device
+                 dev  = '/dev/datadev_0',# path to PCIe device
                  pgp3        = False,           # true = PGPv3, false = PGP2b
                  pollEn      = True,            # Enable automatic polling registers
                  initRead    = True,            # Read all registers at start of the system
                  numLanes    = 1,
                  **kwargs):
 
-        if driverPath == 'sim':
+        if dev == 'sim':
             kwargs['timeout'] = 100000000
         
         super().__init__(
-            driverPath  = driverPath, 
+            dev  = dev, 
             pgp3        = pgp3, 
             pollEn      = pollEn, 
             initRead    = initRead, 
@@ -100,7 +70,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
             **kwargs)
 
         # Create memory interface
-        self.memMap = axipcie.createAxiPcieMemMap(driverPath, 'localhost', 8000)
+        self.memMap = axipcie.createAxiPcieMemMap(dev, 'localhost', 8000)
 
         # Instantiate the top level Device and pass it the memeory map
         self.add(timetool.TimeToolKcu1500(
@@ -109,11 +79,11 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
             expand = True))
 
         # Create DMA streams
-        self.dmaStreams = axipcie.createAxiPcieDmaStreams(driverPath, {lane:{dest for dest in range(4)} for lane in range(numLanes)}, 'localhost', 8000)
+        self.dmaStreams = axipcie.createAxiPcieDmaStreams(dev, {lane:{dest for dest in range(4)} for lane in range(numLanes)}, 'localhost', 8000)
 
                         
         # Map dma streams to SRP, CLinkFebs
-        if (driverPath!='sim'):            
+        if (dev!='sim'):            
             
             # Create arrays to be filled
             self._srp = [None for lane in range(numLanes)]
@@ -138,7 +108,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
 
         # Else doing Rogue VCS simulation
         else:
-            self.roguePgp = lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500HsioRogueStreams(numLanes=numLanes, pgp3=pgp3)
+            self.roguePgp = lcls2_pgp_fw_lib.hardware.shared.RogueStreams(numLanes=numLanes, pgp3=pgp3)
         
             # Create arrays to be filled
             self._frameGen = [None for lane in range(numLanes)]
@@ -167,7 +137,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                 pass
                 
                 # Check if VCS or not
-#                if (driverPath!='sim'): 
+#                if (dev!='sim'): 
                     #print("using TimeToolRx")
 #                    self._dbg[lane] = timetool.streams.TimeToolRx(expand=True)
 #                else:
@@ -237,6 +207,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
 #         )
         
         # Check if not simulation
+
 #         if (driverPath!='sim'):           
 #             # Read all the variables
 #             self.ReadAll()
