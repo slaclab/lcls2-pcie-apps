@@ -127,7 +127,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
                 #pr.streamConnectBiDir(self.dmaStreams[lane][0], self._srp[lane])
 
                 # CameraLink Feb Board
-                self.add(CLinkFeb.ClinkFeb(      
+                self.add(ClinkFeb.ClinkFeb(      
                     name        = (f'ClinkFeb[{lane}]'), 
                     memBase     = self._srp[lane], 
                     serial      = [self.dmaStreams[lane][2],None],
@@ -164,7 +164,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
         for lane in range(numLanes):        
             # Debug slave
             if dataDebug:
-
+                pass
                 
                 # Check if VCS or not
 #                if (driverPath!='sim'): 
@@ -237,29 +237,29 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Root):
 #         )
         
         # Check if not simulation
-        if (driverPath!='sim'):           
-            # Read all the variables
-            self.ReadAll()
-            # Some initialization after starting root
-            for lane in range(numLanes):
-                self.ClinkFeb[lane].ClinkTop.Ch[0].BaudRate.set(9600)
-                self.ClinkFeb[lane].ClinkTop.Ch[0].SerThrottle.set(10000)
-                #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
-                self.ClinkFeb[lane].ClinkTop.Ch[0].LinkMode.setDisp('Full')
-                self.ClinkFeb[lane].ClinkTop.Ch[0].DataMode.setDisp('8Bit')
-                self.ClinkFeb[lane].ClinkTop.Ch[0].FrameMode.setDisp('Line')
-                self.ClinkFeb[lane].ClinkTop.Ch[0].TapCount.set(8)                    
-                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SendEscape()
-                self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SPF.setDisp('0')
-                #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
-        else:
-            # Disable the PGP PHY device (speed up the simulation)
-#            self.TimeToolKcu1500.Kcu1500Hsio.enable.set(False)
-#            self.TimeToolKcu1500.Kcu1500Hsio.hidden = True
-            # Bypass the time AXIS channel
-            eventDev = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)
-            for d in eventDev:
-                d.Bypass.set(0x1)            
+#         if (driverPath!='sim'):           
+#             # Read all the variables
+#             self.ReadAll()
+#             # Some initialization after starting root
+#             for lane in range(numLanes):
+#                 self.ClinkFeb[lane].ClinkTop.Ch[0].BaudRate.set(9600)
+#                 self.ClinkFeb[lane].ClinkTop.Ch[0].SerThrottle.set(10000)
+#                 #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
+#                 self.ClinkFeb[lane].ClinkTop.Ch[0].LinkMode.setDisp('Full')
+#                 self.ClinkFeb[lane].ClinkTop.Ch[0].DataMode.setDisp('8Bit')
+#                 self.ClinkFeb[lane].ClinkTop.Ch[0].FrameMode.setDisp('Line')
+#                 self.ClinkFeb[lane].ClinkTop.Ch[0].TapCount.set(8)                    
+#                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SendEscape()
+#                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SPF.setDisp('0')
+#                 #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
+#         else:
+#             # Disable the PGP PHY device (speed up the simulation)
+# #            self.TimeToolKcu1500.Kcu1500Hsio.enable.set(False)
+# #            self.TimeToolKcu1500.Kcu1500Hsio.hidden = True
+#             # Bypass the time AXIS channel
+#             eventDev = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)
+#             for d in eventDev:
+#                 d.Bypass.set(0x1)            
                 
     def initialize(self):
         self.StopRun()
