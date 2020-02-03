@@ -65,10 +65,10 @@ parser.add_argument(
     help     = "Enable TimeToolRx module",
 )
 
-parser.add_argument(
-    "--serverPort",
-    type = int,
-    default = 9099)
+#parser.add_argument(
+#    "--serverPort",
+#    type = int,
+#    default = 9099)
   
 
 # Get the arguments
@@ -78,15 +78,15 @@ args = parser.parse_args()
 
 with timetool.TimeToolKcu1500Root(**vars(args)) as root:
 
-    pyrogue.pydm.runPyDM(root=root)
+#    pyrogue.pydm.runPyDM(root=root)
 
-# Create GUI
-  #   appTop = pyrogue.gui.application(sys.argv)
-#     guiTop = pyrogue.gui.GuiTop()
-#     guiTop.addTree(root)
-#     guiTop.resize(1000, 1000)
+    # Create GUI
+    appTop = pyrogue.gui.application(sys.argv)
+    guiTop = pyrogue.gui.GuiTop()
+    guiTop.addTree(root)
+    guiTop.resize(1000, 1000)
 
-#     # Run gui
-#     appTop.exec_()
+    # Run gui
+    appTop.exec_()
 
 
