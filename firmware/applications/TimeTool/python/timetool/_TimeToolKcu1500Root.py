@@ -134,7 +134,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
         for lane in range(numLanes):        
             # Debug slave
             if dataDebug:
-                pass
+                self.dmaStreams[lane][1] >> self.unbatchers[lane] >> self._dbg[lane]
                 
                 # Check if VCS or not
 #                if (dev!='sim'): 
@@ -145,7 +145,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
 #                    self._dbg[lane] = timetool.streams.TimeToolRxVcs(expand=True)
                 
                 # Connect the streams
-                self.dmaStreams[lane][1] >> self.unbatchers[lane] >> self._dbg[lane]
+
                 
                 # Add stream device to root class
                 #self.add(self._dbg[lane])
