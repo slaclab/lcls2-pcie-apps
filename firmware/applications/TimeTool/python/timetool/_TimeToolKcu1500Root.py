@@ -40,7 +40,7 @@ class DataDebug(rogue.interfaces.stream.Slave):
             frameSize = frame.getPayload()
             ba = bytearray(frameSize)
             frame.read(ba, 0)            
-            print("Raw camera data channel")
+            print(f"Raw camera data channel - {len(ba)} bytes")
             print(frame.getNumpy(0, frameSize))
             print('-------------------------')
         print()

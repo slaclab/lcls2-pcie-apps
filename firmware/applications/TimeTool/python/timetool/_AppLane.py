@@ -12,7 +12,7 @@ class AppLane(pr.Device):
         self.add(surf.protocols.batcher.AxiStreamBatcherEventBuilder( 
             name         = 'EventBuilder', 
             offset       = 0x00000, 
-            numberSlaves = 1,
+            numberSlaves = 2,
             tickUnit     = '156.25MHz',            
         ))
         
