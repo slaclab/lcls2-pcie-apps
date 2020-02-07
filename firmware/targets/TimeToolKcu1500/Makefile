@@ -8,7 +8,7 @@ export PRJ_VERSION = 0x10000000
 export PRJ_PART = xcku115-flvb2104-2-e
 
 
-export OVERRIDE_SUBMODULE_LOCKS = 1
+export OVERRIDE_SUBMODULE_LOCKS = 0
 
 # Define target output
 target: prom
