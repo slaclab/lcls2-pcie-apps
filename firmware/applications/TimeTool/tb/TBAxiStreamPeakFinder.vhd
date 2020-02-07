@@ -19,15 +19,23 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
-use work.SsiPkg.all;
-use work.TestingPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+
+library axi_pcie_core;
+use axi_pcie_core.AxiPciePkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
+use surf.Pgp2bPkg.all;
+use surf.SsiPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 use STD.textio.all;
 use ieee.std_logic_textio.all;
@@ -95,7 +103,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk : entity work.ClkRst
+   U_axilClk : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 1 ns,
@@ -108,7 +116,7 @@ begin
    -- Test data
    --------------------  
 
-      U_CamOutput : entity work.FileToAxiStream
+      U_CamOutput : entity timetool.FileToAxiStream
          generic map (
             TPD_G              => TPD_G,
             BYTE_SIZE_C        => 2+1,
@@ -123,7 +131,7 @@ begin
     
 
 
-     U_FramePeakFinder : entity work.FramePeakFinder
+     U_FramePeakFinder : entity timetool.FramePeakFinder
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -144,7 +152,7 @@ begin
          );
 
 
-      --U_FileInput : entity work.AxiStreamToFile
+      --U_FileInput : entity timetool.AxiStreamToFile
       --   generic map (
       --      TPD_G              => TPD_G,
       --      BYTE_SIZE_C        => 2+1,

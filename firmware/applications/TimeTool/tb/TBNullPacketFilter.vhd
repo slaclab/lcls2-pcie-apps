@@ -18,15 +18,23 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.StdRtlPkg.all;
-use work.AxiPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
-use work.SsiPkg.all;
-use work.TestingPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+
+library axi_pcie_core;
+use axi_pcie_core.AxiPciePkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
+use surf.Pgp2bPkg.all;
+use surf.SsiPkg.all;
+
+library timetool;
+use timetool.TestingPkg.all;
 
 entity TBNullPacketFilter is end TBNullPacketFilter;
 
@@ -112,7 +120,7 @@ begin
    --------------------
    -- AXI-Lite Crossbar
    --------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -133,7 +141,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk_2 : entity work.ClkRst
+   U_axilClk_2 : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -146,7 +154,7 @@ begin
    --------------------
    -- Clocks and Resets
    --------------------
-   U_axilClk : entity work.ClkRst
+   U_axilClk : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => CLK_PERIOD_G,
          RST_START_DELAY_G => 0 ns,
@@ -160,7 +168,7 @@ begin
    --------------------  
 
 
-      U_CamOutput : entity work.FileToAxiStreamSim
+      U_CamOutput : entity timetool.FileToAxiStreamSim
          generic map (
             TPD_G         => TPD_G,
             BYTE_SIZE_C   => 2+1,
@@ -176,7 +184,7 @@ begin
    --------------------  
 
 
-   U_TimeToolPrescaler : entity work.TimeToolPrescaler
+   U_TimeToolPrescaler : entity timetool.TimeToolPrescaler
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
@@ -195,7 +203,7 @@ begin
          axilWriteMaster => axilWriteMasters(PRESCALE_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(PRESCALE_INDEX_C));
 
-   U_NullPacketFilter : entity work.NullPacketFilter
+   U_NullPacketFilter : entity timetool.NullPacketFilter
       generic map (
          TPD_G             => TPD_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)

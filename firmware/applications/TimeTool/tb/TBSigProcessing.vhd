@@ -18,14 +18,22 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-use work.StdRtlPkg.all;
-use work.AxiPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.AxiPciePkg.all;
-use work.TimingPkg.all;
-use work.Pgp2bPkg.all;
-use work.SsiPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+
+library axi_pcie_core;
+use axi_pcie_core.AxiPciePkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
+use surf.Pgp2bPkg.all;
+use surf.SsiPkg.all;
+
+library timetool; 
 
 entity TBSigProcessing is end TBSigProcessing;
 
@@ -70,7 +78,7 @@ begin
 
    
 
-   FileToAxiStreamSim_0 : entity work.FileToAxiStreamSim
+   FileToAxiStreamSim_0 : entity timetool.FileToAxiStreamSim
                generic map (
                   TPD_G         => TPD_G,
                   BYTE_SIZE_C   => 2+1,

@@ -1,28 +1,21 @@
 [submodule "firmware/submodules/ruckus"]
 	path = firmware/submodules/ruckus
-	url = https://github.com/slaclab/ruckus
-	ignore = dirty
+	url = git@github.com:slaclab/ruckus
 [submodule "firmware/submodules/surf"]
 	path = firmware/submodules/surf
-	url = https://github.com/slaclab/surf
-	ignore = dirty
+	url = git@github.com:slaclab/surf
 [submodule "firmware/submodules/axi-pcie-core"]
 	path = firmware/submodules/axi-pcie-core
-	url = https://github.com/slaclab/axi-pcie-core
-	ignore = dirty
+	url = git@github.com:slaclab/axi-pcie-core
 [submodule "firmware/submodules/lcls-timing-core"]
 	path = firmware/submodules/lcls-timing-core
-	url = https://github.com/slaclab/lcls-timing-core
-	ignore = dirty
+	url = git@github.com:slaclab/lcls-timing-core
 [submodule "firmware/submodules/lcls2-pgp-fw-lib"]
 	path = firmware/submodules/lcls2-pgp-fw-lib
-	url = https://github.com/slaclab/lcls2-pgp-fw-lib
-	ignore = dirty
+	url = git@github.com:slaclab/lcls2-pgp-fw-lib
 [submodule "firmware/submodules/clink-gateway-fw-lib"]
 	path = firmware/submodules/clink-gateway-fw-lib
-	url = https://github.com/slaclab/clink-gateway-fw-lib
-	ignore = dirty
+	url = git@github.com:slaclab/clink-gateway-fw-lib
 [submodule "firmware/submodules/l2si-core"]
 	path = firmware/submodules/l2si-core
-	url = https://github.com/slaclab/l2si-core
-	ignore = dirty
+	url = git@github.com:slaclab/l2si-core

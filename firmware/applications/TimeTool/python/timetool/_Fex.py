@@ -12,7 +12,7 @@
 import pyrogue as pr
 
 import surf.protocols.batcher as batcher
-import TimeTool               as tt
+import timetool               as tt
 
 class Fex(pr.Device):
     def __init__(   self,       
