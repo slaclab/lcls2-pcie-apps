@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import pyrogue as pr
+import pyrogue.utilities.fileio
 
 import rogue
 
@@ -78,6 +79,10 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
             pgp3    = pgp3,
             expand = True))
 
+        self.add(timetool.RunControl())
+
+        self.add(pyrogue.utilities.fileio.StreamWriter(name='DataWriter'))
+
         # Create DMA streams
         self.dmaStreams = axipcie.createAxiPcieDmaStreams(dev, {lane:{dest for dest in range(4)} for lane in range(numLanes)}, 'localhost', 8000)
 
@@ -124,90 +129,24 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
 
                 # Resulting frame will be pushed at pgp VC1
                 self._frameGen[lane] >> self.roguePgp.pgpStreams[lane][1]
-                    
+
+
+        # Connect the data writer
+        self >> self.DataWriter.getChannel(0)
                 
         # Create arrays to be filled
         self._dbg = [DataDebug("DataDebug") for lane in range(numLanes)]
         self.unbatchers = [rogue.protocols.batcher.SplitterV1() for lane in range(numLanes)]
         
         # Create the stream interface
-        for lane in range(numLanes):        
+        for lane in range(numLanes):
+            self.dmaStreams[lane][1] >> self.DataWriter.getChannel(lane+1)
+            
             # Debug slave
             if dataDebug:
                 self.dmaStreams[lane][1] >> self.unbatchers[lane] >> self._dbg[lane]
                 
-                # Check if VCS or not
-#                if (dev!='sim'): 
-                    #print("using TimeToolRx")
-#                    self._dbg[lane] = timetool.streams.TimeToolRx(expand=True)
-#                else:
-                    #print("using TimeToolRxVcs")
-#                    self._dbg[lane] = timetool.streams.TimeToolRxVcs(expand=True)
                 
-                # Connect the streams
-
-                
-                # Add stream device to root class
-                #self.add(self._dbg[lane])
-                
-        
-        self.add(pr.LocalVariable(
-            name        = 'RunState', 
-            description = 'Run state status, which is controlled by the StopRun() and StartRun() commands',
-            mode        = 'RO', 
-            value       = False,
-        ))        
-        
-        @self.command(description  = 'Stops the triggers and blows off data in the pipeline')        
-        def StopRun():
-            print ('TimeToolDev.StopRun() executed')
-            
-            # Get devices
-            trigChDev = self.find(typ=LclsTimingCore.EvrV2ChannelReg)
-            eventDev  = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)
-            
-            # Turn off the triggering
-            for devPtr in trigChDev:
-                devPtr.EnableReg.set(False)
-                
-            # Turn on the blowoff to clear out the pipeline
-            for devPtr in eventDev:
-                devPtr.Blowoff.set(True) 
-
-            # Update the run state status variable
-            self.RunState.set(False)
-                
-        @self.command(description  = 'starts the triggers and allow steams to flow to DMA engine')        
-        def StartRun():
-            print ('TimeToolDev.StartRun() executed')
-            
-            # Get devices
-            trigChDev = self.find(typ=LclsTimingCore.EvrV2ChannelReg)
-            eventDev  = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)    
-            
-            # Turn off the blowoff to allow steams to flow to DMA engine
-            for devPtr in eventDev:
-                devPtr.Blowoff.set(False)                  
-            
-            # Turn on the triggering
-            for devPtr in trigChDev:
-                devPtr.EnableReg.set(True)  
-                
-            # Reset all counters
-            self.CountReset()
-                
-            # Update the run state status variable
-            self.RunState.set(True)        
-
-#         # Start the system
-#         self.start(
-#             pollEn   = self._pollEn,
-#             initRead = self._initRead,
-#             timeout  = self._timeout,
-#         )
-        
-        # Check if not simulation
-
 #         if (driverPath!='sim'):           
 #             # Read all the variables
 #             self.ReadAll()
@@ -223,15 +162,3 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
 #                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SendEscape()
 #                 self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.SPF.setDisp('0')
 #                 #self.ClinkFeb[lane].ClinkTop.Ch[0].UartPiranha4.GCP()
-#         else:
-#             # Disable the PGP PHY device (speed up the simulation)
-# #            self.TimeToolKcu1500.Kcu1500Hsio.enable.set(False)
-# #            self.TimeToolKcu1500.Kcu1500Hsio.hidden = True
-#             # Bypass the time AXIS channel
-#             eventDev = self.find(typ=surf.protocols.batcher.AxiStreamBatcherEventBuilder)
-#             for d in eventDev:
-#                 d.Bypass.set(0x1)            
-                
-    def initialize(self):
-        self.StopRun()
-        
