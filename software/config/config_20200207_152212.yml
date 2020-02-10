@@ -1,0 +1,56 @@
+TimeToolKcu1500Root:
+  enable: True
+  TimeToolKcu1500:
+    enable: True
+    Application:
+      enable: True
+      AppLane[0]:
+        enable: True
+        EventBuilder:
+          enable: True
+          Bypass: 0x0
+          Timeout: 0x0
+          Blowoff: False
+    Kcu1500Hsio:
+      enable: True
+      TimingRx:
+        enable: True
+        TimingFrameRx:
+          enable: True
+          RxPolarity: 0x0
+          ClkSel: 0x1
+          MsgDelay: 0x0
+        XpmMiniWrapper:
+          enable: True
+          XpmMini:
+            enable: True
+            Link: 0
+            TxPllReset: 0x0
+            Loopback: False
+            HwEnable: True
+            Config_L0Select_Enabled: 0x0
+            AxilRdEn: True
+            Config_L0Select_RateSel: 0x2
+            Config_L0Select_DestSel: 0x8000
+            Pipeline_Depth_Clks: 20000
+            Pipeline_Depth_Fids: 97
+            PartitionMessage_Insert: 0x0
+            PartitionMessage_Hdr: 0x0
+        TriggerEventManager:
+          enable: True
+          XpmMessageAligner:
+            enable: True
+            XpmId: 0x0
+          TriggerEventBuffer[0]:
+            enable: True
+            MasterEnable: False
+            EventBufferEnable: False
+            Partition: 0
+            PauseThreshold: 16
+            TriggerDelay: 3
+        TimingPhyMonitor:
+          enable: True
+          Loopback: 'No'
+          UseMiniTpg: True
+
+          

@@ -2,13 +2,13 @@ export INCLUDE_PGP3_10G = 0
 #export REMOVE_UNUSED_CODE = 1
 
 # Define Firmware Version Number
-export PRJ_VERSION = 0x00000012
+export PRJ_VERSION = 0x10000000
 
 # Define target part
 export PRJ_PART = xcku115-flvb2104-2-e
 
-#simulation package export
-export TIMING_EXT_PKG = 1
+
+export OVERRIDE_SUBMODULE_LOCKS = 0
 
 # Define target output
 target: prom
