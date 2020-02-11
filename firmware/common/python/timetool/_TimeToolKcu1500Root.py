@@ -105,8 +105,8 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
                 self.add(ClinkFeb.ClinkFeb(      
                     name        = (f'ClinkFeb[{lane}]'), 
                     memBase     = self._srp[lane], 
-                    serial      = [self.dmaStreams[lane][2],None],
-                    camType     = ['Piranha4',        None],
+                    serial      = self.dmaStreams[lane][2],
+                    camType     = 'Piranha4',
                     version3    = pgp3,
                     enableDeps  = [self.TimeToolKcu1500.Kcu1500Hsio.PgpMon[lane].RxRemLinkReady], # Only allow access if the PGP link is established
                     expand      = False))
