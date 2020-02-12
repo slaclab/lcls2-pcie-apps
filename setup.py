@@ -1,21 +1,21 @@
-from setuptools import setup, find_packages
 
-pdirlist = ['firmware/submodules/surf/python',
-            'firmware/submodules/axi-pcie-core/python',
-            'firmware/submodules/lcls-timing-core/python',
-            'firmware/submodules/lcls2-pgp-fw-lib/python',
-            'firmware/applications/TimeTool/python',
-            'firmware/submodules/clink-gateway-fw-lib/python',
-            'software/TimeTool/python',
-            'software/TimeTool/scripts']
+from distutils.core import setup
+from git import Repo
 
-pnamelist = ['surf','axipcie','LclsTimingCore','lcls2_pgp_fw_lib','TimeTool','ClinkFeb','TimeToolDev','toggle_prescaling']
+repo = Repo()
 
-for pname,pdir in zip(pnamelist,pdirlist):
-    setup(
-        name = pname,
-        license = 'LCLS II',
-        description = 'LCLS II firmware package',
-        package_dir = {'':pdir},
-        packages = find_packages(pdir),
-    )
+# Get version before adding version file
+ver = repo.git.describe('--tags')
+
+# append version constant to package init
+with open('python/surf/__init__.py','a') as vf:
+    vf.write(f'\n__version__="{ver}"\n')
+
+setup (
+    name='lcls2_timetool',
+    version=ver,
+    packages=['lcls2_timetool'],
+    package_dir={'':'firmware/common/python'},
+    scripts['software/scripts/timetoolGui']
+)
+
