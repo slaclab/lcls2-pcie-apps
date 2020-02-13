@@ -3,25 +3,17 @@
 import sys
 import argparse
 
-import setupLibPaths
+if '--setupLibPaths' in sys.argv:
+    import setupLibPaths
+
+import rogue    
 import pyrogue.gui
 import pyrogue.pydm
 import timetool
+    
 
-import rogue
-
-#rogue.Logging.setFilter('pyrogue.batcher', rogue.Logging.Debug)
-
-#################################################################
-
-# Set the argument parser
+# New Arg parsers    
 parser = argparse.ArgumentParser()
-
-# Convert str to bool
-argBool = lambda s: s.lower() in ['true', 't', 'yes', '1']
-
-def auto_int(x):
-    return int (x,0)
 
 # Add arguments
 parser.add_argument(
@@ -43,36 +35,42 @@ parser.add_argument(
 
 parser.add_argument(
     "--pollEn", 
-    type     = argBool,
     required = False,
-    default  = False,
+    action = 'store_true',
     help     = "Enable auto-polling",
 ) 
 
 parser.add_argument(
     "--initRead", 
-    type     = argBool,
     required = False,
-    default  = False,
+    action = 'store_true',
     help     = "Enable read all variables at start",
 )  
 
 parser.add_argument(
     "--dataDebug", 
-    type     = argBool,
     required = False,
-    default  = False,
+    action = 'store_true',
     help     = "Enable TimeToolRx module",
 )
 
-#parser.add_argument(
-#    "--serverPort",
-#    type = int,
-#    default = 9099)
+
+parser.add_argument(
+    "--serverPort",
+    type = int,
+    default = 0)
   
 
 # Get the arguments
 args = parser.parse_args()
+    
+
+
+#rogue.Logging.setFilter('pyrogue.batcher', rogue.Logging.Debug)
+
+#################################################################
+
+# Set the argument parser
 
 #################################################################
 
