@@ -1,17 +1,28 @@
 
 GitBase: ..
 
-TopRoguePackage: timetool
+TopRoguePackage: lcls2_timetool
 
 RoguePackages:
    - common/python
-   - submodules/surf/python
-   - submodules/axi-pcie-core/python
-   - submodules/lcls-timing-core/python
-   - submodules/lcls2-pgp-fw-lib/python
-   - submodules/l2si-core/python
-   - submodules/clink-gateway-fw-lib/python      
+#   - submodules/surf/python
+#   - submodules/axi-pcie-core/python
+#   - submodules/lcls-timing-core/python
+#   - submodules/lcls2-pgp-fw-lib/python
+#   - submodules/l2si-core/python
+#   - submodules/clink-gateway-fw-lib/python
 
+RogueScripts:
+  - ../software/scripts/timetoolGui
+
+CondaDependencies:
+  - surf=v2.0.7
+  - axi_pcie_core=v3.1.2
+  - lcls_timing_core=v3.0.1
+  - lcls2_pgp_fw_lib=v3.0.1
+  - l2si_core=v2.0.2
+  - clink_gateway_fw_lib=v2.1.1
+  - rogue=v2.9
 
 RogueConfig:
 
