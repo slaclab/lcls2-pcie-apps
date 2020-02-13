@@ -10,6 +10,9 @@ language:
 python:
   - 3.6
 
+git:
+  clone: false
+  
 # Environment variables
 env:
   global:
