@@ -14,7 +14,7 @@ import IPython
 
 import random
 
-import timetool.EventBuilderParser as eventBuilderParser
+import lcls2_timetool.EventBuilderParser as eventBuilderParser
 
 try:
     matplotlib.use("Qt5agg")

@@ -9,7 +9,7 @@ if '--setupLibPaths' in sys.argv:
 import rogue    
 import pyrogue.gui
 import pyrogue.pydm
-import timetool
+import lcls2_timetool
     
 
 # New Arg parsers    
@@ -73,7 +73,7 @@ args = parser.parse_known_args()
 
 #################################################################
 
-with timetool.TimeToolKcu1500Root(**vars(args[0])) as root:
+with lcls2_timetool.TimeToolKcu1500Root(**vars(args[0])) as root:
 
 #    pyrogue.pydm.runPyDM(root=root)
 

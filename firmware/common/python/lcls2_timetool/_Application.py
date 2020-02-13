@@ -11,7 +11,7 @@
 
 import pyrogue as pr
 
-import timetool
+import lcls2_timetool
 
         
 class Application(pr.Device):
@@ -19,7 +19,7 @@ class Application(pr.Device):
         super().__init__(**kwargs) 
 
         for i in range(numLanes):
-            self.add(timetool.AppLane(            
+            self.add(lcls2_timetool.AppLane(            
                 name   = ('AppLane[%i]' % i), 
                 offset = 0x00C00000 + (i*0x00100000), 
             ))       
