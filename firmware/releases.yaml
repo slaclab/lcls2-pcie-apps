@@ -22,6 +22,7 @@ CondaDependencies:
   - lcls2_pgp_fw_lib=v3.0.1
   - l2si_core=v2.0.2
   - clink_gateway_fw_lib=v2.1.1
+  - matplotlib
 
 RogueConfig:
 
