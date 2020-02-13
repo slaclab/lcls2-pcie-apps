@@ -35,6 +35,7 @@ Targets:
 
 Releases:
    TimeToolKcu1500:
+      Primary: True
       Targets:
       - TimeToolKcu1500
       Types:
