@@ -27,9 +27,8 @@ parser.add_argument(
 
 parser.add_argument(
     "--pgp3", 
-    type     = argBool,
     required = False,
-    default  = False,
+    action = 'store_true',    
     help     = "true = PGPv3, false = PGP2b",
 ) 
 
@@ -62,7 +61,7 @@ parser.add_argument(
   
 
 # Get the arguments
-args = parser.parse_args()
+args = parser.parse_known_args()
     
 
 
@@ -74,7 +73,7 @@ args = parser.parse_args()
 
 #################################################################
 
-with timetool.TimeToolKcu1500Root(**vars(args)) as root:
+with timetool.TimeToolKcu1500Root(**vars(args[0])) as root:
 
 #    pyrogue.pydm.runPyDM(root=root)
 
