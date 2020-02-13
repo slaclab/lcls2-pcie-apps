@@ -39,23 +39,11 @@ jobs:
         # Prepare folders
         - mkdir -p $MINICONDA_DIR
         - mkdir -p $DOWNLOAD_DIR
-        # on OSX rogue needs an older version of the MacOS SDK
-        - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-            git clone https://github.com/phracker/MacOSX-SDKs;
-            sudo mv MacOSX-SDKs/MacOSX10.9.sdk /opt/;
-            export CONDA_BUILD_SYSROOT=/opt/MacOSX10.9.sdk;
-            export CONDA_BUILD=1;
-            brew install p7zip
-          fi
 
       install:
         # Install Anaconda for the right architecture (linux or osx)
         - cd $MINICONDA_DIR
-        - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-            wget -O miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh;
-          else
-            wget -O miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh;
-          fi
+        - wget -O miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh;
         - bash miniconda.sh -b -p $HOME/miniconda
         - export PATH="$HOME/miniconda/bin:$PATH"
         - hash -r
@@ -65,10 +53,7 @@ jobs:
         # Download and unzip tag zipfile
         - cd $DOWNLOAD_DIR
         - wget -O file.zip $DOWNLOAD_URL
-        - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-             7za x file.zip
-          else
-             unzip file.zip
+        - unzip file.zip
 
       script:
         # Build conda package
@@ -78,6 +63,3 @@ jobs:
         # Upload conda package
         - anaconda -t $CONDA_UPLOAD_TOKEN_TAG upload bld-dir/`echo $TRAVIS_OS_NAME`-64/*.tar.bz2
 
-    - <<: *deploy-conda-stage   # Conda for MacOS
-      os: osx
-      language: ruby  # osx does not support language=python
