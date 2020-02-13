@@ -2,7 +2,7 @@ import pyrogue as pr
 
 import surf.protocols.batcher
 
-import timetool
+import lcls2_timetool
 
 class AppLane(pr.Device):
     def __init__(self, **kwargs):
@@ -16,11 +16,11 @@ class AppLane(pr.Device):
             tickUnit     = '156.25MHz',            
         ))
         
-        self.add(timetool.Fex( 
+        self.add(lcls2_timetool.Fex( 
             offset = 0x10000, 
         ))
 
-        self.add(timetool.Prescale( 
+        self.add(lcls2_timetool.Prescale( 
             offset = 0x20000, 
         ))
 

@@ -4,8 +4,8 @@ import pyrogue.utilities.fileio
 
 import rogue
 
-import timetool
-import timetool.streams
+import lcls2_timetool
+import lcls2_timetool.streams
 
 import ClinkFeb
 
@@ -74,12 +74,12 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
         self.memMap = axipcie.createAxiPcieMemMap(dev, 'localhost', 8000)
 
         # Instantiate the top level Device and pass it the memeory map
-        self.add(timetool.TimeToolKcu1500(
+        self.add(lcls2_timetool.TimeToolKcu1500(
             memBase = self.memMap,
             pgp3    = pgp3,
             expand = True))
 
-        self.add(timetool.RunControl())
+        self.add(lcls2_timetool.RunControl())
 
         self.add(pyrogue.utilities.fileio.StreamWriter(name='DataWriter'))
 
@@ -122,7 +122,7 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
             for lane in range(numLanes):  
             
                 # Create the frame generator
-                self._frameGen[lane] = timetool.Piranha4VcsEmu('localhost', 7000)
+                self._frameGen[lane] = lcls2_timetool.Piranha4VcsEmu('localhost', 7000)
 
                 # When a trigger is received, the fake frame generator will be called
                 self.roguePgp.pgpTriggers[lane].setRecvCb( self._frameGen[lane].trigCb )
