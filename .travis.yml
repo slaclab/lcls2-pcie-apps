@@ -4,11 +4,6 @@ sudo: true
 # Setup for Ubuntu Bionic (18.04)
 dist: bionic
 
-# Blacklist
-branches:
-  except:
-    - gh-pages
-
 language:
   - python
 
@@ -18,10 +13,11 @@ python:
 # Environment variables
 env:
   global:
+    - GH_REPO_URL: github.com/slaclab/lcls2-timetool
     - PACKAGE_DIR: $HOME/packages
-    - GH_REPO_NAME: lcls2-timetool
-    - GH_REPO_REF: github.com/slaclab/lcls2-timetool.git
     - MINICONDA_DIR: $PACKAGE_DIR/miniconda
+    - DOWNLOAD_DIR: ${HOME}/download
+    - DOWNLOAD_URL: ${GH_REPO_URL}/releases/download/${TRAVIS_TAG}/rogue_${TRAVIS_TAG}.zip
 
 # Install dependencies
 addons:
@@ -30,31 +26,26 @@ addons:
       - python3
 
 stages:
-    - name: deploy_dev
-      if: branch = pre-release AND tag IS blank AND NOT (type = pull_request)
     - name: deploy_tag
       if: tag IS present
 
 # Generate and deploy documentation
 jobs:
   include:
-    # Stage to only generate the documentation
     - &deploy-conda-stage       # Conda for linux
-      stage: deploy_dev
+      stage: deploy_tag
       name: "Deploy Conda"
-      env: CONDA_TOKEN=$CONDA_UPLOAD_TOKEN_DEV
       before_install:
         # Prepare folders
         - mkdir -p $MINICONDA_DIR
-        # Bring all the tags
-        - git pull --unshallow
-        - git pull
+        - mkdir -p $DOWNLOAD_DIR
         # on OSX rogue needs an older version of the MacOS SDK
         - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
             git clone https://github.com/phracker/MacOSX-SDKs;
             sudo mv MacOSX-SDKs/MacOSX10.9.sdk /opt/;
             export CONDA_BUILD_SYSROOT=/opt/MacOSX10.9.sdk;
             export CONDA_BUILD=1;
+            brew install p7zip
           fi
 
       install:
@@ -71,10 +62,13 @@ jobs:
         - conda config --set always_yes yes
         - conda install conda-build anaconda-client conda-verify
         - conda update -q conda conda-build
-
-      before_script:
-        # Go back to top directory
-        - cd $TRAVIS_BUILD_DIR
+        # Download and unzip tag zipfile
+        - cd $DOWNLOAD_DIR
+        - wget -O file.zip $DOWNLOAD_URL
+        - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+             7za x file.zip
+          else
+             unzip file.zip
 
       script:
         # Build conda package
@@ -82,19 +76,8 @@ jobs:
 
       after_success:
         # Upload conda package
-        - anaconda -t $CONDA_TOKEN upload bld-dir/`echo $TRAVIS_OS_NAME`-64/*.tar.bz2
+        - anaconda -t $CONDA_UPLOAD_TOKEN_TAG upload bld-dir/`echo $TRAVIS_OS_NAME`-64/*.tar.bz2
 
     - <<: *deploy-conda-stage   # Conda for MacOS
       os: osx
       language: ruby  # osx does not support language=python
-
-    - <<: *deploy-conda-stage   # Conda for Linux
-      stage: deploy_tag
-      env: CONDA_TOKEN=$CONDA_UPLOAD_TOKEN_TAG
-
-    - <<: *deploy-conda-stage   # Conda for macOS
-      stage: deploy_tag
-      os: osx
-      language: ruby  # osx does not support language=python
-      env: CONDA_TOKEN=$CONDA_UPLOAD_TOKEN_TAG
-
