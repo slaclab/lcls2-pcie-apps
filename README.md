@@ -1,6 +1,6 @@
-# lcls2-pcie-apps
+# lcls2-timetool
 
-LCLS2 PCIE-Express Board Applications
+LCLS2 TimeTool
 
 <!--- ######################################################## -->
 
@@ -15,26 +15,6 @@ LCLS2 PCIE-Express Board Applications
 3) Add a new SSH key to your GitHub account
 > https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
 
-4) Setup for large filesystems on github
-
-```
-$ git lfs install
-```
-
-5) Verify that you have git version 2.13.0 (or later) installed 
-
-```
-$ git version
-git version 2.13.0
-```
-
-6) Verify that you have git-lfs version 2.1.1 (or later) installed 
-
-```
-$ git-lfs version
-git-lfs/2.1.1
-```
-
 # Clone the GIT repository
 
 ```
@@ -47,12 +27,12 @@ $ git clone --recursive git@github.com:slaclab/lcls2-pcie-apps
 
 1) Setup Xilinx licensing
 ```
-$ source lcls2-pcie-apps/firmware/setup_env_slac.sh
+$ source lcls2-timetool/firmware/setup_env_slac.sh
 ```
 
 2) Go to the target directory and make the firmware:
 ```
-$ cd lcls2-pcie-apps/firmware/targets/TimeToolKcu1500/
+$ cd lcls2-timetool/firmware/targets/TimeToolKcu1500/
 $ make
 ```
 
