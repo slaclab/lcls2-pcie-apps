@@ -13,12 +13,12 @@ print(os.path.dirname(os.path.realpath(__file__)))
 
 for pkgpath in subpackages:
     pkgname = pkgpath.split('/')[-1]
-    linkname = os.path.join('timetool',pkgname)
+    linkname = os.path.join('lcls2_timetool',pkgname)
     if os.path.islink(linkname): os.remove(linkname)
     os.symlink(os.path.join('../../../submodules',pkgpath),linkname)
 
 setup(
-    name = 'timetool',
+    name = 'lcls2_timetool',
     description = 'LCLS II TimeTool package',
     packages = find_packages(),
 )
