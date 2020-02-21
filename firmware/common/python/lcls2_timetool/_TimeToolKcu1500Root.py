@@ -50,7 +50,7 @@ class DataDebug(rogue.interfaces.stream.Slave):
 
 class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
 
-    def __init__(self, *
+    def __init__(self, *,
                  dev  = '/dev/datadev_0',       # path to PCIe device
                  dataCapture = False,
                  dataDebug   = False,                 
