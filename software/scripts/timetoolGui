@@ -47,6 +47,13 @@ parser.add_argument(
 )  
 
 parser.add_argument(
+    "--dataCapture", 
+    required = False,
+    action = 'store_true',
+    help     = "Enable TimeToolRx module",
+)
+
+parser.add_argument(
     "--dataDebug", 
     required = False,
     action = 'store_true',
