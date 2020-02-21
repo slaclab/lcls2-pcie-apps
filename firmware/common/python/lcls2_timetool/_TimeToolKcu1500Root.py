@@ -50,9 +50,10 @@ class DataDebug(rogue.interfaces.stream.Slave):
 
 class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
 
-    def __init__(self,
-                 dataDebug   = False,
-                 dev  = '/dev/datadev_0',# path to PCIe device
+    def __init__(self, *
+                 dev  = '/dev/datadev_0',       # path to PCIe device
+                 dataCapture = False,
+                 dataDebug   = False,                 
                  pgp3        = False,           # true = PGPv3, false = PGP2b
                  pollEn      = True,            # Enable automatic polling registers
                  initRead    = True,            # Read all registers at start of the system
@@ -79,12 +80,17 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
             pgp3    = pgp3,
             expand = True))
 
-        self.add(lcls2_timetool.RunControl())
-
-        self.add(pyrogue.utilities.fileio.StreamWriter(name='DataWriter'))
 
         # Create DMA streams
-        self.dmaStreams = axipcie.createAxiPcieDmaStreams(dev, {lane:{dest for dest in range(4)} for lane in range(numLanes)}, 'localhost', 8000)
+        if dataCapture:
+            self.add(lcls2_timetool.RunControl())
+            self.add(pyrogue.utilities.fileio.StreamWriter(name='DataWriter'))
+            
+            vcList = [0, 1, 2] # CLink SRP, Data, CLink serial
+        else:
+            vcList = [0, 2] # CLink SRP, CLink serial
+            
+        self.dmaStreams = axipcie.createAxiPcieDmaStreams(dev, {lane:{vc for vc in vcList} for lane in range(numLanes)}, 'localhost', 8000)
 
                         
         # Map dma streams to SRP, CLinkFebs
@@ -99,7 +105,6 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
                 # SRP
                 self._srp[lane] = rogue.protocols.srp.SrpV3()
                 self.dmaStreams[lane][0] == self._srp[lane]
-                #pr.streamConnectBiDir(self.dmaStreams[lane][0], self._srp[lane])
 
                 # CameraLink Feb Board
                 self.add(ClinkFeb.ClinkFeb(      
@@ -130,21 +135,21 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
                 # Resulting frame will be pushed at pgp VC1
                 self._frameGen[lane] >> self.roguePgp.pgpStreams[lane][1]
 
-
-        # Connect the data writer
-        self >> self.DataWriter.getChannel(0)
+        if dataCapture:
+            # Connect the data writer
+            self >> self.DataWriter.getChannel(0)
                 
-        # Create arrays to be filled
-        self._dbg = [DataDebug("DataDebug") for lane in range(numLanes)]
-        self.unbatchers = [rogue.protocols.batcher.SplitterV1() for lane in range(numLanes)]
+            # Create arrays to be filled
+            self._dbg = [DataDebug("DataDebug") for lane in range(numLanes)]
+            self.unbatchers = [rogue.protocols.batcher.SplitterV1() for lane in range(numLanes)]
         
-        # Create the stream interface
-        for lane in range(numLanes):
-            self.dmaStreams[lane][1] >> self.DataWriter.getChannel(lane+1)
+            # Create the stream interface
+            for lane in range(numLanes):
+                self.dmaStreams[lane][1] >> self.DataWriter.getChannel(lane+1)
             
-            # Debug slave
-            if dataDebug:
-                self.dmaStreams[lane][1] >> self.unbatchers[lane] >> self._dbg[lane]
+                # Debug slave
+                if dataDebug:
+                    self.dmaStreams[lane][1] >> self.unbatchers[lane] >> self._dbg[lane]
                 
                 
 #         if (driverPath!='sim'):           
