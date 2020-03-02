@@ -8,7 +8,7 @@ if '--setupLibPaths' in sys.argv:
 
 import rogue    
 import pyrogue.gui
-import pyrogue.pydm
+#import pyrogue.pydm
 import lcls2_timetool
     
 
@@ -92,5 +92,3 @@ with lcls2_timetool.TimeToolKcu1500Root(**vars(args[0])) as root:
 
     # Run gui
     appTop.exec_()
-
-
