@@ -8,7 +8,7 @@ if '--setupLibPaths' in sys.argv:
 
 import rogue    
 import pyrogue.gui
-import pyrogue.pydm
+#import pyrogue.pydm
 import lcls2_timetool
     
 
@@ -45,6 +45,13 @@ parser.add_argument(
     action = 'store_true',
     help     = "Enable read all variables at start",
 )  
+
+parser.add_argument(
+    "--dataCapture", 
+    required = False,
+    action = 'store_true',
+    help     = "Enable TimeToolRx module",
+)
 
 parser.add_argument(
     "--dataDebug", 
@@ -85,5 +92,3 @@ with lcls2_timetool.TimeToolKcu1500Root(**vars(args[0])) as root:
 
     # Run gui
     appTop.exec_()
-
-

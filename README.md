@@ -1,6 +1,8 @@
 # lcls2-timetool
 
-LCLS2 TimeTool
+## Travis CI Status:
+[![Anaconda-Server Badge](https://anaconda.org/tidair-tag/timetoolkcu1500/badges/version.svg)](https://anaconda.org/tidair-tag/timetoolkcu1500)
+[![Anaconda-Server Badge](https://anaconda.org/tidair-tag/timetoolkcu1500/badges/latest_release_date.svg)](https://anaconda.org/tidair-tag/timetoolkcu1500)
 
 <!--- ######################################################## -->
 
