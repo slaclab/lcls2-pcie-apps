@@ -47,6 +47,7 @@ entity AppLane is
       -- Trigger Event streams (axilClk domain)
       eventAxisMaster : in  AxiStreamMasterType;
       eventAxisSlave  : out AxiStreamSlaveType;
+      clearReadout    : in  sl;
       -- DMA Interface (dmaClk domain)
       dmaClk          : in  sl;
       dmaRst          : in  sl;
@@ -112,6 +113,7 @@ begin
          -- Trigger Event streams (axilClk domain)
          eventAxisMaster => eventAxisMaster,  -- [in]
          eventAxisSlave  => eventAxisSlave,   -- [out]
+         clearReadout    => clearReadout,     -- [in]
          -- DMA Interface (axilClk domain)
          dataInMaster    => pgpObMasters(1),  -- [in]
          dataInSlave     => pgpObSlaves(1),   -- [out]
