@@ -310,7 +310,7 @@ begin
          axisClk                     => axilClk,
          axisRst                     => axilRst,
          -- Misc
-         blowoff                     => blowoff,
+         blowoffExt                  => blowoff,
          -- AXI-Lite Interface (axisClk domain)
          axilReadMaster              => axilReadMasters(EVENT_INDEX_C),
          axilReadSlave               => axilReadSlaves(EVENT_INDEX_C),
