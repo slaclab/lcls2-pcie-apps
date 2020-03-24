@@ -33,6 +33,7 @@ library timetool;
 entity TimeToolCore is
    generic (
       TPD_G           : time             := 1 ns;
+      SIMULATION_G    : boolean          := false;
       AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000");
    port (
       -- Clock and Reset
@@ -284,7 +285,7 @@ begin
       generic map (
          TPD_G         => TPD_G,
          BYPASS_SYNC_G => true,         -- Already on the right domain
-         PULSE_WIDTH_G => 10000000)
+         PULSE_WIDTH_G => ite(SIMULATION_G, 10000, 10000000))
       port map (
          clk     => axilClk,            -- [in]
          rst     => axilRst,            -- [in]

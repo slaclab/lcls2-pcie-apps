@@ -30,6 +30,7 @@ use timetool.AppPkg.all;
 entity AppLane is
    generic (
       TPD_G           : time             := 1 ns;
+      SIMULATION_G    : boolean          := false;
       AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000");
    port (
       -- AXI-Lite Interface
@@ -105,6 +106,7 @@ begin
    U_TimeToolCore : entity timetool.TimeToolCore
       generic map (
          TPD_G           => TPD_G,
+         SIMULATION_G    => SIMULATION_G,
          AXI_BASE_ADDR_G => AXI_BASE_ADDR_G)
       port map (
          -- System Clock and Reset

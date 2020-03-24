@@ -27,6 +27,7 @@ use timetool.AppPkg.all;
 entity Application is
    generic (
       TPD_G           : time             := 1 ns;
+      SIMULATION_G    : boolean          := false;
       AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000";
       DMA_SIZE_G      : integer          := 1);
    port (
@@ -95,6 +96,7 @@ begin
       U_Lane : entity timetool.AppLane
          generic map (
             TPD_G           => TPD_G,
+            SIMULATION_G    => SIMULATION_G,
             AXI_BASE_ADDR_G => AXIL_CONFIG_C(i).baseAddr)
          port map (
             -- AXI-Lite Interface (axilClk domain)

@@ -253,6 +253,7 @@ begin
    U_App : entity timetool.Application
       generic map (
          TPD_G           => TPD_G,
+         SIMULATION_G    => ROGUE_SIM_EN_G,
          AXI_BASE_ADDR_G => AXIL_CONFIG_C(APP_INDEX_C).baseAddr,
          DMA_SIZE_G      => DMA_SIZE_C)
       port map (
