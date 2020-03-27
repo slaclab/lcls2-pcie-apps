@@ -30,6 +30,7 @@ use timetool.AppPkg.all;
 entity AppLane is
    generic (
       TPD_G           : time             := 1 ns;
+      SIMULATION_G    : boolean          := false;
       AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000");
    port (
       -- AXI-Lite Interface
@@ -47,6 +48,7 @@ entity AppLane is
       -- Trigger Event streams (axilClk domain)
       eventAxisMaster : in  AxiStreamMasterType;
       eventAxisSlave  : out AxiStreamSlaveType;
+      clearReadout    : in  sl;
       -- DMA Interface (dmaClk domain)
       dmaClk          : in  sl;
       dmaRst          : in  sl;
@@ -104,6 +106,7 @@ begin
    U_TimeToolCore : entity timetool.TimeToolCore
       generic map (
          TPD_G           => TPD_G,
+         SIMULATION_G    => SIMULATION_G,
          AXI_BASE_ADDR_G => AXI_BASE_ADDR_G)
       port map (
          -- System Clock and Reset
@@ -112,6 +115,7 @@ begin
          -- Trigger Event streams (axilClk domain)
          eventAxisMaster => eventAxisMaster,  -- [in]
          eventAxisSlave  => eventAxisSlave,   -- [out]
+         clearReadout    => clearReadout,     -- [in]
          -- DMA Interface (axilClk domain)
          dataInMaster    => pgpObMasters(1),  -- [in]
          dataInSlave     => pgpObSlaves(1),   -- [out]

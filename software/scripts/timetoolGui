@@ -3,7 +3,8 @@
 import sys
 import argparse
 
-if '--setupLibPaths' in sys.argv:
+if '--local' in sys.argv:
+    print('local mode')
     import setupLibPaths
 
 import rogue    

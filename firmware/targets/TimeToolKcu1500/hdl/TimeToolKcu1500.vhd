@@ -131,6 +131,7 @@ architecture top_level of TimeToolKcu1500 is
    signal eventAxisMasters : AxiStreamMasterArray(DMA_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal eventAxisSlaves  : AxiStreamSlaveArray(DMA_SIZE_C-1 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
    signal eventAxisCtrl    : AxiStreamCtrlArray(DMA_SIZE_C-1 downto 0)   := (others => AXI_STREAM_CTRL_UNUSED_C);
+   signal clearReadout     : slv(DMA_SIZE_C-1 downto 0);
 
 begin
 
@@ -252,7 +253,9 @@ begin
    U_App : entity timetool.Application
       generic map (
          TPD_G           => TPD_G,
-         AXI_BASE_ADDR_G => AXIL_CONFIG_C(APP_INDEX_C).baseAddr)
+         SIMULATION_G    => ROGUE_SIM_EN_G,
+         AXI_BASE_ADDR_G => AXIL_CONFIG_C(APP_INDEX_C).baseAddr,
+         DMA_SIZE_G      => DMA_SIZE_C)
       port map (
          -- AXI-Lite Interface (axilClk domain)
          axilClk          => axilClk,
@@ -269,6 +272,7 @@ begin
          -- Trigger Event streams (axilClk domain)
          eventAxisMasters => eventAxisMasters,  -- [out]
          eventAxisSlaves  => eventAxisSlaves,   -- [in]
+         clearReadout     => clearReadout,      -- [in]
          -- DMA Interface (dmaClk domain)
          dmaClk           => dmaClk,
          dmaRst           => dmaRst,
@@ -318,6 +322,7 @@ begin
          eventAxisMasters    => eventAxisMasters,  -- [out]
          eventAxisSlaves     => eventAxisSlaves,   -- [in]
          eventAxisCtrl       => eventAxisCtrl,     -- [in]
+         clearReadout        => clearReadout,      -- [out]
          ------------------
          --  Hardware Ports
          ------------------       

@@ -11,10 +11,9 @@ class Piranha4VcsEmu(rogue.interfaces.stream.Master):
         self.count = 0
 
     def trigCb(self, opCode, remData):
-        if opCode == 0:
-            self._basicFrame[0] = self.count%256
-            self.count += 1
-            frame = self._reqFrame(self._maxSize, True)
-            frame.write(self._basicFrame, 0)
-            self._sendFrame(frame)
-
+        self._basicFrame[0] = opCode%256
+        self._basicFrame[1] = self.count%256
+        self.count += 1
+        frame = self._reqFrame(self._maxSize, True)
+        frame.write(self._basicFrame, 0)
+        self._sendFrame(frame)

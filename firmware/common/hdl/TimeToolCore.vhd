@@ -33,6 +33,7 @@ library timetool;
 entity TimeToolCore is
    generic (
       TPD_G           : time             := 1 ns;
+      SIMULATION_G    : boolean          := false;
       AXI_BASE_ADDR_G : slv(31 downto 0) := x"00C0_0000");
    port (
       -- Clock and Reset
@@ -41,6 +42,7 @@ entity TimeToolCore is
       -- Trigger Event streams (axilClk domain)
       eventAxisMaster : in  AxiStreamMasterType;
       eventAxisSlave  : out AxiStreamSlaveType;
+      clearReadout    : in  sl;
       -- PGP data from camera
       dataInMaster    : in  AxiStreamMasterType;
       dataInSlave     : out AxiStreamSlaveType;
@@ -99,6 +101,8 @@ architecture mapping of TimeToolCore is
 
    signal bufDataInMaster : AxiStreamMasterType;
    signal bufDataInSlave  : AxiStreamSlaveType;
+
+   signal blowoff : sl;
 
 
 begin
@@ -274,6 +278,20 @@ begin
          mAxisMaster => bufDataInMaster,
          mAxisSlave  => bufDataInSlave);
 
+   ------------------
+   -- Create blowoff from clearReadout signal
+   ------------------
+   U_SynchronizerOneShot_1 : entity surf.SynchronizerOneShot
+      generic map (
+         TPD_G         => TPD_G,
+         BYPASS_SYNC_G => true,         -- Already on the right domain
+         PULSE_WIDTH_G => ite(SIMULATION_G, 10000, 10000000))
+      port map (
+         clk     => axilClk,            -- [in]
+         rst     => axilRst,            -- [in]
+         dataIn  => clearReadout,       -- [in]
+         dataOut => blowoff);           -- [out]
+
    ----------------------
    -- EventBuilder Module
    ----------------------
@@ -292,6 +310,8 @@ begin
          -- Clock and Reset
          axisClk                     => axilClk,
          axisRst                     => axilRst,
+         -- Misc
+         blowoffExt                  => blowoff,
          -- AXI-Lite Interface (axisClk domain)
          axilReadMaster              => axilReadMasters(EVENT_INDEX_C),
          axilReadSlave               => axilReadSlaves(EVENT_INDEX_C),
