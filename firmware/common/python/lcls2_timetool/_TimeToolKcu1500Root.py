@@ -151,7 +151,9 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
                 if dataDebug:
                     self.dmaStreams[lane][1] >> self.unbatchers[lane] >> self._dbg[lane]
                 
-                
+    def stop(self):
+        pass
+#        self.memMap
 #         if (driverPath!='sim'):           
 #             # Read all the variables
 #             self.ReadAll()

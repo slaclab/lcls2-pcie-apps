@@ -44,50 +44,53 @@ entity TimeToolKcu1500 is
       --  Application Ports
       ---------------------
       -- QSFP[0] Ports
-      qsfp0RefClkP : in  slv(1 downto 0);
-      qsfp0RefClkN : in  slv(1 downto 0);
-      qsfp0RxP     : in  slv(3 downto 0);
-      qsfp0RxN     : in  slv(3 downto 0);
-      qsfp0TxP     : out slv(3 downto 0);
-      qsfp0TxN     : out slv(3 downto 0);
+      qsfp0RefClkP : in    slv(1 downto 0);
+      qsfp0RefClkN : in    slv(1 downto 0);
+      qsfp0RxP     : in    slv(3 downto 0);
+      qsfp0RxN     : in    slv(3 downto 0);
+      qsfp0TxP     : out   slv(3 downto 0);
+      qsfp0TxN     : out   slv(3 downto 0);
       -- QSFP[1] Ports
-      qsfp1RefClkP : in  slv(1 downto 0);
-      qsfp1RefClkN : in  slv(1 downto 0);
-      qsfp1RxP     : in  slv(3 downto 0);
-      qsfp1RxN     : in  slv(3 downto 0);
-      qsfp1TxP     : out slv(3 downto 0);
-      qsfp1TxN     : out slv(3 downto 0);
+      qsfp1RefClkP : in    slv(1 downto 0);
+      qsfp1RefClkN : in    slv(1 downto 0);
+      qsfp1RxP     : in    slv(3 downto 0);
+      qsfp1RxN     : in    slv(3 downto 0);
+      qsfp1TxP     : out   slv(3 downto 0);
+      qsfp1TxN     : out   slv(3 downto 0);
       --------------
       --  Core Ports
       --------------
       -- System Ports
-      emcClk       : in  sl;
-      userClkP     : in  sl;
-      userClkN     : in  sl;
+      emcClk       : in    sl;
+      userClkP     : in    sl;
+      userClkN     : in    sl;
       -- QSFP[0] Ports
-      qsfp0RstL    : out sl;
-      qsfp0LpMode  : out sl;
-      qsfp0ModSelL : out sl;
-      qsfp0ModPrsL : in  sl;
+      qsfp0RstL    : out   sl;
+      qsfp0LpMode  : out   sl;
+      qsfp0ModSelL : out   sl;
+      qsfp0ModPrsL : in    sl;
       -- QSFP[1] Ports
-      qsfp1RstL    : out sl;
-      qsfp1LpMode  : out sl;
-      qsfp1ModSelL : out sl;
-      qsfp1ModPrsL : in  sl;
+      qsfp1RstL    : out   sl;
+      qsfp1LpMode  : out   sl;
+      qsfp1ModSelL : out   sl;
+      qsfp1ModPrsL : in    sl;
+      -- QSFP I2C
+      scl          : inout sl;
+      sda          : inout sl;
       -- Boot Memory Ports 
-      flashCsL     : out sl;
-      flashMosi    : out sl;
-      flashMiso    : in  sl;
-      flashHoldL   : out sl;
-      flashWp      : out sl;
+      flashCsL     : out   sl;
+      flashMosi    : out   sl;
+      flashMiso    : in    sl;
+      flashHoldL   : out   sl;
+      flashWp      : out   sl;
       -- PCIe Ports
-      pciRstL      : in  sl;
-      pciRefClkP   : in  sl;
-      pciRefClkN   : in  sl;
-      pciRxP       : in  slv(7 downto 0);
-      pciRxN       : in  slv(7 downto 0);
-      pciTxP       : out slv(7 downto 0);
-      pciTxN       : out slv(7 downto 0));
+      pciRstL      : in    sl;
+      pciRefClkP   : in    sl;
+      pciRefClkN   : in    sl;
+      pciRxP       : in    slv(7 downto 0);
+      pciRxN       : in    slv(7 downto 0);
+      pciTxP       : out   slv(7 downto 0);
+      pciTxN       : out   slv(7 downto 0));
 end TimeToolKcu1500;
 
 architecture top_level of TimeToolKcu1500 is
@@ -286,13 +289,15 @@ begin
    ------------------
    U_HSIO : entity lcls2_pgp_fw_lib.Kcu1500Hsio
       generic map (
-         TPD_G             => TPD_G,
-         ROGUE_SIM_EN_G    => ROGUE_SIM_EN_G,
-         PGP_TYPE_G        => PGP_TYPE_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
-         NUM_PGP_LANES_G   => DMA_SIZE_C,
-         AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_C,
-         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(HW_INDEX_C).baseAddr)
+         TPD_G               => TPD_G,
+         ROGUE_SIM_EN_G      => ROGUE_SIM_EN_G,
+         DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_C,
+         PGP_TYPE_G          => PGP_TYPE_G,
+         AXIL_CLK_FREQ_G     => AXIL_CLK_FREQ_C,
+         AXI_BASE_ADDR_G     => AXIL_CONFIG_C(HW_INDEX_C).baseAddr,
+         NUM_PGP_LANES_G     => DMA_SIZE_C,
+         EN_LCLS_I_TIMING_G  => true,
+         EN_LCLS_II_TIMING_G => true)
       port map (
          ------------------------      
          --  Top Level Interfaces
@@ -339,6 +344,9 @@ begin
          qsfp1RxP            => qsfp1RxP,
          qsfp1RxN            => qsfp1RxN,
          qsfp1TxP            => qsfp1TxP,
-         qsfp1TxN            => qsfp1TxN);
+         qsfp1TxN            => qsfp1TxN,
+         -- QSFP I2C
+         scl                 => scl,
+         sda                 => sda);
 
 end top_level;

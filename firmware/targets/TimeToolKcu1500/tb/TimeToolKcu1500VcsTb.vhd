@@ -21,6 +21,7 @@ use ieee.std_logic_arith.all;
 
 library surf;
 use surf.StdRtlPkg.all;
+use surf.I2cPkg.all;
 
 library ruckus;
 use ruckus.BuildInfoPkg.all;
@@ -33,6 +34,21 @@ architecture testbed of TimeToolKcu1500VcsTb is
 
    signal userClkP : sl := '0';
    signal userClkN : sl := '1';
+
+   signal i2cClk : sl;
+   signal i2cRst : sl;
+   signal scl    : sl;
+   signal sda    : sl;
+   signal sc     : slv(7 downto 0);
+   signal sd     : slv(7 downto 0);
+
+   signal rst0 : sl;
+   signal rst4 : sl;
+
+   signal wrData : slv(7 downto 0);
+
+   signal i2ci : i2c_in_type;
+   signal i2co : i2c_out_type;   
 
 begin
 
@@ -85,6 +101,8 @@ begin
          qsfp1LpMode  => open,
          qsfp1ModSelL => open,
          qsfp1ModPrsL => '1',
+         scl          => scl,
+         sda          => sda,
          -- Boot Memory Ports 
          flashCsL     => open,
          flashMosi    => open,
@@ -99,5 +117,93 @@ begin
          pciRxN       => (others => '1'),
          pciTxP       => open,
          pciTxN       => open);
+
+   U_ClkI2c : entity surf.ClkRst
+      generic map (
+         CLK_PERIOD_G      => 8.0 ns,   -- 156.25 MHz
+         RST_START_DELAY_G => 0 ns,
+         RST_HOLD_TIME_G   => 1000 ns)
+      port map (
+         clkP => i2cClk,
+         rst  => i2cRst);
+
+   scl <= 'H';
+   sda <= 'H';
+
+   sc <= (others => 'H');
+   sd <= (others => 'H');
+
+--    U_Tca9548a_1 : entity surf.Tca9548a
+--       generic map (
+--          TPD_G  => TPD_G,
+--          ADDR_G => "1110100")
+--       port map (
+--          scl => scl,                    -- [inout]
+--          sda => sda,                    -- [inout]
+--          sc  => sc,                     -- [inout]
+--          sd  => sd);                    -- [inout]
+
+   U_I2cRegSlave_1 : entity surf.I2cRegSlave
+      generic map (
+         TPD_G                => TPD_G,
+         TENBIT_G             => 0,
+         I2C_ADDR_G           => conv_integer("1110100"),
+         OUTPUT_EN_POLARITY_G => 0,
+--         FILTER_G             => FILTER_G,
+         ADDR_SIZE_G          => 0,
+         DATA_SIZE_G          => 1,
+         ENDIANNESS_G         => 0)
+      port map (
+         sRst   => i2cRst,              -- [in]
+         clk    => i2cClk,              -- [in]
+         wrEn   => open,                -- [out]
+         wrData => wrData,              -- [out]
+--         rdEn   => rdEn,                -- [out]
+         rdData => wrData,              -- [in]
+         i2ci   => i2ci,                -- [in]
+         i2co   => i2co);               -- [out]
+
+   sda      <= i2co.sda when i2co.sdaoen = '0' else 'Z';
+   i2ci.sda <= sda;
+
+   scl      <= i2co.scl when i2co.scloen = '0' else 'Z';
+   i2ci.scl <= scl;
+   
+
+   rst0 <= i2cRst or not wrData(0);
+   rst4 <= i2cRst or not wrData(4);
+
+   U_i2cRamSlave_0 : entity surf.i2cRamSlave
+      generic map (
+         TPD_G        => TPD_G,
+         I2C_ADDR_G   => conv_integer("1010000"),
+         TENBIT_G     => 0,
+         FILTER_G     => 4,
+         ADDR_SIZE_G  => 1,
+         DATA_SIZE_G  => 1,
+         ENDIANNESS_G => 0)
+      port map (
+         clk    => i2cClk,              -- [in]
+         rst    => rst0,                -- [in]
+         i2cSda => sda,                 -- [inout]
+         i2cScl => scl);                -- [inout]
+
+   U_i2cRamSlave_4 : entity surf.i2cRamSlave
+      generic map (
+         TPD_G        => TPD_G,
+         I2C_ADDR_G   => conv_integer("1010000"),  --80,
+         TENBIT_G     => 0,
+         FILTER_G     => 4,
+         ADDR_SIZE_G  => 1,
+         DATA_SIZE_G  => 1,
+         ENDIANNESS_G => 0)
+      port map (
+         clk    => i2cClk,                         -- [in]
+         rst    => rst4,                           -- [in]
+         i2cSda => sda,                            -- [inout]
+         i2cScl => scl);                           -- [inout]
+
+
+
 
 end testbed;
