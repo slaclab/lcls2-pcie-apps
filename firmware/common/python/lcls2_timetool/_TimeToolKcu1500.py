@@ -19,6 +19,8 @@ class TimeToolKcu1500(pr.Device):
         self.add(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500Hsio( 
             offset    = 0x0080_0000,
             numLanes  = numLanes,
+            enLclsI = True,
+            enLclsII = True,
             pgp3      = pgp3,
             expand    = True,
         ))
