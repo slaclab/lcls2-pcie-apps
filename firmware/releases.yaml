@@ -10,11 +10,11 @@ RogueScripts:
   - ../software/scripts/timetoolGui
 
 CondaDependencies:
-  - surf=v2.2.0
-  - axi_pcie_core=v3.1.2
-  - lcls_timing_core=v3.0.3
-  - lcls2_pgp_fw_lib=v3.1.0
-  - l2si_core=v3.0.3
+  - surf=v2.5.1
+  - axi_pcie_core=v3.2.1
+  - lcls_timing_core=v3.2.1
+  - lcls2_pgp_fw_lib=v3.3.0
+  - l2si_core=v3.1.0
   - clink_gateway_fw_lib=v2.1.1
   - matplotlib
 
