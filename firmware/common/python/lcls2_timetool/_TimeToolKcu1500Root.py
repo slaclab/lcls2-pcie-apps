@@ -90,7 +90,9 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
         else:
             vcList = [0, 2] # CLink SRP, CLink serial
             
-        self.dmaStreams = axipcie.createAxiPcieDmaStreams(dev, {lane:{vc for vc in vcList} for lane in range(numLanes)}, 'localhost', 8000)
+        self.dmaStreams = axipcie.createAxiPcieDmaStreams(
+            dev, {lane:{vc for vc in vcList} for lane in range(numLanes)}, 'localhost', 8000)
+
 
                         
         # Map dma streams to SRP, CLinkFebs
@@ -150,7 +152,21 @@ class TimeToolKcu1500Root(lcls2_pgp_fw_lib.hardware.shared.Root):
                 # Debug slave
                 if dataDebug:
                     self.dmaStreams[lane][1] >> self.unbatchers[lane] >> self._dbg[lane]
-                
+
+    def stop(self):
+        for lane in self.dmaStreams.values():
+            for vc in lane.values():
+                vc.close()
+
+        if hasattr(self, 'roguePgp'):
+            for lane in self.roguePgp.pgpStreams:
+                for vc in lane:
+                   vc.close()
+                    
+            for sideband in self.roguePgp.pgpTriggers:
+                sideband.stop()
+
+        super().stop()
                 
 #         if (driverPath!='sim'):           
 #             # Read all the variables

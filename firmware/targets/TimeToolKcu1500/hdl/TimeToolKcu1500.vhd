@@ -286,13 +286,15 @@ begin
    ------------------
    U_HSIO : entity lcls2_pgp_fw_lib.Kcu1500Hsio
       generic map (
-         TPD_G             => TPD_G,
-         ROGUE_SIM_EN_G    => ROGUE_SIM_EN_G,
-         PGP_TYPE_G        => PGP_TYPE_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
-         NUM_PGP_LANES_G   => DMA_SIZE_C,
-         AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_C,
-         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(HW_INDEX_C).baseAddr)
+         TPD_G               => TPD_G,
+         ROGUE_SIM_EN_G      => ROGUE_SIM_EN_G,
+         PGP_TYPE_G          => PGP_TYPE_G,
+         DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_C,
+         NUM_PGP_LANES_G     => DMA_SIZE_C,
+         EN_LCLS_I_TIMING_G  => false,
+         EN_LCLS_II_TIMING_G => true,
+         AXIL_CLK_FREQ_G     => AXIL_CLK_FREQ_C,
+         AXI_BASE_ADDR_G     => AXIL_CONFIG_C(HW_INDEX_C).baseAddr)
       port map (
          ------------------------      
          --  Top Level Interfaces
