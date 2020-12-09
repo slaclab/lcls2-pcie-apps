@@ -11,7 +11,6 @@
 # ----------------------------------------------------------------------------
 # The following environment variables are required for this process:
 # secrets.CONDA_UPLOAD_TOKEN_TAG
-# secrets.CONDA_UPLOAD_TOKEN_DEV
 
 name: Timetool Integration
 on: [push]
@@ -19,7 +18,7 @@ on: [push]
 jobs:
   conda_build:
     name: Anaconda Build
-    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/pre-release'
+    if: startsWith(github.ref, 'refs/tags/')
     strategy:
       matrix:
         os:
@@ -77,16 +76,10 @@ jobs:
         id: get_image_info
         env:
           OS_NAME: ${{ matrix.os }}
-          CONDA_UPLOAD_TOKEN_DEV: ${{ secrets.CONDA_UPLOAD_TOKEN_DEV }}
           CONDA_UPLOAD_TOKEN_TAG: ${{ secrets.CONDA_UPLOAD_TOKEN_TAG }}
           URL_BASE: https://github.com/${{ github.repository }}/releases/download
         run: |
-          if [ ${GITHUB_REF} == "refs/heads/pre-release" ]
-          then
-              echo ::set-output name=token::$CONDA_UPLOAD_TOKEN_DEV
-          else
-              echo ::set-output name=token::$CONDA_UPLOAD_TOKEN_TAG
-          fi
+          echo ::set-output name=token::$CONDA_UPLOAD_TOKEN_TAG
           if [ ${OS_NAME} == "macos-10.15" ]
           then
               echo ::set-output name=os::osx-64
@@ -105,7 +98,7 @@ jobs:
           wget -O file.zip $DOWNLOAD_URL
           unzip file.zip
 
-      - name: Build And Upload Rogue
+      - name: Build And Upload
         run: |
           export PATH="${HOME}/miniconda/bin:$PATH"
           source ${HOME}/miniconda/etc/profile.d/conda.sh
